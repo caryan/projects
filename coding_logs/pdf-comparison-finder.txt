@@ -1,0 +1,492 @@
+╭────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code research preview! │
+│                                            │
+│   /help for help                           │
+│                                            │
+│   cwd: /Users/colmryan/repos/tools         │
+╰────────────────────────────────────────────╯
+
+> in pdf-duplicate-finder.html I have a web app that finds duplicate pages and secitons in a PDF file. I would like to make a 
+  similar webapp that finds duplicate pages and sections bewteen two PDF files. 
+
+⏺ I'll examine the current PDF duplicate finder to understand how it works, then adapt it for comparing two PDF files.
+
+⏺ Read(file_path: "web/pdf-duplicate-finder.html")…
+  ⎿  <!DOCTYPE html>
+     <html lang="en">
+     <head>
+     ... (+647 lines)
+
+⏺ Write(file_path: web/pdf-comparison-finder.html)…
+  ⎿ Wrote 724 lines to web/pdf-comparison-finder.html
+     <!DOCTYPE html>
+     <html lang="en">
+     <head>
+         <meta charset="UTF-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+         <title>PDF Comparison Tool</title>
+         <style>
+             body {
+                 font-family: Arial, sans-serif;
+                 max-width: 800px;
+     ... (+714 lines)
+
+⏺ Created a new web app that compares two PDF files to find duplicates. Key changes:
+
+  1. Added interface for uploading two separate PDF files
+  2. Modified processing logic to handle both files separately
+  3. Added comparison logic to identify matching pages between documents
+  4. Updated the display to show which pages from file 1 match pages in file 2
+
+  The app will now let you upload two PDFs and automatically compare them once both are loaded.
+
+> Great that works. As well as reporting duplicate sections I also want to report set differences or pages that are in one PDF 
+  and not in the other and vice versa. 
+
+⏺ I'll enhance the PDF comparison tool to report pages that are unique to each file.
+
+⏺ Read(file_path: "web/pdf-comparison-finder.html")…
+  ⎿  <!DOCTYPE html>
+     <html lang="en">
+     <head>
+     ... (+721 lines)
+
+⏺ Update(file_path: web/pdf-comparison-finder.html)…
+  ⎿  Updated web/pdf-comparison-finder.html with 14 additions
+     57              padding: 15px;
+     58              background-color: #f9f9f9;
+     59          }
+     60          .unique-group {
+     61              margin-bottom: 30px;
+     62              border: 1px solid #ddd;
+     63              border-radius: 5px;
+     64              padding: 15px;
+     65              background-color: #f8f8ff;
+     66          }
+     67          .group-title {
+     68              margin-top: 0;
+     69              padding-bottom: 10px;
+     70              border-bottom: 1px solid #eee;
+     71          }
+     72          .section-header {
+     73              margin-top: 30px;
+     74              margin-bottom: 15px;
+     75              font-size: 1.3em;
+     76              font-weight: bold;
+     77              color: #444;
+     78          }
+     79          .thumbnails {
+     80              display: flex;
+     81              flex-wrap: wrap;
+
+⏺ Update(file_path: web/pdf-comparison-finder.html)…
+  ⎿  Updated web/pdf-comparison-finder.html with 243 additions and 49 removals
+     379              // Create a map of duplicate pages between the two PDFs
+     380              const crossDuplicates = new Map();
+     381 
+     382              // Track which pages have been matched across the files
+     383              const matchedPages1 = new Set();
+     384              const matchedPages2 = new Set();
+     385              
+     386              // For each hash in the first PDF
+     387              for (const [hash1, pages1] of pageHashes1.entries()) {
+     388                  // Check if the hash exists in the second PDF
+     ...
+     393 
+     394                          for (const page2 of pages2) {
+     395                              crossDuplicates.get(page1).push(page2);
+     396                              
+     397                              // Mark these pages as matched
+     398                              matchedPages1.add(page1);
+     399                              matchedPages2.add(page2);
+     400                          }
+     401                      }
+     402                  }
+     ...
+     460                  }
+     461              }
+     462 
+     463              // Display sections
+     464              let groupCount = 0;
+     463              // Identify unique pages (set differences)
+     464              const uniquePages1 = []; // Pages in PDF1 not in PDF2
+     465              const uniquePages2 = []; // Pages in PDF2 not in PDF1
+     466 
+     467              // Find unique pages in file 1
+     468              for (let i = 1; i <= pageImages1.size; i++) {
+     469                  if (!matchedPages1.has(i)) {
+     470                      uniquePages1.push(i);
+     471                  }
+     472              }
+     473              
+     474              // Find unique pages in file 2
+     475              for (let i = 1; i <= pageImages2.size; i++) {
+     476                  if (!matchedPages2.has(i)) {
+     477                      uniquePages2.push(i);
+     478                  }
+     479              }
+     480              
+     481              // Display results
+     482              // Add a comparison header
+     483              const comparisonHeader = document.createElement('div');
+     484              comparisonHeader.className = 'comparison-header';
+     485              comparisonHeader.textContent = `Comparing ${file1.name} with ${file2.name}`;
+     486              duplicateGroups.appendChild(comparisonHeader);
+     487 
+     488              // Display summary statistics
+     489              let duplicateCount = sectionsMap.size;
+     490              
+     491              const summary = document.createElement('p');
+     492              summary.innerHTML = `
+     493                  <strong>Summary:</strong><br>
+     494                  - ${duplicateCount} duplicate ${duplicateCount !== 1 ? 'sections' : 'section'} found
+          between documents<br>
+     495                  - ${uniquePages1.length} unique pages in File 1 (not in File 2)<br>
+     496                  - ${uniquePages2.length} unique pages in File 2 (not in File 1)
+     497              `;
+     498              duplicateGroups.appendChild(summary);
+     499              
+     500              // Display duplicate sections
+     501              for (const [sectionKey, duplicateSections] of sectionsMap) {
+     502                  groupCount++;
+     501              if (sectionsMap.size > 0) {
+     502                  const duplicateHeader = document.createElement('div');
+     503                  duplicateHeader.className = 'section-header';
+     504                  duplicateHeader.textContent = 'Duplicate Content';
+     505                  duplicateGroups.appendChild(duplicateHeader);
+     506 
+     507                  const [startPage, endPage] = sectionKey.split('-').map(Number);
+     508                  const sectionLength = endPage - startPage + 1;
+     507                  let groupCount = 0;
+     508 
+     509                  // Create group element
+     509                  for (const [sectionKey, duplicateSections] of sectionsMap) {
+     510                      groupCount++;
+     511                      
+     512                      const [startPage, endPage] = sectionKey.split('-').map(Number);
+     513                      const sectionLength = endPage - startPage + 1;
+     514                      
+     515                      // Create group element
+     516                      const group = document.createElement('div');
+     517                      group.className = 'group';
+     518                      
+     519                      // Create group title showing the section and its duplicates
+     520                      const groupTitle = document.createElement('h3');
+     521                      groupTitle.className = 'group-title';
+     522                      
+     523                      let titleText = `Duplicate ${sectionLength > 1 ? "Section" : "Page"} ${groupCoun
+         t}`;
+     524                      titleText += ` - File 1: Page${sectionLength > 1 ? "s" : ""} ${startPage}${secti
+         onLength > 1 ? `-${endPage}` : ""}`;
+     525                      titleText += ` matches File 2: `;
+     526                      
+     527                      const duplicateRanges = duplicateSections.map(section => {
+     528                          const rangeLength = section.end - section.start + 1;
+     529                          return `Page${rangeLength > 1 ? "s" : ""} ${section.start}${rangeLength > 1 
+         ? `-${section.end}` : ""}`;
+     530                      }).join(', ');
+     531                      
+     532                      groupTitle.textContent = titleText + duplicateRanges;
+     533                      group.appendChild(groupTitle);
+     534                      
+     535                      // Create thumbnails container
+     536                      const thumbnails = document.createElement('div');
+     537                      thumbnails.className = 'thumbnails';
+     538                      
+     539                      // Add thumbnails for PDF1 pages
+     540                      for (const pageNum of [startPage, endPage].filter((v, i, a) => i === 0 || a[0] !
+         == a[1])) {
+     541                          const thumbnailContainer = document.createElement('div');
+     542                          thumbnailContainer.className = 'thumbnail-container';
+     543                          
+     544                          const thumbnail = document.createElement('img');
+     545                          thumbnail.className = 'thumbnail';
+     546                          thumbnail.src = pageImages1.get(pageNum).image;
+     547                          thumbnailContainer.appendChild(thumbnail);
+     548                          
+     549                          const pageNumberText = document.createElement('div');
+     550                          pageNumberText.className = 'page-number';
+     551                          pageNumberText.textContent = `File 1: Page ${pageNum}`;
+     552                          thumbnailContainer.appendChild(pageNumberText);
+     553                          
+     554                          thumbnails.appendChild(thumbnailContainer);
+     555                      }
+     556                      
+     557                      // Add thumbnails for PDF2 pages
+     558                      for (const section of duplicateSections) {
+     559                          const pageNums = [section.start, section.end].filter((v, i, a) => i === 0 ||
+          a[0] !== a[1]);
+     560                          
+     561                          for (const pageNum of pageNums) {
+     562                              const thumbnailContainer = document.createElement('div');
+     563                              thumbnailContainer.className = 'thumbnail-container';
+     564                              
+     565                              const thumbnail = document.createElement('img');
+     566                              thumbnail.className = 'thumbnail';
+     567                              thumbnail.src = pageImages2.get(pageNum).image;
+     568                              thumbnailContainer.appendChild(thumbnail);
+     569                              
+     570                              const pageNumberText = document.createElement('div');
+     571                              pageNumberText.className = 'page-number';
+     572                              pageNumberText.textContent = `File 2: Page ${pageNum}`;
+     573                              thumbnailContainer.appendChild(pageNumberText);
+     574                              
+     575                              thumbnails.appendChild(thumbnailContainer);
+     576                          }
+     577                      }
+     578                      
+     579                      group.appendChild(thumbnails);
+     580                      duplicateGroups.appendChild(group);
+     581                  }
+     582              } else {
+     583                  const noResultsMsg = document.createElement('p');
+     584                  noResultsMsg.textContent = 'No duplicate pages or sections found between these docum
+         ents.';
+     585                  duplicateGroups.appendChild(noResultsMsg);
+     586              }
+     587              
+     588              // Display unique pages in File 1
+     589              if (uniquePages1.length > 0) {
+     590                  const uniqueFile1Header = document.createElement('div');
+     591                  uniqueFile1Header.className = 'section-header';
+     592                  uniqueFile1Header.textContent = `Pages Unique to File 1 (${file1.name})`;
+     593                  duplicateGroups.appendChild(uniqueFile1Header);
+     594                  
+     595                  const maxThumbnails = 10; // Limit number of thumbnails displayed
+     596                  const group = document.createElement('div');
+     597                  group.className = 'group';
+     597                  group.className = 'unique-group';
+     598 
+     599                  // Create group title showing the section and its duplicates
+     599                  // Create group title
+     600                  const groupTitle = document.createElement('h3');
+     601                  groupTitle.className = 'group-title';
+     602                  groupTitle.textContent = `${uniquePages1.length} pages only in File 1`;
+     603                  group.appendChild(groupTitle);
+     604 
+     605                  let titleText = `Duplicate ${sectionLength > 1 ? "Section" : "Page"} ${groupCount}`;
+     606                  titleText += ` - File 1: Page${sectionLength > 1 ? "s" : ""} 
+     ${startPage}${sectionLength > 1 ? `-${endPage}` : ""}`;
+         ngth > 1 ? `-${endPage}` : ""}`;
+     607                  titleText += ` matches File 2: `;
+     605                  // Create thumbnails container
+     606                  const thumbnails = document.createElement('div');
+     607                  thumbnails.className = 'thumbnails';
+     608 
+     609                  const duplicateRanges = duplicateSections.map(section => {
+     610                      const rangeLength = section.end - section.start + 1;
+     611                      return `Page${rangeLength > 1 ? "s" : ""} ${section.start}${rangeLength > 1 ? 
+     `-${section.end}` : ""}`;
+         ${section.end}` : ""}`;
+     612                  }).join(', ');
+     609                  // Add thumbnails for unique pages (up to max limit)
+     610                  const pagesToShow = uniquePages1.length > maxThumbnails ? 
+     611                      uniquePages1.slice(0, maxThumbnails) : uniquePages1;
+     612 
+     613                  groupTitle.textContent = titleText + duplicateRanges;
+     613                  for (const pageNum of pagesToShow) {
+     614                      const thumbnailContainer = document.createElement('div');
+     615                      thumbnailContainer.className = 'thumbnail-container';
+     616                      
+     617                      const thumbnail = document.createElement('img');
+     618                      thumbnail.className = 'thumbnail';
+     619                      thumbnail.src = pageImages1.get(pageNum).image;
+     620                      thumbnailContainer.appendChild(thumbnail);
+     621                      
+     622                      const pageNumberText = document.createElement('div');
+     623                      pageNumberText.className = 'page-number';
+     624                      pageNumberText.textContent = `Page ${pageNum}`;
+     625                      thumbnailContainer.appendChild(pageNumberText);
+     626                      
+     627                      thumbnails.appendChild(thumbnailContainer);
+     628                  }
+     629                  
+     630                  if (uniquePages1.length > maxThumbnails) {
+     631                      const moreInfo = document.createElement('div');
+     632                      moreInfo.style.marginTop = '10px';
+     633                      moreInfo.textContent = `... and ${uniquePages1.length - maxThumbnails} more page
+         s`;
+     634                      group.appendChild(moreInfo);
+     635                  }
+     636                  
+     637                  // Add page list as text
+     638                  const pageList = document.createElement('div');
+     639                  pageList.style.marginTop = '10px';
+     640                  pageList.textContent = `Pages: ${formatPageRanges(uniquePages1)}`;
+     641                  
+     642                  group.appendChild(thumbnails);
+     643                  group.appendChild(pageList);
+     644                  duplicateGroups.appendChild(group);
+     645              }
+     646              
+     647              // Display unique pages in File 2
+     648              if (uniquePages2.length > 0) {
+     649                  const uniqueFile2Header = document.createElement('div');
+     650                  uniqueFile2Header.className = 'section-header';
+     651                  uniqueFile2Header.textContent = `Pages Unique to File 2 (${file2.name})`;
+     652                  duplicateGroups.appendChild(uniqueFile2Header);
+     653                  
+     654                  const maxThumbnails = 10; // Limit number of thumbnails displayed
+     655                  const group = document.createElement('div');
+     656                  group.className = 'unique-group';
+     657                  
+     658                  // Create group title
+     659                  const groupTitle = document.createElement('h3');
+     660                  groupTitle.className = 'group-title';
+     661                  groupTitle.textContent = `${uniquePages2.length} pages only in File 2`;
+     662                  group.appendChild(groupTitle);
+     663 
+     664                  // Create thumbnails container
+     665                  const thumbnails = document.createElement('div');
+     666                  thumbnails.className = 'thumbnails';
+     667 
+     668                  // Add thumbnails for PDF1 pages
+     669                  for (const pageNum of [startPage, endPage].filter((v, i, a) => i === 0 || a[0] !== 
+     a[1])) {
+         [1])) {
+     668                  // Add thumbnails for unique pages (up to max limit)
+     669                  const pagesToShow = uniquePages2.length > maxThumbnails ? 
+     670                      uniquePages2.slice(0, maxThumbnails) : uniquePages2;
+     671                  
+     672                  for (const pageNum of pagesToShow) {
+     673                      const thumbnailContainer = document.createElement('div');
+     674                      thumbnailContainer.className = 'thumbnail-container';
+     675 
+     676                      const thumbnail = document.createElement('img');
+     677                      thumbnail.className = 'thumbnail';
+     678                      thumbnail.src = pageImages1.get(pageNum).image;
+     678                      thumbnail.src = pageImages2.get(pageNum).image;
+     679                      thumbnailContainer.appendChild(thumbnail);
+     680 
+     681                      const pageNumberText = document.createElement('div');
+     682                      pageNumberText.className = 'page-number';
+     683                      pageNumberText.textContent = `File 1: Page ${pageNum}`;
+     683                      pageNumberText.textContent = `Page ${pageNum}`;
+     684                      thumbnailContainer.appendChild(pageNumberText);
+     685 
+     686                      thumbnails.appendChild(thumbnailContainer);
+     687                  }
+     688 
+     689                  // Add thumbnails for PDF2 pages
+     690                  for (const section of duplicateSections) {
+     691                      const pageNums = [section.start, section.end].filter((v, i, a) => i === 0 || a[0]
+      !== a[1]);
+         ] !== a[1]);
+     692                      
+     693                      for (const pageNum of pageNums) {
+     694                          const thumbnailContainer = document.createElement('div');
+     695                          thumbnailContainer.className = 'thumbnail-container';
+     696                          
+     697                          const thumbnail = document.createElement('img');
+     698                          thumbnail.className = 'thumbnail';
+     699                          thumbnail.src = pageImages2.get(pageNum).image;
+     700                          thumbnailContainer.appendChild(thumbnail);
+     701                          
+     702                          const pageNumberText = document.createElement('div');
+     703                          pageNumberText.className = 'page-number';
+     704                          pageNumberText.textContent = `File 2: Page ${pageNum}`;
+     705                          thumbnailContainer.appendChild(pageNumberText);
+     706                          
+     707                          thumbnails.appendChild(thumbnailContainer);
+     708                      }
+     689                  if (uniquePages2.length > maxThumbnails) {
+     690                      const moreInfo = document.createElement('div');
+     691                      moreInfo.style.marginTop = '10px';
+     692                      moreInfo.textContent = `... and ${uniquePages2.length - maxThumbnails} more 
+     pages`;
+         s`;
+     693                      group.appendChild(moreInfo);
+     694                  }
+     695 
+     696                  // Add page list as text
+     697                  const pageList = document.createElement('div');
+     698                  pageList.style.marginTop = '10px';
+     699                  pageList.textContent = `Pages: ${formatPageRanges(uniquePages2)}`;
+     700                  
+     701                  group.appendChild(thumbnails);
+     702                  group.appendChild(pageList);
+     703                  duplicateGroups.appendChild(group);
+     704              }
+     705          }
+     706          
+     707          // Helper function to format page numbers into ranges (e.g. 1,2,3,5,6,7 -> 1-3,5-7)
+     708          function formatPageRanges(pages) {
+     709              if (pages.length === 0) return '';
+     710 
+     711              // Display summary
+     712              if (groupCount === 0) {
+     713                  const noResultsMsg = document.createElement('p');
+     714                  noResultsMsg.textContent = 'No duplicate pages or sections found between these 
+     documents.';
+         ents.';
+     715                  duplicateGroups.appendChild(noResultsMsg);
+     711              // Make sure pages are sorted
+     712              const sortedPages = [...pages].sort((a, b) => a - b);
+     713              
+     714              const ranges = [];
+     715              let rangeStart = sortedPages[0];
+     716              let rangeEnd = sortedPages[0];
+     717              
+     718              for (let i = 1; i < sortedPages.length; i++) {
+     719                  if (sortedPages[i] === rangeEnd + 1) {
+     720                      // Extend the current range
+     721                      rangeEnd = sortedPages[i];
+     722                  } else {
+     723                      // End the current range and start a new one
+     724                      if (rangeStart === rangeEnd) {
+     725                          ranges.push(rangeStart.toString());
+     726                      } else {
+     727                          ranges.push(`${rangeStart}-${rangeEnd}`);
+     728                      }
+     729                      
+     730                      rangeStart = sortedPages[i];
+     731                      rangeEnd = sortedPages[i];
+     732                  }
+     733              }
+     734              
+     735              // Add the last range
+     736              if (rangeStart === rangeEnd) {
+     737                  ranges.push(rangeStart.toString());
+     738              } else {
+     739                  const summary = document.createElement('p');
+     740                  summary.textContent = `Found ${groupCount} duplicate ${groupCount === 1 ? 'match' : 
+         'matches'} between the documents.`;
+     741                  duplicateGroups.insertBefore(summary, duplicateGroups.childNodes[1]); // Insert afte
+         r header
+     739                  ranges.push(`${rangeStart}-${rangeEnd}`);
+     740              }
+     741              
+     742              return ranges.join(', ');
+     743          }
+     744 
+     745          // High-precision PDF page hash function that uses full resolution
+
+⏺ Enhanced the webapp to display pages unique to each file:
+
+  1. Now tracks which pages from each file have matches in the other file
+  2. Added sections for displaying pages that only exist in File 1 or File 2
+  3. Created a new helper function to format page numbers as ranges for better readability
+  4. Added a summary at the top that shows:
+    - Number of duplicate sections between files
+    - Number of unique pages in each file
+  5. Improved the visual layout with section headers and different styling for unique vs duplicate content
+  6. Limited thumbnail display to 10 for unique pages to avoid performance issues with large files
+
+  The app now provides a complete comparison of both duplicate content and set differences between the two
+  PDFs.
+
+· Synthesizing… (0s · esc to interrupt)
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ >                                                                                                                │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  ? for shortcuts
+
+
+
+Total cost:            $0.73
+Total duration (API):  3m 22.4s
+Total duration (wall): 34m 7.7s
+Total code changes:    981 lines added, 49 lines removed
+colmryan@Colms-MacBook-Air tools % 
+
