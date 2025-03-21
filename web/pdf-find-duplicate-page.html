@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Duplicate Page Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        .drop-area.active {
+            border-color: #007bff;
+            background-color: #e6f3ff;
+        }
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+        }
+        .duplicate-groups {
+            margin-top: 30px;
+        }
+        .group {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .group-title {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .thumbnail-container {
+            margin: 10px;
+            text-align: center;
+        }
+        .thumbnail {
+            max-width: 150px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .page-number {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        #file-info {
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF Duplicate Page Finder</h1>
+    
+    <div class="drop-area" id="drop-area">
+        <p>Drag and drop a PDF file here or click to select a file</p>
+        <p><small>Your file is processed locally, nothing is uploaded to any server</small></p>
+        <input type="file" id="file-input" accept=".pdf" class="hidden">
+    </div>
+    
+    <div id="file-info"></div>
+    
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Processing page 0 of 0...</div>
+    </div>
+    
+    <div class="duplicate-groups" id="duplicate-groups">
+        <!-- Results will be displayed here -->
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        // DOM elements
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress');
+        const progressText = document.getElementById('progress-text');
+        const duplicateGroups = document.getElementById('duplicate-groups');
+        
+        // Event listeners for drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('active');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('active');
+        }
+        
+        // Handle file drop
+        dropArea.addEventListener('drop', handleDrop, false);
+        dropArea.addEventListener('click', () => fileInput.click(), false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                handleFile(files[0]);
+            } else {
+                alert('Please drop a valid PDF file.');
+            }
+        }
+        
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                handleFile(files[0]);
+            } else {
+                alert('Please select a valid PDF file.');
+            }
+        }
+        
+        async function handleFile(file) {
+            // Clear previous results
+            duplicateGroups.innerHTML = '';
+            
+            // Display file info
+            fileInfo.textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
+            
+            // Show progress bar
+            progressContainer.style.display = 'block';
+            
+            // Load the PDF file
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const numPages = pdf.numPages;
+            
+            // Update progress text
+            progressText.textContent = `Processing page 0 of ${numPages}...`;
+            
+            // Create canvas for rendering
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Create a map to store page hashes
+            const pageHashes = new Map();
+            const pageImages = new Map();
+            
+            // Process each page
+            for (let i = 1; i <= numPages; i++) {
+                const page = await pdf.getPage(i);
+                
+                // Use a high scale for maximum resolution (1.0 is 72 DPI)
+                // Higher scale = higher resolution but more processing time
+                const scale = 1.0; // 144 DPI 
+                const viewport = page.getViewport({ scale: scale });
+                
+                // Set canvas dimensions to the high-resolution size
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                // Render the page at high resolution
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                }).promise;
+                
+                // Get the high-resolution image data at high quality (0.9)
+                const highResImageData = canvas.toDataURL('image/jpeg', 0.9);
+                
+                // Create a lower resolution version for thumbnail display
+                const thumbScale = 0.2;
+                const thumbViewport = page.getViewport({ scale: thumbScale });
+                
+                // Create a thumbnail canvas
+                const thumbCanvas = document.createElement('canvas');
+                thumbCanvas.width = thumbViewport.width;
+                thumbCanvas.height = thumbViewport.height;
+                const thumbCtx = thumbCanvas.getContext('2d');
+                
+                // Render the page at thumbnail resolution
+                await page.render({
+                    canvasContext: thumbCtx,
+                    viewport: thumbViewport
+                }).promise;
+                
+                // Get the thumbnail data
+                const thumbImageData = thumbCanvas.toDataURL('image/jpeg', 0.8);
+                
+                // Store the thumbnail for display
+                pageImages.set(i, thumbImageData);
+                
+                // Calculate a hash for the page contents using the high resolution image
+                const hash = await calculateImageHash(highResImageData);
+                
+                // Store the page number by hash
+                if (!pageHashes.has(hash)) {
+                    pageHashes.set(hash, []);
+                }
+                pageHashes.get(hash).push(i);
+                
+                // Update progress
+                const progress = (i / numPages) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `Processing page ${i} of ${numPages}...`;
+                
+                // Small delay to let the UI update
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+            
+            // Hide progress bar
+            progressContainer.style.display = 'none';
+            
+            // Find and display duplicate pages
+            displayDuplicates(pageHashes, pageImages);
+        }
+        
+        function displayDuplicates(pageHashes, pageImages) {
+            // First, identify individual duplicate pages
+            const duplicatePages = new Map();
+            
+            for (const [hash, pageNumbers] of pageHashes) {
+                if (pageNumbers.length >= 2) {
+                    for (const page of pageNumbers) {
+                        duplicatePages.set(page, { 
+                            hash,
+                            duplicateWith: pageNumbers.filter(p => p !== page)
+                        });
+                    }
+                }
+            }
+            
+            // Now identify consecutive duplicate sections
+            const sectionsMap = new Map();
+            const processedPages = new Set();
+            
+            // For each page that has a duplicate
+            for (const [startPage, data] of duplicatePages.entries()) {
+                // Skip if already processed as part of a section
+                if (processedPages.has(startPage)) continue;
+                
+                // For each page this page duplicates with
+                for (const startDuplicatePage of data.duplicateWith) {
+                    // Skip if already processed as part of a section
+                    if (processedPages.has(startDuplicatePage)) continue;
+                    
+                    // Try to find a consecutive section
+                    let sectionLength = 1;
+                    let currentPage = startPage;
+                    let currentDuplicatePage = startDuplicatePage;
+                    
+                    // Check consecutive pages
+                    while (true) {
+                        const nextPage = currentPage + 1;
+                        const nextDuplicatePage = currentDuplicatePage + 1;
+                        
+                        // Check if the next pages exist and form a duplicate pair
+                        if (duplicatePages.has(nextPage) && 
+                            duplicatePages.has(nextDuplicatePage) && 
+                            duplicatePages.get(nextPage).duplicateWith.includes(nextDuplicatePage)) {
+                            
+                            // Extend the section
+                            sectionLength++;
+                            currentPage = nextPage;
+                            currentDuplicatePage = nextDuplicatePage;
+                            
+                            // Mark these pages as processed
+                            processedPages.add(nextPage);
+                            processedPages.add(nextDuplicatePage);
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    // If we found a section of 2 or more pages
+                    if (sectionLength > 1) {
+                        const sectionKey = `${startPage}-${startPage + sectionLength - 1}`;
+                        
+                        if (!sectionsMap.has(sectionKey)) {
+                            sectionsMap.set(sectionKey, []);
+                        }
+                        
+                        sectionsMap.get(sectionKey).push({
+                            start: startDuplicatePage,
+                            end: startDuplicatePage + sectionLength - 1
+                        });
+                        
+                        // Mark start pages as processed
+                        processedPages.add(startPage);
+                        processedPages.add(startDuplicatePage);
+                    }
+                }
+            }
+            
+            // Finally, identify any remaining individual duplicates that aren't part of sections
+            const remainingDuplicates = new Map();
+            
+            for (const [hash, pageNumbers] of pageHashes) {
+                if (pageNumbers.length >= 2) {
+                    const unprocessedPages = pageNumbers.filter(page => !processedPages.has(page));
+                    
+                    if (unprocessedPages.length >= 2) {
+                        remainingDuplicates.set(hash, unprocessedPages);
+                    }
+                }
+            }
+            
+            // Display sections first
+            let groupCount = 0;
+            
+            // Display duplicate sections
+            for (const [sectionKey, duplicateSections] of sectionsMap) {
+                groupCount++;
+                
+                const [startPage, endPage] = sectionKey.split('-').map(Number);
+                
+                // Create group element
+                const group = document.createElement('div');
+                group.className = 'group';
+                
+                // Create group title showing the section and its duplicates
+                const groupTitle = document.createElement('h3');
+                groupTitle.className = 'group-title';
+                
+                let titleText = `Duplicate Section ${groupCount} - Pages ${startPage}-${endPage} duplicated in: `;
+                const duplicateRanges = duplicateSections.map(section => 
+                    `pages ${section.start}-${section.end}`
+                ).join(', ');
+                
+                groupTitle.textContent = titleText + duplicateRanges;
+                group.appendChild(groupTitle);
+                
+                // Create thumbnails container
+                const thumbnails = document.createElement('div');
+                thumbnails.className = 'thumbnails';
+                
+                // Add thumbnails for the first and last page of the section
+                for (const pageNum of [startPage, endPage]) {
+                    const thumbnailContainer = document.createElement('div');
+                    thumbnailContainer.className = 'thumbnail-container';
+                    
+                    const thumbnail = document.createElement('img');
+                    thumbnail.className = 'thumbnail';
+                    thumbnail.src = pageImages.get(pageNum);
+                    thumbnailContainer.appendChild(thumbnail);
+                    
+                    const pageNumberText = document.createElement('div');
+                    pageNumberText.className = 'page-number';
+                    pageNumberText.textContent = `Page ${pageNum}`;
+                    thumbnailContainer.appendChild(pageNumberText);
+                    
+                    thumbnails.appendChild(thumbnailContainer);
+                }
+                
+                group.appendChild(thumbnails);
+                duplicateGroups.appendChild(group);
+            }
+            
+            // Display remaining individual duplicates
+            for (const [hash, pageNumbers] of remainingDuplicates) {
+                groupCount++;
+                
+                // Create group element
+                const group = document.createElement('div');
+                group.className = 'group';
+                
+                // Add group title showing all duplicate pages
+                const groupTitle = document.createElement('h3');
+                groupTitle.className = 'group-title';
+                groupTitle.textContent = `Duplicate Group ${groupCount} - Pages: ${pageNumbers.join(', ')}`;
+                group.appendChild(groupTitle);
+                
+                // Create thumbnails container
+                const thumbnails = document.createElement('div');
+                thumbnails.className = 'thumbnails';
+                
+                // Add a thumbnail for the first page in the group
+                const thumbnailContainer = document.createElement('div');
+                thumbnailContainer.className = 'thumbnail-container';
+                
+                const thumbnail = document.createElement('img');
+                thumbnail.className = 'thumbnail';
+                thumbnail.src = pageImages.get(pageNumbers[0]);
+                thumbnailContainer.appendChild(thumbnail);
+                
+                const pageNumberList = document.createElement('div');
+                pageNumberList.className = 'page-number';
+                pageNumberList.textContent = `Page ${pageNumbers[0]}`;
+                thumbnailContainer.appendChild(pageNumberList);
+                
+                thumbnails.appendChild(thumbnailContainer);
+                group.appendChild(thumbnails);
+                
+                duplicateGroups.appendChild(group);
+            }
+            
+            // Display summary
+            if (groupCount === 0) {
+                const noResultsMsg = document.createElement('p');
+                noResultsMsg.textContent = 'No duplicate pages or sections found in this document.';
+                duplicateGroups.appendChild(noResultsMsg);
+            } else {
+                const sectionCount = sectionsMap.size;
+                const individualCount = remainingDuplicates.size;
+                
+                const summary = document.createElement('p');
+                summary.textContent = `Found ${sectionCount} duplicate sections and ${individualCount} individual duplicate groups.`;
+                duplicateGroups.insertBefore(summary, duplicateGroups.firstChild);
+            }
+        }
+        
+        // High-precision PDF page hash function that uses full resolution
+        async function calculateImageHash(imageDataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    // Store original aspect ratio
+                    const aspectRatio = img.width / img.height;
+                    
+                    // Create a canvas for the hash - use the original high-resolution size
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Use the image's full resolution
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw the image at full resolution
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height); // Fill with white background first
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Get the pixel data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Convert to grayscale
+                    const grayScaleMatrix = new Array(canvas.height * canvas.width);
+                    
+                    for (let y = 0; y < canvas.height; y++) {
+                        for (let x = 0; x < canvas.width; x++) {
+                            const pixelIndex = (y * canvas.width + x) * 4;
+                            
+                            // Convert RGB to grayscale using perceived luminance weights
+                            const r = data[pixelIndex];
+                            const g = data[pixelIndex + 1];
+                            const b = data[pixelIndex + 2];
+                            
+                            // Weighted grayscale conversion (human eye is more sensitive to green)
+                            const grayValue = 0.299 * r + 0.587 * g + 0.114 * b;
+                            grayScaleMatrix[y * canvas.width + x] = grayValue;
+                        }
+                    }
+                    
+                    // Compute the reduced feature set (maintaining aspect ratio)
+                    // Use a higher resolution grid for more precise comparisons
+                    const gridHeight = 32; // Higher resolution grid
+                    const gridWidth = Math.max(16, Math.round(gridHeight * aspectRatio / 2)); // Ensure at least 16 columns
+                    
+                    const blockHeight = canvas.height / gridHeight;
+                    const blockWidth = canvas.width / gridWidth;
+                    
+                    const featureValues = new Array(gridHeight * gridWidth);
+                    
+                    for (let y = 0; y < gridHeight; y++) {
+                        for (let x = 0; x < gridWidth; x++) {
+                            let blockSum = 0;
+                            let pixelCount = 0;
+                            
+                            // Average each block
+                            for (let by = 0; by < blockHeight; by++) {
+                                for (let bx = 0; bx < blockWidth; bx++) {
+                                    const origX = Math.floor(x * blockWidth + bx);
+                                    const origY = Math.floor(y * blockHeight + by);
+                                    
+                                    if (origX < canvas.width && origY < canvas.height) {
+                                        blockSum += grayScaleMatrix[origY * canvas.width + origX];
+                                        pixelCount++;
+                                    }
+                                }
+                            }
+                            
+                            featureValues[y * gridWidth + x] = pixelCount > 0 ? blockSum / pixelCount : 0;
+                        }
+                    }
+                    
+                    // Feature extraction using mean and variance of each block
+                    const blockFeatures = [];
+                    
+                    // Calculate both mean and variance for each block for better discrimination
+                    for (let y = 0; y < gridHeight; y++) {
+                        for (let x = 0; x < gridWidth; x++) {
+                            let blockSum = 0;
+                            let blockSumSquares = 0;
+                            let pixelCount = 0;
+                            
+                            // First pass: Calculate sum and sum of squares
+                            for (let by = 0; by < blockHeight; by++) {
+                                for (let bx = 0; bx < blockWidth; bx++) {
+                                    const origX = Math.floor(x * blockWidth + bx);
+                                    const origY = Math.floor(y * blockHeight + by);
+                                    
+                                    if (origX < canvas.width && origY < canvas.height) {
+                                        const value = grayScaleMatrix[origY * canvas.width + origX];
+                                        blockSum += value;
+                                        blockSumSquares += value * value;
+                                        pixelCount++;
+                                    }
+                                }
+                            }
+                            
+                            if (pixelCount > 0) {
+                                const mean = blockSum / pixelCount;
+                                const variance = (blockSumSquares / pixelCount) - (mean * mean);
+                                blockFeatures.push({ mean, variance });
+                            } else {
+                                blockFeatures.push({ mean: 0, variance: 0 });
+                            }
+                        }
+                    }
+                    
+                    // Calculate overall mean for thresholding
+                    const sortedMeans = blockFeatures.map(f => f.mean).sort((a, b) => a - b);
+                    const medianValue = sortedMeans[Math.floor(sortedMeans.length / 2)];
+                    
+                    // Create the hash combining multiple features
+                    let hash = '';
+                    
+                    // Add aspect ratio to the hash with higher precision
+                    const aspectRatioQuantized = Math.round(aspectRatio * 100);
+                    hash += aspectRatioQuantized.toString(36); // Base36 encoding to keep it compact
+                    hash += '_'; // Separator for readability in debugging
+
+                    // Add mean-based hash component
+                    for (let i = 0; i < blockFeatures.length; i++) {
+                        hash += blockFeatures[i].mean > medianValue ? '1' : '0';
+                    }
+                    hash += '_'; // Separator
+                    
+                    // Add variance-based hash component (high variance = more texture/detail)
+                    const sortedVariances = blockFeatures.map(f => f.variance).sort((a, b) => a - b);
+                    const medianVariance = sortedVariances[Math.floor(sortedVariances.length / 2)];
+                    
+                    for (let i = 0; i < blockFeatures.length; i++) {
+                        hash += blockFeatures[i].variance > medianVariance ? '1' : '0';
+                    }
+                    hash += '_'; // Separator
+                    
+                    // Add content density features with higher precision
+                    let nonWhitePixels = 0;
+                    let blackPixels = 0;
+                    const totalPixels = canvas.width * canvas.height;
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        // Check if pixel is not white (with some tolerance)
+                        if (data[i] < 240 || data[i+1] < 240 || data[i+2] < 240) {
+                            nonWhitePixels++;
+                            
+                            // Count very dark pixels separately (text/lines)
+                            if (data[i] < 30 && data[i+1] < 30 && data[i+2] < 30) {
+                                blackPixels++;
+                            }
+                        }
+                    }
+                    
+                    // Add both total content and black content percentages
+                    const contentDensity = Math.round((nonWhitePixels / totalPixels) * 1000);
+                    const blackDensity = Math.round((blackPixels / totalPixels) * 1000);
+                    
+                    hash += contentDensity.toString(36); // Add content density to hash
+                    hash += '_'; // Separator
+                    hash += blackDensity.toString(36); // Add black content density
+                    
+                    resolve(hash);
+                };
+                img.src = imageDataUrl;
+            });
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
