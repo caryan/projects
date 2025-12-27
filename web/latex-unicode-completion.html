@@ -133,6 +133,64 @@
         footer a:hover {
             text-decoration: underline;
         }
+
+        /* Search container styling */
+        .search-container {
+            margin-bottom: 15px;
+        }
+
+        .symbol-search-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .symbol-search-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .symbol-search-input::placeholder {
+            color: #999;
+            font-family: Arial, sans-serif;
+        }
+
+        .search-info {
+            margin-top: 10px;
+            font-size: 0.95em;
+            color: #666;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .search-info.no-results {
+            color: #d9534f;
+            font-weight: 500;
+        }
+
+        .search-info.has-results {
+            color: #5cb85c;
+        }
+
+        /* Enhanced reference grid for search results */
+        .reference-grid.searching {
+            max-height: 600px;
+        }
+
+        .reference-grid .no-results-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 40px 20px;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -155,7 +213,16 @@
     </div>
     
     <div class="reference">
-        <h2>Available LaTeX Commands (2000+ symbols)</h2>
+        <div class="search-container">
+            <input
+                type="text"
+                id="symbolSearch"
+                class="symbol-search-input"
+                placeholder="Search LaTeX commands... (e.g., alpha, arrow, sum)"
+                autocomplete="off"
+            >
+            <div id="searchInfo" class="search-info"></div>
+        </div>
         <div id="referenceList" class="reference-grid"></div>
     </div>
     
@@ -2828,7 +2895,27 @@ const latexSymbols = {
             const newCursorPos = start + replacement.length;
             textarea.setSelectionRange(newCursorPos, newCursorPos);
         }
-        
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Debounce function to limit search frequency
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // Handle Tab key press
         document.getElementById('inputText').addEventListener('keydown', function(e) {
             if (e.key === 'Tab') {
@@ -2844,33 +2931,96 @@ const latexSymbols = {
             }
         });
         
-        // Generate reference list
-        function generateReferenceList() {
+        // Generate reference list with optional filtering
+        function generateReferenceList(searchQuery = '') {
             const referenceList = document.getElementById('referenceList');
-            const entries = Object.entries(latexSymbols)
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .slice(0, 200); // Show first 200 for performance
-            
-            entries.forEach(([latex, unicode]) => {
+            const searchInfo = document.getElementById('searchInfo');
+
+            // Clear previous content
+            referenceList.innerHTML = '';
+
+            // Get all entries
+            let entries = Object.entries(latexSymbols);
+
+            // Filter if search query provided
+            if (searchQuery.trim()) {
+                const query = searchQuery.toLowerCase().trim();
+                entries = entries.filter(([latex, unicode]) => {
+                    // Search in LaTeX command (without backslash)
+                    const latexMatch = latex.toLowerCase().includes(query);
+                    // Optionally search in Unicode character
+                    const unicodeMatch = unicode.includes(query);
+                    return latexMatch || unicodeMatch;
+                });
+
+                // Update search info
+                if (entries.length === 0) {
+                    searchInfo.textContent = `No symbols found for "${searchQuery}"`;
+                    searchInfo.className = 'search-info no-results';
+
+                    // Show no results message
+                    const noResultsDiv = document.createElement('div');
+                    noResultsDiv.className = 'no-results-message';
+                    noResultsDiv.textContent = `No LaTeX commands match "${searchQuery}". Try searching for common terms like "alpha", "arrow", or "sum".`;
+                    referenceList.appendChild(noResultsDiv);
+                    return;
+                }
+
+                searchInfo.textContent = `Found ${entries.length} symbol${entries.length !== 1 ? 's' : ''} matching "${searchQuery}"`;
+                searchInfo.className = 'search-info has-results';
+                referenceList.classList.add('searching');
+            } else {
+                // No search query - show default view
+                entries = entries.slice(0, 200); // Show first 200 for performance
+                searchInfo.textContent = `Showing first 200 of ${Object.keys(latexSymbols).length} available commands. Use search to find specific symbols.`;
+                searchInfo.className = 'search-info';
+                referenceList.classList.remove('searching');
+            }
+
+            // Sort entries alphabetically
+            entries.sort((a, b) => a[0].localeCompare(b[0]));
+
+            // Limit search results display to prevent performance issues
+            const displayLimit = searchQuery.trim() ? 500 : 200;
+            const displayEntries = entries.slice(0, displayLimit);
+
+            // Create reference items
+            displayEntries.forEach(([latex, unicode]) => {
                 const item = document.createElement('div');
                 item.className = 'reference-item';
-                item.innerHTML = `<span class="latex">${latex}</span> → <span class="unicode">${unicode}</span>`;
+                item.innerHTML = `<span class="latex">${escapeHtml(latex)}</span> → <span class="unicode">${escapeHtml(unicode)}</span>`;
                 referenceList.appendChild(item);
             });
-            
-            // Add note about showing subset
-            const note = document.createElement('div');
-            note.style.gridColumn = '1 / -1';
-            note.style.textAlign = 'center';
-            note.style.color = '#666';
-            note.style.fontStyle = 'italic';
-            note.style.marginTop = '10px';
-            note.textContent = `Showing first 200 of ${Object.keys(latexSymbols).length} available commands`;
-            referenceList.appendChild(note);
+
+            // Add note if results were truncated
+            if (entries.length > displayLimit) {
+                const note = document.createElement('div');
+                note.style.gridColumn = '1 / -1';
+                note.style.textAlign = 'center';
+                note.style.color = '#666';
+                note.style.fontStyle = 'italic';
+                note.style.marginTop = '10px';
+                note.style.fontFamily = 'Arial, sans-serif';
+                note.textContent = `Showing first ${displayLimit} of ${entries.length} matching results. Refine your search to see more specific results.`;
+                referenceList.appendChild(note);
+            }
         }
-        
-        // Initialize reference list on page load
-        window.addEventListener('load', generateReferenceList);
+
+        // Handle search input with debouncing
+        const handleSearch = debounce((query) => {
+            generateReferenceList(query);
+        }, 300);
+
+        // Set up search event listener
+        window.addEventListener('load', () => {
+            // Initialize reference list
+            generateReferenceList();
+
+            // Add search input listener
+            document.getElementById('symbolSearch').addEventListener('input', function(e) {
+                handleSearch(e.target.value);
+            });
+        });
     </script>
 </body>
 </html>
