@@ -8,7 +8,7 @@
 ## Development Commands
 - No formal build system is present (single-file applications)
 - Test: Open web tools in browser and verify functionality
-- Deploy: Update hosted version of tools on tools.colmryan.org
+- Deploy: The repository is hosted at projects.colmryan.org (see CNAME file) by Github Pages as publishing from a branch and so deploying simply means pushing to `main`. 
 
 ## Code Style Guidelines
 
