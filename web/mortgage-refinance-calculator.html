@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Refinance Calculator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 12px;
+            line-height: 1.4;
+            background-color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 4px;
+            margin-top: 0;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .calculator-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .calculator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+        }
+
+        .input-section h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1em;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 500;
+            color: #444;
+            font-size: 0.85em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        input::placeholder {
+            color: #999;
+        }
+
+        .currency-input {
+            position: relative;
+        }
+
+        .currency-input::before {
+            content: "$";
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .currency-input input {
+            padding-left: 20px;
+        }
+
+        .input-hint {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .arm-fields {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .arm-fields.visible {
+            display: block;
+        }
+
+        .arm-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 0.8em;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .results-section {
+            background-color: #f0f7ff;
+            border: 1px solid #b8d4f0;
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px 12px;
+        }
+
+        .result-item.highlight {
+            background-color: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .result-item.warning {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+        }
+
+        .result-label {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .result-breakdown {
+            font-size: 0.8em;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .result-breakdown .principal {
+            color: #1976d2;
+        }
+
+        .result-breakdown .interest {
+            color: #e65100;
+        }
+
+        .result-diff {
+            font-size: 0.85em;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .result-diff.positive {
+            color: #2e7d32;
+        }
+
+        .result-diff.negative {
+            color: #c62828;
+        }
+
+        .result-subtext {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .loan-summary {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #c5d9f0;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+            font-size: 0.85em;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 6px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .summary-table td:nth-child(2),
+        .summary-table td:nth-child(3),
+        .summary-table th:nth-child(2),
+        .summary-table th:nth-child(3) {
+            text-align: right;
+        }
+
+        .summary-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .summary-table .highlight-row {
+            background-color: #e8f5e9;
+            font-weight: 600;
+        }
+
+        .summary-table .highlight-row td {
+            color: #2e7d32;
+        }
+
+        .summary-table .highlight-row td[colspan] {
+            text-align: center;
+        }
+
+        .summary-table .highlight-row.negative td {
+            color: #c62828;
+            background-color: #ffebee;
+        }
+
+        footer {
+            margin-top: 15px;
+            text-align: center;
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mortgage Refinance Calculator</h1>
+
+    <div class="calculator-container">
+        <div class="input-section">
+            <h2>Current Loan</h2>
+
+            <div class="form-group">
+                <label for="currentBalance">Remaining Balance</label>
+                <div class="currency-input">
+                    <input type="text" id="currentBalance" placeholder="e.g., 500,000" inputmode="decimal">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="currentRate">Interest Rate (%)</label>
+                <input type="text" id="currentRate" placeholder="e.g., 6.625" inputmode="decimal">
+            </div>
+
+            <div class="form-group">
+                <label for="currentPayment">Monthly Payment (P&I)</label>
+                <div class="currency-input">
+                    <input type="text" id="currentPayment" placeholder="e.g., 3,200" inputmode="decimal">
+                </div>
+                <div class="input-hint">Principal & interest only (exclude taxes/insurance)</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h2>New Loan</h2>
+
+            <div class="form-group">
+                <label for="newTerm">Loan Term</label>
+                <select id="newTerm">
+                    <option value="30">30 Year Fixed</option>
+                    <option value="20">20 Year Fixed</option>
+                    <option value="15">15 Year Fixed</option>
+                    <option value="5/1">5/1 ARM</option>
+                    <option value="7/1">7/1 ARM</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="newRate">Interest Rate (%)</label>
+                <input type="text" id="newRate" placeholder="e.g., 5.5" inputmode="decimal">
+            </div>
+
+            <div class="arm-fields" id="armFields">
+                <div class="arm-note">
+                    ARM rates adjust after the initial fixed period. Enter the rate you expect after adjustment.
+                </div>
+                <div class="form-group">
+                    <label for="armAdjustedRate">Expected Rate After Adjustment (%)</label>
+                    <input type="text" id="armAdjustedRate" placeholder="e.g., 7.0" inputmode="decimal">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="points">Points</label>
+                <input type="text" id="points" placeholder="e.g., 1" inputmode="decimal" value="0">
+                <div class="input-hint">Each point = 1% of loan amount</div>
+            </div>
+
+            <div class="form-group">
+                <label for="closingCosts">Other Closing Costs</label>
+                <div class="currency-input">
+                    <input type="text" id="closingCosts" placeholder="e.g., 5,000" inputmode="decimal" value="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-section">
+        <div class="results-grid">
+            <div class="result-item">
+                <div class="result-label">Current Monthly Payment</div>
+                <div class="result-value" id="currentPaymentDisplay">--</div>
+                <div class="result-breakdown" id="currentBreakdown"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">New Monthly Payment</div>
+                <div class="result-value" id="newPayment">--</div>
+                <div class="result-breakdown" id="newBreakdown"></div>
+                <div class="result-diff" id="paymentDiff"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Total Refinancing Cost</div>
+                <div class="result-value" id="totalCost">--</div>
+                <div class="result-subtext">Points + closing costs</div>
+            </div>
+
+            <div class="result-item" id="breakevenCard">
+                <div class="result-label">Breakeven Point</div>
+                <div class="result-value" id="breakeven">--</div>
+                <div class="result-subtext" id="breakevenNote"></div>
+            </div>
+        </div>
+
+        <div class="loan-summary">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Current Loan</th>
+                        <th>New Loan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Total Interest</td>
+                        <td id="currentTotalInterest">--</td>
+                        <td id="newTotalInterest">--</td>
+                    </tr>
+                    <tr>
+                        <td>Total Payments</td>
+                        <td id="currentTotalPayments">--</td>
+                        <td id="newTotalPayments">--</td>
+                    </tr>
+                    <tr>
+                        <td>Remaining Term</td>
+                        <td id="currentRemainingTerm">--</td>
+                        <td id="newLoanTerm">--</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td>Lifetime Savings</td>
+                        <td colspan="2" id="lifetimeSavings">--</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        Part of <a href="https://projects.colmryan.org">projects.colmryan.org</a>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const currentBalanceInput = document.getElementById('currentBalance');
+        const currentRateInput = document.getElementById('currentRate');
+        const currentPaymentInput = document.getElementById('currentPayment');
+        const newTermSelect = document.getElementById('newTerm');
+        const newRateInput = document.getElementById('newRate');
+        const armFieldsDiv = document.getElementById('armFields');
+        const armAdjustedRateInput = document.getElementById('armAdjustedRate');
+        const pointsInput = document.getElementById('points');
+        const closingCostsInput = document.getElementById('closingCosts');
+
+        // Result elements
+        const currentPaymentDisplayEl = document.getElementById('currentPaymentDisplay');
+        const currentBreakdownEl = document.getElementById('currentBreakdown');
+        const newPaymentEl = document.getElementById('newPayment');
+        const newBreakdownEl = document.getElementById('newBreakdown');
+        const paymentDiffEl = document.getElementById('paymentDiff');
+        const breakevenEl = document.getElementById('breakeven');
+        const breakevenNoteEl = document.getElementById('breakevenNote');
+        const breakevenCard = document.getElementById('breakevenCard');
+        const totalCostEl = document.getElementById('totalCost');
+
+        // Summary table elements
+        const currentTotalInterestEl = document.getElementById('currentTotalInterest');
+        const newTotalInterestEl = document.getElementById('newTotalInterest');
+        const currentTotalPaymentsEl = document.getElementById('currentTotalPayments');
+        const newTotalPaymentsEl = document.getElementById('newTotalPayments');
+        const currentRemainingTermEl = document.getElementById('currentRemainingTerm');
+        const newLoanTermEl = document.getElementById('newLoanTerm');
+        const lifetimeSavingsEl = document.getElementById('lifetimeSavings');
+        const highlightRow = document.querySelector('.highlight-row');
+
+        // Money input fields for formatting
+        const moneyInputs = [currentBalanceInput, currentPaymentInput, closingCostsInput];
+
+        // Utility functions
+        function parseNumber(str) {
+            if (!str) return NaN;
+            return parseFloat(str.replace(/[$,]/g, ''));
+        }
+
+        function formatCurrency(amount) {
+            if (isNaN(amount) || !isFinite(amount)) return '--';
+            return '$' + amount.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function formatInputCurrency(input) {
+            const value = parseNumber(input.value);
+            if (!isNaN(value) && value > 0) {
+                input.value = value.toLocaleString('en-US');
+            }
+        }
+
+        function formatMonths(months) {
+            if (isNaN(months) || !isFinite(months) || months < 0) return '--';
+            const years = Math.floor(months / 12);
+            const remainingMonths = Math.round(months % 12);
+
+            if (years === 0) {
+                return `${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+            } else if (remainingMonths === 0) {
+                return `${years} year${years !== 1 ? 's' : ''}`;
+            } else {
+                return `${years} yr ${remainingMonths} mo`;
+            }
+        }
+
+        // Calculation functions
+        function calculateMonthlyPayment(principal, annualRate, termYears) {
+            if (principal <= 0 || annualRate < 0 || termYears <= 0) return NaN;
+
+            const monthlyRate = annualRate / 100 / 12;
+            const numPayments = termYears * 12;
+
+            if (monthlyRate === 0) {
+                return principal / numPayments;
+            }
+
+            const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
+                           (Math.pow(1 + monthlyRate, numPayments) - 1);
+            return payment;
+        }
+
+        function getTermYears(termValue) {
+            if (termValue === '5/1' || termValue === '7/1') {
+                return 30;
+            }
+            return parseInt(termValue);
+        }
+
+        function isARM(termValue) {
+            return termValue === '5/1' || termValue === '7/1';
+        }
+
+        function calculateRemainingTerm(balance, annualRate, monthlyPayment) {
+            if (balance <= 0 || annualRate < 0 || monthlyPayment <= 0) return NaN;
+
+            const monthlyRate = annualRate / 100 / 12;
+
+            if (monthlyRate === 0) {
+                return balance / monthlyPayment;
+            }
+
+            const monthlyInterest = balance * monthlyRate;
+            if (monthlyPayment <= monthlyInterest) {
+                return Infinity;
+            }
+
+            const n = -Math.log(1 - (monthlyRate * balance) / monthlyPayment) / Math.log(1 + monthlyRate);
+            return n;
+        }
+
+        function calculateTotalInterest(principal, monthlyPayment, termMonths) {
+            if (isNaN(principal) || isNaN(monthlyPayment) || isNaN(termMonths)) return NaN;
+            return (monthlyPayment * termMonths) - principal;
+        }
+
+        // Main update function
+        function updateResults() {
+            // Parse inputs
+            const currentBalance = parseNumber(currentBalanceInput.value);
+            const currentRate = parseNumber(currentRateInput.value);
+            const currentPayment = parseNumber(currentPaymentInput.value);
+            const newTermValue = newTermSelect.value;
+            const newRate = parseNumber(newRateInput.value);
+            const points = parseNumber(pointsInput.value) || 0;
+            const closingCosts = parseNumber(closingCostsInput.value) || 0;
+
+            // Show/hide ARM fields
+            const isARMLoan = isARM(newTermValue);
+            armFieldsDiv.classList.toggle('visible', isARMLoan);
+
+            // Calculate new loan term
+            const newTermYears = getTermYears(newTermValue);
+
+            // Calculate total refinancing costs
+            const pointsCost = (points / 100) * currentBalance;
+            const totalRefinancingCost = pointsCost + closingCosts;
+            totalCostEl.textContent = formatCurrency(totalRefinancingCost);
+
+            // Calculate interest portions (first month)
+            const currentMonthlyInterest = currentBalance * (currentRate / 100 / 12);
+            const currentMonthlyPrincipal = currentPayment - currentMonthlyInterest;
+            const newMonthlyInterest = currentBalance * (newRate / 100 / 12);
+
+            // Display current payment with breakdown
+            currentPaymentDisplayEl.textContent = formatCurrency(currentPayment);
+            if (!isNaN(currentMonthlyInterest) && !isNaN(currentMonthlyPrincipal)) {
+                currentBreakdownEl.innerHTML = `<span class="principal">${formatCurrency(currentMonthlyPrincipal)} principal</span> + <span class="interest">${formatCurrency(currentMonthlyInterest)} interest</span>`;
+            } else {
+                currentBreakdownEl.textContent = '';
+            }
+
+            // Calculate new monthly payment
+            const newMonthlyPayment = calculateMonthlyPayment(currentBalance, newRate, newTermYears);
+            const newMonthlyPrincipal = newMonthlyPayment - newMonthlyInterest;
+
+            newPaymentEl.textContent = formatCurrency(newMonthlyPayment);
+            if (!isNaN(newMonthlyInterest) && !isNaN(newMonthlyPrincipal)) {
+                newBreakdownEl.innerHTML = `<span class="principal">${formatCurrency(newMonthlyPrincipal)} principal</span> + <span class="interest">${formatCurrency(newMonthlyInterest)} interest</span>`;
+            } else {
+                newBreakdownEl.textContent = '';
+            }
+
+            // Payment and interest difference with green/red highlighting
+            const paymentDiff = currentPayment - newMonthlyPayment;
+            const interestDiff = currentMonthlyInterest - newMonthlyInterest;
+
+            paymentDiffEl.classList.remove('positive', 'negative');
+            if (!isNaN(paymentDiff) && !isNaN(interestDiff)) {
+                let diffText = '';
+
+                // Payment difference
+                if (paymentDiff > 0) {
+                    diffText = `${formatCurrency(paymentDiff)}/mo less`;
+                    paymentDiffEl.classList.add('positive');
+                } else if (paymentDiff < 0) {
+                    diffText = `${formatCurrency(Math.abs(paymentDiff))}/mo more`;
+                    paymentDiffEl.classList.add('negative');
+                }
+
+                // Interest difference
+                if (interestDiff > 0) {
+                    diffText += ` (saving ${formatCurrency(interestDiff)} interest)`;
+                } else if (interestDiff < 0) {
+                    diffText += ` (${formatCurrency(Math.abs(interestDiff))} more interest)`;
+                }
+
+                paymentDiffEl.textContent = diffText;
+            } else {
+                paymentDiffEl.textContent = '';
+            }
+
+            // Calculate breakeven based on monthly interest saved
+            breakevenCard.classList.remove('warning', 'highlight');
+            if (interestDiff > 0 && totalRefinancingCost > 0) {
+                const breakevenMonths = totalRefinancingCost / interestDiff;
+                breakevenEl.textContent = formatMonths(breakevenMonths);
+                breakevenNoteEl.textContent = `Based on ${formatCurrency(interestDiff)}/mo interest savings`;
+                breakevenCard.classList.add('highlight');
+            } else if (interestDiff <= 0 && !isNaN(interestDiff)) {
+                breakevenEl.textContent = 'Never';
+                breakevenNoteEl.textContent = 'New rate has higher interest';
+                breakevenCard.classList.add('warning');
+            } else if (totalRefinancingCost === 0 && !isNaN(interestDiff)) {
+                breakevenEl.textContent = 'Immediate';
+                breakevenNoteEl.textContent = 'No refinancing costs';
+                breakevenCard.classList.add('highlight');
+            } else {
+                breakevenEl.textContent = '--';
+                breakevenNoteEl.textContent = '';
+            }
+
+            // Calculate summary table values
+            const remainingMonths = calculateRemainingTerm(currentBalance, currentRate, currentPayment);
+            const newTermMonths = newTermYears * 12;
+
+            currentRemainingTermEl.textContent = formatMonths(remainingMonths);
+            newLoanTermEl.textContent = formatMonths(newTermMonths);
+
+            const currentTotalInterest = calculateTotalInterest(currentBalance, currentPayment, remainingMonths);
+            const newTotalInterest = calculateTotalInterest(currentBalance, newMonthlyPayment, newTermMonths);
+
+            currentTotalInterestEl.textContent = formatCurrency(currentTotalInterest);
+            newTotalInterestEl.textContent = formatCurrency(newTotalInterest);
+
+            const currentTotalPayments = currentPayment * remainingMonths;
+            const newTotalPayments = newMonthlyPayment * newTermMonths;
+
+            currentTotalPaymentsEl.textContent = formatCurrency(currentTotalPayments);
+            newTotalPaymentsEl.textContent = formatCurrency(newTotalPayments);
+
+            // Lifetime savings
+            const interestSaved = currentTotalInterest - newTotalInterest;
+            const lifetimeSavings = interestSaved - totalRefinancingCost;
+
+            lifetimeSavingsEl.textContent = formatCurrency(lifetimeSavings);
+            highlightRow.classList.remove('negative');
+            if (!isNaN(lifetimeSavings) && lifetimeSavings < 0) {
+                highlightRow.classList.add('negative');
+            }
+        }
+
+        // Format money inputs on blur
+        moneyInputs.forEach(input => {
+            input.addEventListener('blur', () => formatInputCurrency(input));
+        });
+
+        // Attach event listeners for calculations
+        const allInputs = [
+            currentBalanceInput, currentRateInput, currentPaymentInput,
+            newTermSelect, newRateInput, armAdjustedRateInput,
+            pointsInput, closingCostsInput
+        ];
+
+        allInputs.forEach(input => {
+            input.addEventListener('input', updateResults);
+        });
+
+        newTermSelect.addEventListener('change', updateResults);
+
+        // Initial calculation
+        updateResults();
+    </script>
+</body>
+</html>
