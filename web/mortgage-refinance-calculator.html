@@ -28,19 +28,6 @@
             font-weight: 600;
         }
 
-        .calculator-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        @media (max-width: 600px) {
-            .calculator-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
         .input-section {
             background-color: #f9f9f9;
             border: 1px solid #ddd;
@@ -85,6 +72,15 @@
         input:focus, select:focus {
             outline: none;
             border-color: #007bff;
+        }
+
+        input.invalid {
+            border-color: #c62828;
+            background-color: #fff8f8;
+        }
+
+        input.invalid:focus {
+            border-color: #c62828;
         }
 
         input::placeholder {
@@ -146,138 +142,6 @@
         }
 
 
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        @media (max-width: 500px) {
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .result-item {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px 12px;
-        }
-
-        .result-item.highlight {
-            background-color: #e8f5e9;
-            border-color: #4caf50;
-        }
-
-        .result-item.warning {
-            background-color: #fff3e0;
-            border-color: #ff9800;
-        }
-
-        .result-label {
-            font-size: 0.8em;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .result-value {
-            font-size: 1.3em;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .result-breakdown {
-            font-size: 0.8em;
-            color: #555;
-            margin-top: 4px;
-        }
-
-        .result-breakdown .principal {
-            color: #1976d2;
-        }
-
-        .result-breakdown .interest {
-            color: #e65100;
-        }
-
-        .result-diff {
-            font-size: 0.85em;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        .result-diff.positive {
-            color: #2e7d32;
-        }
-
-        .result-diff.negative {
-            color: #c62828;
-        }
-
-        .result-subtext {
-            font-size: 0.75em;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .loan-summary {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #c5d9f0;
-        }
-
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            border-radius: 4px;
-            overflow: hidden;
-            font-size: 0.85em;
-        }
-
-        .summary-table th,
-        .summary-table td {
-            padding: 6px 10px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        .summary-table th {
-            background-color: #f5f5f5;
-            font-weight: 600;
-            color: #444;
-        }
-
-        .summary-table td:nth-child(2),
-        .summary-table td:nth-child(3),
-        .summary-table th:nth-child(2),
-        .summary-table th:nth-child(3) {
-            text-align: right;
-        }
-
-        .summary-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .summary-table .highlight-row {
-            background-color: #e8f5e9;
-            font-weight: 600;
-        }
-
-        .summary-table .highlight-row td {
-            color: #2e7d32;
-        }
-
-        .summary-table .highlight-row td[colspan] {
-            text-align: center;
-        }
-
-        .summary-table .highlight-row.negative td {
-            color: #c62828;
-            background-color: #ffebee;
-        }
-
         footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -295,13 +159,219 @@
         footer a:hover {
             text-decoration: underline;
         }
+
+        /* Multi-scenario styles */
+        .input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .current-loan-section {
+            flex-shrink: 0;
+            width: 280px;
+        }
+
+        .scenarios-container {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .scenario-section {
+            min-width: 280px;
+            flex-shrink: 0;
+        }
+
+        .scenario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .scenario-header h2 {
+            margin: 0;
+            padding: 0;
+            border: none;
+            font-size: 1em;
+            color: #333;
+        }
+
+        .remove-scenario-btn {
+            background: none;
+            border: none;
+            font-size: 1.4em;
+            color: #999;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        .remove-scenario-btn:hover {
+            color: #c62828;
+        }
+
+        .remove-scenario-btn:disabled {
+            color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .add-scenario-box {
+            min-width: 280px;
+            flex-shrink: 0;
+            background: #f5f5f5;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 200px;
+        }
+
+        .add-scenario-box:hover {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .add-scenario-box:hover .add-scenario-content {
+            color: #2e7d32;
+        }
+
+        .add-scenario-content {
+            text-align: center;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .add-scenario-content .plus-icon {
+            font-size: 2.5em;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .add-scenario-content .add-text {
+            font-size: 0.9em;
+        }
+
+        /* Comparison table wrapper */
+        .comparison-wrapper {
+            overflow-x: auto;
+            margin: 0 -12px;
+            padding: 0 12px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            min-width: max-content;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+            font-size: 0.85em;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 8px 12px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+
+        .comparison-table th:first-child,
+        .comparison-table td:first-child {
+            text-align: left;
+            position: sticky;
+            left: 0;
+            background: #fff;
+            z-index: 1;
+            min-width: 130px;
+        }
+
+        .comparison-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .comparison-table th:first-child {
+            background-color: #f5f5f5;
+        }
+
+        .comparison-table .current-col {
+            background-color: #fafafa;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 500;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .best-value {
+            background-color: #e8f5e9;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        .comparison-table .worst-value {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .comparison-table .highlight-row td {
+            background-color: #e3f2fd;
+            font-weight: 600;
+        }
+
+        .comparison-table .highlight-row td:first-child {
+            background-color: #e3f2fd;
+        }
+
+        .comparison-table .highlight-row .best-value {
+            background-color: #c8e6c9;
+        }
+
+        .comparison-table .highlight-row .worst-value {
+            background-color: #ffcdd2;
+        }
+
+        .value-detail {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: normal;
+        }
+
+        @media (max-width: 768px) {
+            .input-row {
+                flex-direction: column;
+            }
+
+            .current-loan-section {
+                width: 100%;
+            }
+
+            .scenarios-container {
+                overflow-x: auto;
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Mortgage Refinance Calculator</h1>
 
-    <div class="calculator-container">
-        <div class="input-section">
+    <div class="input-row">
+        <div class="input-section current-loan-section">
             <h2>Current Loan</h2>
 
             <div class="form-group">
@@ -319,113 +389,29 @@
             <div class="form-group">
                 <label for="currentPayment">Monthly Payment (P&I)</label>
                 <div class="currency-input">
-                    <input type="text" id="currentPayment" placeholder="e.g., 3,200" inputmode="decimal">
+                    <input type="text" id="currentPayment" placeholder="e.g., 3,200" inputmode="decimal" aria-describedby="currentPaymentHint">
                 </div>
-                <div class="input-hint">Principal & interest only (exclude taxes/insurance)</div>
+                <div class="input-hint" id="currentPaymentHint">Principal & interest only (exclude taxes/insurance)</div>
             </div>
         </div>
 
-        <div class="input-section">
-            <h2>New Loan</h2>
-
-            <div class="form-group">
-                <label for="newTerm">Loan Term</label>
-                <select id="newTerm">
-                    <option value="30">30 Year Fixed</option>
-                    <option value="20">20 Year Fixed</option>
-                    <option value="15">15 Year Fixed</option>
-                    <option value="5/1">5/1 ARM</option>
-                    <option value="7/1">7/1 ARM</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="newRate">Interest Rate (%)</label>
-                <input type="text" id="newRate" placeholder="e.g., 5.5" inputmode="decimal">
-            </div>
-
-            <div class="arm-fields" id="armFields">
-                <div class="arm-note">
-                    ARM rates adjust after the initial fixed period. Enter the rate you expect after adjustment.
-                </div>
-                <div class="form-group">
-                    <label for="armAdjustedRate">Expected Rate After Adjustment (%)</label>
-                    <input type="text" id="armAdjustedRate" placeholder="e.g., 7.0" inputmode="decimal">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="points">Points</label>
-                <input type="text" id="points" placeholder="e.g., 1" inputmode="decimal" value="0">
-                <div class="input-hint">Each point = 1% of loan amount</div>
-            </div>
-
-            <div class="form-group">
-                <label for="closingCosts">Other Closing Costs</label>
-                <div class="currency-input">
-                    <input type="text" id="closingCosts" placeholder="e.g., 5,000" inputmode="decimal" value="0">
-                </div>
-            </div>
+        <div class="scenarios-container" id="scenariosContainer">
+            <!-- Scenarios and add button will be rendered here by JavaScript -->
         </div>
     </div>
 
     <div class="results-section">
-        <div class="results-grid">
-            <div class="result-item">
-                <div class="result-label">Current Monthly Payment</div>
-                <div class="result-value" id="currentPaymentDisplay">--</div>
-                <div class="result-breakdown" id="currentBreakdown"></div>
-            </div>
-
-            <div class="result-item">
-                <div class="result-label">New Monthly Payment</div>
-                <div class="result-value" id="newPayment">--</div>
-                <div class="result-breakdown" id="newBreakdown"></div>
-                <div class="result-diff" id="paymentDiff"></div>
-            </div>
-
-            <div class="result-item">
-                <div class="result-label">Total Refinancing Cost</div>
-                <div class="result-value" id="totalCost">--</div>
-                <div class="result-subtext">Points + closing costs</div>
-            </div>
-
-            <div class="result-item" id="breakevenCard">
-                <div class="result-label">Breakeven Point</div>
-                <div class="result-value" id="breakeven">--</div>
-                <div class="result-subtext" id="breakevenNote"></div>
-            </div>
-        </div>
-
-        <div class="loan-summary">
-            <table class="summary-table">
+        <div class="comparison-wrapper">
+            <table class="comparison-table" id="comparisonTable">
                 <thead>
-                    <tr>
+                    <tr id="comparisonHeader">
                         <th></th>
-                        <th>Current Loan</th>
-                        <th>New Loan</th>
+                        <th class="current-col">Current</th>
+                        <!-- Scenario headers will be added by JavaScript -->
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>Total Interest</td>
-                        <td id="currentTotalInterest">--</td>
-                        <td id="newTotalInterest">--</td>
-                    </tr>
-                    <tr>
-                        <td>Total Payments</td>
-                        <td id="currentTotalPayments">--</td>
-                        <td id="newTotalPayments">--</td>
-                    </tr>
-                    <tr>
-                        <td>Remaining Term</td>
-                        <td id="currentRemainingTerm">--</td>
-                        <td id="newLoanTerm">--</td>
-                    </tr>
-                    <tr class="highlight-row">
-                        <td>Lifetime Savings</td>
-                        <td colspan="2" id="lifetimeSavings">--</td>
-                    </tr>
+                <tbody id="comparisonBody">
+                    <!-- Comparison rows will be rendered by JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -436,40 +422,19 @@
     </footer>
 
     <script>
+        // State management
+        const state = {
+            scenarios: [],
+            nextScenarioId: 1
+        };
+
         // DOM Elements
         const currentBalanceInput = document.getElementById('currentBalance');
         const currentRateInput = document.getElementById('currentRate');
         const currentPaymentInput = document.getElementById('currentPayment');
-        const newTermSelect = document.getElementById('newTerm');
-        const newRateInput = document.getElementById('newRate');
-        const armFieldsDiv = document.getElementById('armFields');
-        const armAdjustedRateInput = document.getElementById('armAdjustedRate');
-        const pointsInput = document.getElementById('points');
-        const closingCostsInput = document.getElementById('closingCosts');
-
-        // Result elements
-        const currentPaymentDisplayEl = document.getElementById('currentPaymentDisplay');
-        const currentBreakdownEl = document.getElementById('currentBreakdown');
-        const newPaymentEl = document.getElementById('newPayment');
-        const newBreakdownEl = document.getElementById('newBreakdown');
-        const paymentDiffEl = document.getElementById('paymentDiff');
-        const breakevenEl = document.getElementById('breakeven');
-        const breakevenNoteEl = document.getElementById('breakevenNote');
-        const breakevenCard = document.getElementById('breakevenCard');
-        const totalCostEl = document.getElementById('totalCost');
-
-        // Summary table elements
-        const currentTotalInterestEl = document.getElementById('currentTotalInterest');
-        const newTotalInterestEl = document.getElementById('newTotalInterest');
-        const currentTotalPaymentsEl = document.getElementById('currentTotalPayments');
-        const newTotalPaymentsEl = document.getElementById('newTotalPayments');
-        const currentRemainingTermEl = document.getElementById('currentRemainingTerm');
-        const newLoanTermEl = document.getElementById('newLoanTerm');
-        const lifetimeSavingsEl = document.getElementById('lifetimeSavings');
-        const highlightRow = document.querySelector('.highlight-row');
-
-        // Money input fields for formatting
-        const moneyInputs = [currentBalanceInput, currentPaymentInput, closingCostsInput];
+        const scenariosContainer = document.getElementById('scenariosContainer');
+        const comparisonHeader = document.getElementById('comparisonHeader');
+        const comparisonBody = document.getElementById('comparisonBody');
 
         // Utility functions
         function parseNumber(str) {
@@ -492,6 +457,49 @@
             }
         }
 
+        function validateInput(input, options = {}) {
+            const value = parseNumber(input.value);
+            const isEmpty = input.value.trim() === '';
+            const { allowEmpty = true, min = 0, max = Infinity, isRate = false } = options;
+
+            let isValid = true;
+
+            if (isEmpty) {
+                isValid = allowEmpty;
+            } else if (isNaN(value)) {
+                isValid = false;
+            } else if (value < min || value > max) {
+                isValid = false;
+            } else if (isRate && value > 30) {
+                // Rate sanity check - rates above 30% are likely errors
+                isValid = false;
+            }
+
+            input.classList.toggle('invalid', !isValid);
+            return isValid;
+        }
+
+        function validateAllInputs() {
+            // Validate current loan inputs
+            validateInput(currentBalanceInput, { allowEmpty: true, min: 1 });
+            validateInput(currentRateInput, { allowEmpty: true, min: 0, isRate: true });
+            validateInput(currentPaymentInput, { allowEmpty: true, min: 1 });
+
+            // Validate scenario inputs
+            document.querySelectorAll('.scenario-rate').forEach(input => {
+                validateInput(input, { allowEmpty: true, min: 0, isRate: true });
+            });
+            document.querySelectorAll('.scenario-arm-rate').forEach(input => {
+                validateInput(input, { allowEmpty: true, min: 0, isRate: true });
+            });
+            document.querySelectorAll('.scenario-points').forEach(input => {
+                validateInput(input, { allowEmpty: true, min: 0, max: 10 });
+            });
+            document.querySelectorAll('.scenario-closing-costs').forEach(input => {
+                validateInput(input, { allowEmpty: true, min: 0 });
+            });
+        }
+
         function formatMonths(months) {
             if (isNaN(months) || !isFinite(months) || months < 0) return '--';
             const years = Math.floor(months / 12);
@@ -504,6 +512,17 @@
             } else {
                 return `${years} yr ${remainingMonths} mo`;
             }
+        }
+
+        function getTermLabel(termValue) {
+            const labels = {
+                '30': '30 Year Fixed',
+                '20': '20 Year Fixed',
+                '15': '15 Year Fixed',
+                '5/1': '5/1 ARM',
+                '7/1': '7/1 ARM'
+            };
+            return labels[termValue] || termValue;
         }
 
         // Calculation functions
@@ -556,199 +575,604 @@
             return (monthlyPayment * termMonths) - principal;
         }
 
-        // Main update function
-        function updateResults() {
-            // Parse inputs
-            const currentBalance = parseNumber(currentBalanceInput.value);
-            const currentRate = parseNumber(currentRateInput.value);
-            const currentPayment = parseNumber(currentPaymentInput.value);
-            const newTermValue = newTermSelect.value;
-            const newRate = parseNumber(newRateInput.value);
-            const points = parseNumber(pointsInput.value) || 0;
-            const closingCosts = parseNumber(closingCostsInput.value) || 0;
-
-            // Show/hide ARM fields
-            const isARMLoan = isARM(newTermValue);
-            armFieldsDiv.classList.toggle('visible', isARMLoan);
-
-            // Calculate new loan term
-            const newTermYears = getTermYears(newTermValue);
-
-            // Calculate total refinancing costs
-            const pointsCost = (points / 100) * currentBalance;
-            const totalRefinancingCost = pointsCost + closingCosts;
-            totalCostEl.textContent = formatCurrency(totalRefinancingCost);
-
-            // Calculate interest portions (first month)
-            const currentMonthlyInterest = currentBalance * (currentRate / 100 / 12);
-            const currentMonthlyPrincipal = currentPayment - currentMonthlyInterest;
-            const newMonthlyInterest = currentBalance * (newRate / 100 / 12);
-
-            // Display current payment with breakdown
-            currentPaymentDisplayEl.textContent = formatCurrency(currentPayment);
-            if (!isNaN(currentMonthlyInterest) && !isNaN(currentMonthlyPrincipal)) {
-                currentBreakdownEl.innerHTML = `<span class="principal">${formatCurrency(currentMonthlyPrincipal)} principal</span> + <span class="interest">${formatCurrency(currentMonthlyInterest)} interest</span>`;
-            } else {
-                currentBreakdownEl.textContent = '';
+        function calculateRemainingBalance(principal, annualRate, monthlyPayment, monthsPaid) {
+            const monthlyRate = annualRate / 100 / 12;
+            if (monthlyRate === 0) {
+                return Math.max(0, principal - (monthlyPayment * monthsPaid));
             }
-
-            // Calculate new monthly payment
-            const newMonthlyPayment = calculateMonthlyPayment(currentBalance, newRate, newTermYears);
-            const newMonthlyPrincipal = newMonthlyPayment - newMonthlyInterest;
-
-            newPaymentEl.textContent = formatCurrency(newMonthlyPayment);
-            if (!isNaN(newMonthlyInterest) && !isNaN(newMonthlyPrincipal)) {
-                newBreakdownEl.innerHTML = `<span class="principal">${formatCurrency(newMonthlyPrincipal)} principal</span> + <span class="interest">${formatCurrency(newMonthlyInterest)} interest</span>`;
-            } else {
-                newBreakdownEl.textContent = '';
-            }
-
-            // Payment and interest difference with green/red highlighting
-            const paymentDiff = currentPayment - newMonthlyPayment;
-            const interestDiff = currentMonthlyInterest - newMonthlyInterest;
-
-            paymentDiffEl.classList.remove('positive', 'negative');
-            if (!isNaN(paymentDiff) && !isNaN(interestDiff)) {
-                let diffText = '';
-
-                // Payment difference
-                if (paymentDiff > 0) {
-                    diffText = `${formatCurrency(paymentDiff)}/mo less`;
-                    paymentDiffEl.classList.add('positive');
-                } else if (paymentDiff < 0) {
-                    diffText = `${formatCurrency(Math.abs(paymentDiff))}/mo more`;
-                    paymentDiffEl.classList.add('negative');
-                }
-
-                // Interest difference
-                if (interestDiff > 0) {
-                    diffText += ` (saving ${formatCurrency(interestDiff)} interest)`;
-                } else if (interestDiff < 0) {
-                    diffText += ` (${formatCurrency(Math.abs(interestDiff))} more interest)`;
-                }
-
-                paymentDiffEl.textContent = diffText;
-            } else {
-                paymentDiffEl.textContent = '';
-            }
-
-            // Calculate breakeven based on monthly interest saved
-            breakevenCard.classList.remove('warning', 'highlight');
-            if (interestDiff > 0 && totalRefinancingCost > 0) {
-                const breakevenMonths = totalRefinancingCost / interestDiff;
-                breakevenEl.textContent = formatMonths(breakevenMonths);
-                breakevenNoteEl.textContent = `Based on ${formatCurrency(interestDiff)}/mo interest savings`;
-                breakevenCard.classList.add('highlight');
-            } else if (interestDiff <= 0 && !isNaN(interestDiff)) {
-                breakevenEl.textContent = 'Never';
-                breakevenNoteEl.textContent = 'New rate has higher interest';
-                breakevenCard.classList.add('warning');
-            } else if (totalRefinancingCost === 0 && !isNaN(interestDiff)) {
-                breakevenEl.textContent = 'Immediate';
-                breakevenNoteEl.textContent = 'No refinancing costs';
-                breakevenCard.classList.add('highlight');
-            } else {
-                breakevenEl.textContent = '--';
-                breakevenNoteEl.textContent = '';
-            }
-
-            // Calculate summary table values
-            const remainingMonths = calculateRemainingTerm(currentBalance, currentRate, currentPayment);
-            const newTermMonths = newTermYears * 12;
-
-            currentRemainingTermEl.textContent = formatMonths(remainingMonths);
-            newLoanTermEl.textContent = formatMonths(newTermMonths);
-
-            const currentTotalInterest = calculateTotalInterest(currentBalance, currentPayment, remainingMonths);
-            const newTotalInterest = calculateTotalInterest(currentBalance, newMonthlyPayment, newTermMonths);
-
-            currentTotalInterestEl.textContent = formatCurrency(currentTotalInterest);
-            newTotalInterestEl.textContent = formatCurrency(newTotalInterest);
-
-            const currentTotalPayments = currentPayment * remainingMonths;
-            const newTotalPayments = newMonthlyPayment * newTermMonths;
-
-            currentTotalPaymentsEl.textContent = formatCurrency(currentTotalPayments);
-            newTotalPaymentsEl.textContent = formatCurrency(newTotalPayments);
-
-            // Lifetime savings
-            const interestSaved = currentTotalInterest - newTotalInterest;
-            const lifetimeSavings = interestSaved - totalRefinancingCost;
-
-            lifetimeSavingsEl.textContent = formatCurrency(lifetimeSavings);
-            highlightRow.classList.remove('negative');
-            if (!isNaN(lifetimeSavings) && lifetimeSavings < 0) {
-                highlightRow.classList.add('negative');
-            }
+            const balance = principal * Math.pow(1 + monthlyRate, monthsPaid) -
+                           monthlyPayment * (Math.pow(1 + monthlyRate, monthsPaid) - 1) / monthlyRate;
+            return Math.max(0, balance);
         }
 
-        // Format money inputs on blur
-        moneyInputs.forEach(input => {
+        function calculateARMTotalInterest(principal, initialRate, adjustedRate, termValue, termYears) {
+            const fixedPeriodYears = termValue === '5/1' ? 5 : 7;
+            const fixedPeriodMonths = fixedPeriodYears * 12;
+            const totalMonths = termYears * 12;
+            const remainingMonths = totalMonths - fixedPeriodMonths;
+
+            // Calculate initial payment based on full term at initial rate
+            const initialPayment = calculateMonthlyPayment(principal, initialRate, termYears);
+
+            // Calculate balance at end of fixed period
+            const balanceAfterFixed = calculateRemainingBalance(principal, initialRate, initialPayment, fixedPeriodMonths);
+
+            // Interest paid during fixed period
+            const principalPaidFixed = principal - balanceAfterFixed;
+            const fixedPeriodInterest = (initialPayment * fixedPeriodMonths) - principalPaidFixed;
+
+            // Calculate new payment for remaining term at adjusted rate
+            const remainingYears = remainingMonths / 12;
+            const adjustedPayment = calculateMonthlyPayment(balanceAfterFixed, adjustedRate, remainingYears);
+
+            // Interest paid during adjusted period
+            const adjustedPeriodInterest = (adjustedPayment * remainingMonths) - balanceAfterFixed;
+
+            return {
+                initialPayment,
+                adjustedPayment,
+                totalInterest: fixedPeriodInterest + adjustedPeriodInterest,
+                balanceAfterFixed
+            };
+        }
+
+        // Scenario management
+        function createScenario() {
+            const id = state.nextScenarioId++;
+            // Name based on position it will be added (current length + 1)
+            const position = state.scenarios.length + 1;
+            return {
+                id,
+                name: `Scenario ${position}`,
+                term: '30',
+                rate: '',
+                armAdjustedRate: '',
+                points: '0',
+                closingCosts: '0'
+            };
+        }
+
+        function addScenario() {
+            const scenario = createScenario();
+            state.scenarios.push(scenario);
+            renderScenarioInputs();
+            renderResults();
+            updateURL();
+        }
+
+        function isDefaultName(name) {
+            return /^Scenario \d+$/.test(name);
+        }
+
+        function removeScenario(id) {
+            if (state.scenarios.length <= 1) return;
+            state.scenarios = state.scenarios.filter(s => s.id !== id);
+
+            // Renumber scenarios with default names
+            state.scenarios.forEach((scenario, index) => {
+                if (isDefaultName(scenario.name)) {
+                    scenario.name = `Scenario ${index + 1}`;
+                }
+            });
+
+            renderScenarioInputs();
+            renderResults();
+            updateURL();
+        }
+
+        function getScenarioFromDOM(id) {
+            const section = scenariosContainer.querySelector(`[data-scenario-id="${id}"]`);
+            if (!section) return null;
+
+            return {
+                id,
+                name: section.querySelector('.scenario-name').textContent,
+                term: section.querySelector('.scenario-term').value,
+                rate: section.querySelector('.scenario-rate').value,
+                armAdjustedRate: section.querySelector('.scenario-arm-rate')?.value || '',
+                points: section.querySelector('.scenario-points').value,
+                closingCosts: section.querySelector('.scenario-closing-costs').value
+            };
+        }
+
+        function syncScenariosFromDOM() {
+            state.scenarios = state.scenarios.map(s => getScenarioFromDOM(s.id) || s);
+        }
+
+        function createScenarioHTML(scenario) {
+            const isARMLoan = isARM(scenario.term);
+            return `
+                <div class="input-section scenario-section" data-scenario-id="${scenario.id}">
+                    <div class="scenario-header">
+                        <h2 class="scenario-name" contenteditable="true" role="textbox" aria-label="Scenario name">${scenario.name}</h2>
+                        <button class="remove-scenario-btn" title="Remove scenario" aria-label="Remove ${scenario.name}" ${state.scenarios.length <= 1 ? 'disabled' : ''}>&times;</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scenario-${scenario.id}-term">Loan Term</label>
+                        <select id="scenario-${scenario.id}-term" class="scenario-term">
+                            <option value="30" ${scenario.term === '30' ? 'selected' : ''}>30 Year Fixed</option>
+                            <option value="20" ${scenario.term === '20' ? 'selected' : ''}>20 Year Fixed</option>
+                            <option value="15" ${scenario.term === '15' ? 'selected' : ''}>15 Year Fixed</option>
+                            <option value="5/1" ${scenario.term === '5/1' ? 'selected' : ''}>5/1 ARM</option>
+                            <option value="7/1" ${scenario.term === '7/1' ? 'selected' : ''}>7/1 ARM</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scenario-${scenario.id}-rate">Interest Rate (%)</label>
+                        <input type="text" id="scenario-${scenario.id}-rate" class="scenario-rate" placeholder="e.g., 5.5" inputmode="decimal" value="${scenario.rate}">
+                    </div>
+
+                    <div class="arm-fields ${isARMLoan ? 'visible' : ''}">
+                        <div class="arm-note">
+                            ARM rates adjust after the initial fixed period. Enter the rate you expect after adjustment.
+                        </div>
+                        <div class="form-group">
+                            <label for="scenario-${scenario.id}-arm-rate">Expected Rate After Adjustment (%)</label>
+                            <input type="text" id="scenario-${scenario.id}-arm-rate" class="scenario-arm-rate" placeholder="e.g., 7.0" inputmode="decimal" value="${scenario.armAdjustedRate}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scenario-${scenario.id}-points">Points</label>
+                        <input type="text" id="scenario-${scenario.id}-points" class="scenario-points" placeholder="e.g., 1" inputmode="decimal" value="${scenario.points}">
+                        <div class="input-hint">Each point = 1% of loan amount</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scenario-${scenario.id}-closing-costs">Other Closing Costs</label>
+                        <div class="currency-input">
+                            <input type="text" id="scenario-${scenario.id}-closing-costs" class="scenario-closing-costs" placeholder="e.g., 5,000" inputmode="decimal" value="${scenario.closingCosts}">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderScenarioInputs() {
+            // Render scenarios plus the add button placeholder
+            const scenariosHTML = state.scenarios.map(s => createScenarioHTML(s)).join('');
+            const addButtonHTML = `
+                <div class="add-scenario-box" id="addScenarioBox" role="button" tabindex="0" aria-label="Add new refinance scenario">
+                    <div class="add-scenario-content">
+                        <div class="plus-icon">+</div>
+                        <div class="add-text">Add Scenario</div>
+                    </div>
+                </div>
+            `;
+            scenariosContainer.innerHTML = scenariosHTML + addButtonHTML;
+
+            // Update remove button states
+            const removeButtons = scenariosContainer.querySelectorAll('.remove-scenario-btn');
+            removeButtons.forEach(btn => {
+                btn.disabled = state.scenarios.length <= 1;
+            });
+
+            // Format money inputs
+            scenariosContainer.querySelectorAll('.scenario-closing-costs').forEach(input => {
+                formatInputCurrency(input);
+            });
+        }
+
+        // Parse current loan from DOM
+        function parseCurrentLoan() {
+            const balance = parseNumber(currentBalanceInput.value);
+            const rate = parseNumber(currentRateInput.value);
+            const payment = parseNumber(currentPaymentInput.value);
+            const remainingMonths = calculateRemainingTerm(balance, rate, payment);
+            const totalInterest = calculateTotalInterest(balance, payment, remainingMonths);
+            const totalPayments = payment * remainingMonths;
+
+            return {
+                balance,
+                rate,
+                payment,
+                remainingMonths,
+                totalInterest,
+                totalPayments
+            };
+        }
+
+        // Calculate results for a single scenario
+        function calculateScenarioResults(currentLoan, scenario) {
+            const balance = currentLoan.balance;
+            const rate = parseNumber(scenario.rate);
+            const termYears = getTermYears(scenario.term);
+            const termMonths = termYears * 12;
+            const points = parseNumber(scenario.points) || 0;
+            const closingCosts = parseNumber(scenario.closingCosts) || 0;
+            const isARMLoan = isARM(scenario.term);
+            const armAdjustedRate = parseNumber(scenario.armAdjustedRate);
+
+            let monthlyPayment, totalInterest, adjustedPayment;
+
+            if (isARMLoan && !isNaN(armAdjustedRate) && armAdjustedRate > 0) {
+                // ARM with adjusted rate specified
+                const armResult = calculateARMTotalInterest(balance, rate, armAdjustedRate, scenario.term, termYears);
+                monthlyPayment = armResult.initialPayment;
+                adjustedPayment = armResult.adjustedPayment;
+                totalInterest = armResult.totalInterest;
+            } else {
+                // Fixed rate or ARM without adjusted rate
+                monthlyPayment = calculateMonthlyPayment(balance, rate, termYears);
+                totalInterest = calculateTotalInterest(balance, monthlyPayment, termMonths);
+            }
+
+            const pointsCost = (points / 100) * balance;
+            const totalRefinancingCost = pointsCost + closingCosts;
+            const totalPayments = (adjustedPayment !== undefined)
+                ? totalInterest + balance + totalRefinancingCost  // Derived from total interest for ARMs
+                : monthlyPayment * termMonths;
+
+            // Improved breakeven calculation using cumulative savings approach
+            // Simulates month-by-month to find when savings exceed costs
+            let breakevenMonths = calculateBreakevenMonths(
+                currentLoan.balance,
+                currentLoan.rate,
+                currentLoan.payment,
+                balance,
+                rate,
+                monthlyPayment,
+                totalRefinancingCost
+            );
+
+            // Lifetime savings
+            const lifetimeSavings = (currentLoan.totalInterest - totalInterest) - totalRefinancingCost;
+
+            return {
+                scenarioId: scenario.id,
+                scenarioName: scenario.name,
+                term: scenario.term,
+                rate,
+                monthlyPayment,
+                adjustedPayment,
+                paymentDiff: currentLoan.payment - monthlyPayment,
+                totalInterest,
+                totalPayments,
+                termMonths,
+                refinancingCost: totalRefinancingCost,
+                breakevenMonths,
+                lifetimeSavings
+            };
+        }
+
+        // Calculate breakeven by simulating month-by-month savings
+        function calculateBreakevenMonths(currentBalance, currentRate, currentPayment,
+                                          newBalance, newRate, newPayment, refinancingCost) {
+            if (isNaN(currentBalance) || isNaN(newBalance) || isNaN(refinancingCost)) return NaN;
+            if (refinancingCost === 0 && newPayment <= currentPayment) return 0;
+
+            const currentMonthlyRate = currentRate / 100 / 12;
+            const newMonthlyRate = newRate / 100 / 12;
+
+            let currentBal = currentBalance;
+            let newBal = newBalance;
+            let cumulativeSavings = -refinancingCost; // Start negative due to upfront costs
+
+            const maxMonths = 360; // 30 years max
+
+            for (let month = 1; month <= maxMonths; month++) {
+                // Interest for current loan this month
+                const currentInterest = currentBal * currentMonthlyRate;
+                const currentPrincipal = Math.min(currentPayment - currentInterest, currentBal);
+                currentBal = Math.max(0, currentBal - currentPrincipal);
+
+                // Interest for new loan this month
+                const newInterest = newBal * newMonthlyRate;
+                const newPrincipal = Math.min(newPayment - newInterest, newBal);
+                newBal = Math.max(0, newBal - newPrincipal);
+
+                // Monthly savings = interest saved (principal paid is not a "cost")
+                const interestSaved = currentInterest - newInterest;
+                cumulativeSavings += interestSaved;
+
+                if (cumulativeSavings >= 0) {
+                    return month;
+                }
+
+                // If both loans paid off, stop
+                if (currentBal === 0 && newBal === 0) break;
+            }
+
+            return Infinity; // Never breaks even within 30 years
+        }
+
+        // Render results comparison table
+        function renderResults() {
+            syncScenariosFromDOM();
+            validateAllInputs();
+            const currentLoan = parseCurrentLoan();
+            const scenarioResults = state.scenarios.map(s => calculateScenarioResults(currentLoan, s));
+
+            // Build header
+            let headerHTML = '<th></th><th class="current-col">Current</th>';
+            scenarioResults.forEach(r => {
+                headerHTML += `<th>${r.scenarioName}</th>`;
+            });
+            comparisonHeader.innerHTML = headerHTML;
+
+            // Metrics to compare
+            const metrics = [
+                {
+                    label: 'Monthly Payment',
+                    current: currentLoan.payment,
+                    values: scenarioResults.map(r => r.monthlyPayment),
+                    format: formatCurrency,
+                    lowerIsBetter: true,
+                    detail: scenarioResults.map(r => {
+                        let detail = '';
+                        if (!isNaN(r.paymentDiff)) {
+                            if (r.paymentDiff > 0) detail = `${formatCurrency(r.paymentDiff)}/mo less`;
+                            else if (r.paymentDiff < 0) detail = `${formatCurrency(Math.abs(r.paymentDiff))}/mo more`;
+                            else detail = 'Same';
+                        }
+                        // Show adjusted payment for ARMs
+                        if (r.adjustedPayment !== undefined) {
+                            detail += detail ? `, then ${formatCurrency(r.adjustedPayment)}` : `Then ${formatCurrency(r.adjustedPayment)}`;
+                        }
+                        return detail;
+                    })
+                },
+                {
+                    label: 'Interest Rate',
+                    current: currentLoan.rate,
+                    values: scenarioResults.map(r => r.rate),
+                    format: v => isNaN(v) ? '--' : v.toFixed(3) + '%',
+                    lowerIsBetter: true
+                },
+                {
+                    label: 'Loan Term',
+                    current: currentLoan.remainingMonths,
+                    values: scenarioResults.map(r => r.termMonths),
+                    format: formatMonths,
+                    lowerIsBetter: true,
+                    detail: scenarioResults.map(r => getTermLabel(r.term))
+                },
+                {
+                    label: 'Total Interest',
+                    current: currentLoan.totalInterest,
+                    values: scenarioResults.map(r => r.totalInterest),
+                    format: formatCurrency,
+                    lowerIsBetter: true
+                },
+                {
+                    label: 'Total Payments',
+                    current: currentLoan.totalPayments,
+                    values: scenarioResults.map(r => r.totalPayments),
+                    format: formatCurrency,
+                    lowerIsBetter: true
+                },
+                {
+                    label: 'Refinancing Cost',
+                    current: null,
+                    values: scenarioResults.map(r => r.refinancingCost),
+                    format: formatCurrency,
+                    lowerIsBetter: true
+                },
+                {
+                    label: 'Breakeven',
+                    current: null,
+                    values: scenarioResults.map(r => r.breakevenMonths),
+                    format: v => {
+                        if (v === 0) return 'Immediate';
+                        if (!isFinite(v)) return 'Never';
+                        return formatMonths(v);
+                    },
+                    lowerIsBetter: true
+                },
+                {
+                    label: 'Lifetime Savings',
+                    current: null,
+                    values: scenarioResults.map(r => r.lifetimeSavings),
+                    format: formatCurrency,
+                    lowerIsBetter: false,
+                    isHighlight: true
+                }
+            ];
+
+            // Build body rows
+            let bodyHTML = '';
+            metrics.forEach(metric => {
+                const rowClass = metric.isHighlight ? 'class="highlight-row"' : '';
+                bodyHTML += `<tr ${rowClass}>`;
+                bodyHTML += `<td>${metric.label}</td>`;
+
+                // Current column
+                if (metric.current !== null) {
+                    bodyHTML += `<td class="current-col">${metric.format(metric.current)}</td>`;
+                } else {
+                    bodyHTML += `<td class="current-col">--</td>`;
+                }
+
+                // Find best value among scenarios (excluding NaN and non-finite)
+                const validValues = metric.values.filter(v => !isNaN(v) && isFinite(v));
+                let bestValue = null;
+                if (validValues.length > 0) {
+                    bestValue = metric.lowerIsBetter
+                        ? Math.min(...validValues)
+                        : Math.max(...validValues);
+                }
+
+                // Scenario columns
+                metric.values.forEach((value, i) => {
+                    let cellClass = '';
+                    if (!isNaN(value) && isFinite(value) && validValues.length > 1) {
+                        if (value === bestValue) {
+                            cellClass = 'best-value';
+                        } else if (metric.isHighlight && value < 0) {
+                            cellClass = 'worst-value';
+                        }
+                    }
+
+                    let cellContent = metric.format(value);
+                    if (metric.detail && metric.detail[i]) {
+                        cellContent += `<div class="value-detail">${metric.detail[i]}</div>`;
+                    }
+
+                    bodyHTML += `<td class="${cellClass}">${cellContent}</td>`;
+                });
+
+                bodyHTML += '</tr>';
+            });
+
+            comparisonBody.innerHTML = bodyHTML;
+        }
+
+        // Event delegation for scenarios
+        scenariosContainer.addEventListener('input', (e) => {
+            renderResults();
+            updateURL();
+        });
+
+        scenariosContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('scenario-term')) {
+                const section = e.target.closest('.scenario-section');
+                const armFields = section.querySelector('.arm-fields');
+                armFields.classList.toggle('visible', isARM(e.target.value));
+            }
+            renderResults();
+            updateURL();
+        });
+
+        scenariosContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-scenario-btn')) {
+                const section = e.target.closest('.scenario-section');
+                const id = parseInt(section.dataset.scenarioId);
+                removeScenario(id);
+            }
+            // Handle add scenario button click
+            if (e.target.closest('.add-scenario-box')) {
+                addScenario();
+            }
+        });
+
+        // Keyboard support for add scenario button
+        scenariosContainer.addEventListener('keydown', (e) => {
+            if (e.target.closest('.add-scenario-box') && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                addScenario();
+            }
+        });
+
+        scenariosContainer.addEventListener('blur', (e) => {
+            if (e.target.classList.contains('scenario-closing-costs')) {
+                formatInputCurrency(e.target);
+            }
+            if (e.target.classList.contains('scenario-name')) {
+                syncScenariosFromDOM();
+                renderResults();
+                updateURL();
+            }
+        }, true);
+
+        // Current loan inputs
+        const currentLoanInputs = [currentBalanceInput, currentRateInput, currentPaymentInput];
+        currentLoanInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                renderResults();
+                updateURL();
+            });
+        });
+
+        [currentBalanceInput, currentPaymentInput].forEach(input => {
             input.addEventListener('blur', () => formatInputCurrency(input));
         });
 
-        // Attach event listeners for calculations
-        const allInputs = [
-            currentBalanceInput, currentRateInput, currentPaymentInput,
-            newTermSelect, newRateInput, armAdjustedRateInput,
-            pointsInput, closingCostsInput
-        ];
-
-        allInputs.forEach(input => {
-            input.addEventListener('input', updateResults);
-        });
-
-        newTermSelect.addEventListener('change', updateResults);
-
         // URL parameter handling
-        const paramConfig = {
-            bal: currentBalanceInput,
-            rate: currentRateInput,
-            pmt: currentPaymentInput,
-            term: newTermSelect,
-            newRate: newRateInput,
-            armRate: armAdjustedRateInput,
-            pts: pointsInput,
-            costs: closingCostsInput
-        };
+        function buildURLParams() {
+            const params = new URLSearchParams();
+
+            // Current loan params
+            const bal = currentBalanceInput.value.replace(/[$,]/g, '').trim();
+            const rate = currentRateInput.value.trim();
+            const pmt = currentPaymentInput.value.replace(/[$,]/g, '').trim();
+
+            if (bal && bal !== '0') params.set('bal', bal);
+            if (rate && rate !== '0') params.set('rate', rate);
+            if (pmt && pmt !== '0') params.set('pmt', pmt);
+
+            // Scenario params with index prefix
+            syncScenariosFromDOM();
+            state.scenarios.forEach((scenario, index) => {
+                const prefix = `s${index + 1}_`;
+                if (scenario.term) params.set(`${prefix}term`, scenario.term);
+                if (scenario.rate) params.set(`${prefix}rate`, scenario.rate);
+                if (scenario.armAdjustedRate) params.set(`${prefix}armRate`, scenario.armAdjustedRate);
+                if (scenario.points && scenario.points !== '0') params.set(`${prefix}pts`, scenario.points);
+                if (scenario.closingCosts && scenario.closingCosts !== '0') {
+                    params.set(`${prefix}costs`, scenario.closingCosts.replace(/[$,]/g, ''));
+                }
+                if (scenario.name !== `Scenario ${index + 1}`) {
+                    params.set(`${prefix}name`, scenario.name);
+                }
+            });
+
+            return params;
+        }
 
         function loadFromURL() {
             const params = new URLSearchParams(window.location.search);
-            for (const [param, input] of Object.entries(paramConfig)) {
-                const value = params.get(param);
-                if (value !== null) {
-                    input.value = value;
-                }
+
+            // Load current loan
+            if (params.get('bal')) currentBalanceInput.value = params.get('bal');
+            if (params.get('rate')) currentRateInput.value = params.get('rate');
+            if (params.get('pmt')) currentPaymentInput.value = params.get('pmt');
+
+            // Format money inputs
+            [currentBalanceInput, currentPaymentInput].forEach(input => formatInputCurrency(input));
+
+            // Detect scenario indices
+            const scenarioIndices = new Set();
+            for (const key of params.keys()) {
+                const match = key.match(/^s(\d+)_/);
+                if (match) scenarioIndices.add(parseInt(match[1]));
             }
-            // Format money inputs after loading
-            moneyInputs.forEach(input => formatInputCurrency(input));
+
+            // Check for legacy single-scenario params (backward compatibility)
+            if (scenarioIndices.size === 0 && params.get('newRate')) {
+                const scenario = createScenario();
+                scenario.term = params.get('term') || '30';
+                scenario.rate = params.get('newRate') || '';
+                scenario.armAdjustedRate = params.get('armRate') || '';
+                scenario.points = params.get('pts') || '0';
+                scenario.closingCosts = params.get('costs') || '0';
+                state.scenarios = [scenario];
+            } else if (scenarioIndices.size > 0) {
+                state.scenarios = [];
+                const sortedIndices = [...scenarioIndices].sort((a, b) => a - b);
+
+                sortedIndices.forEach(index => {
+                    const prefix = `s${index}_`;
+                    const scenario = createScenario();
+                    scenario.term = params.get(`${prefix}term`) || '30';
+                    scenario.rate = params.get(`${prefix}rate`) || '';
+                    scenario.armAdjustedRate = params.get(`${prefix}armRate`) || '';
+                    scenario.points = params.get(`${prefix}pts`) || '0';
+                    scenario.closingCosts = params.get(`${prefix}costs`) || '0';
+                    const customName = params.get(`${prefix}name`);
+                    if (customName) scenario.name = customName;
+                    state.scenarios.push(scenario);
+                });
+            } else {
+                // No scenarios in URL, create default
+                state.scenarios = [createScenario()];
+            }
+
+            renderScenarioInputs();
         }
 
         function updateURL() {
-            const params = new URLSearchParams();
-            for (const [param, input] of Object.entries(paramConfig)) {
-                const value = input.value.replace(/[$,]/g, '').trim();
-                if (value && value !== '0') {
-                    params.set(param, value);
-                }
-            }
+            const params = buildURLParams();
             const newURL = params.toString()
                 ? `${window.location.pathname}?${params.toString()}`
                 : window.location.pathname;
             window.history.replaceState({}, '', newURL);
         }
 
-        // Update URL when inputs change
-        allInputs.forEach(input => {
-            input.addEventListener('input', updateURL);
-        });
-        newTermSelect.addEventListener('change', updateURL);
-
-        // Load from URL on page load
+        // Initialize
         loadFromURL();
-
-        // Initial calculation
-        updateResults();
+        renderResults();
     </script>
 </body>
 </html>
