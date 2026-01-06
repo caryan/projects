@@ -700,6 +700,53 @@
 
         newTermSelect.addEventListener('change', updateResults);
 
+        // URL parameter handling
+        const paramConfig = {
+            bal: currentBalanceInput,
+            rate: currentRateInput,
+            pmt: currentPaymentInput,
+            term: newTermSelect,
+            newRate: newRateInput,
+            armRate: armAdjustedRateInput,
+            pts: pointsInput,
+            costs: closingCostsInput
+        };
+
+        function loadFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            for (const [param, input] of Object.entries(paramConfig)) {
+                const value = params.get(param);
+                if (value !== null) {
+                    input.value = value;
+                }
+            }
+            // Format money inputs after loading
+            moneyInputs.forEach(input => formatInputCurrency(input));
+        }
+
+        function updateURL() {
+            const params = new URLSearchParams();
+            for (const [param, input] of Object.entries(paramConfig)) {
+                const value = input.value.replace(/[$,]/g, '').trim();
+                if (value && value !== '0') {
+                    params.set(param, value);
+                }
+            }
+            const newURL = params.toString()
+                ? `${window.location.pathname}?${params.toString()}`
+                : window.location.pathname;
+            window.history.replaceState({}, '', newURL);
+        }
+
+        // Update URL when inputs change
+        allInputs.forEach(input => {
+            input.addEventListener('input', updateURL);
+        });
+        newTermSelect.addEventListener('change', updateURL);
+
+        // Load from URL on page load
+        loadFromURL();
+
         // Initial calculation
         updateResults();
     </script>
