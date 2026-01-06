@@ -915,6 +915,21 @@
                     })
                 },
                 {
+                    label: 'Interest (1st Payment)',
+                    current: currentLoan.balance * (currentLoan.rate / 100 / 12),
+                    values: scenarioResults.map(r => currentLoan.balance * (r.rate / 100 / 12)),
+                    format: formatCurrency,
+                    lowerIsBetter: true,
+                    detail: scenarioResults.map(r => {
+                        const currentInterest = currentLoan.balance * (currentLoan.rate / 100 / 12);
+                        const newInterest = currentLoan.balance * (r.rate / 100 / 12);
+                        const diff = currentInterest - newInterest;
+                        if (diff > 0) return `${formatCurrency(diff)}/mo less`;
+                        else if (diff < 0) return `${formatCurrency(Math.abs(diff))}/mo more`;
+                        return 'Same';
+                    })
+                },
+                {
                     label: 'Interest Rate',
                     current: currentLoan.rate,
                     values: scenarioResults.map(r => r.rate),
