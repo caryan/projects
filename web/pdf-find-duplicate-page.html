@@ -5,13 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Duplicate Page Finder</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             line-height: 1.6;
+            background-color: #fff;
+            color: #333;
         }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.75em;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+
         .drop-area {
             border: 2px dashed #ccc;
             border-radius: 8px;
@@ -89,14 +112,33 @@
         .hidden {
             display: none;
         }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #888;
+            font-size: 0.85em;
+        }
+
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <h1>PDF Duplicate Page Finder</h1>
-    
+    <p class="subtitle">Find duplicate pages within a PDF document</p>
+
     <div class="drop-area" id="drop-area">
-        <p>Drag and drop a PDF file here or click to select a file</p>
-        <p><small>Your file is processed locally, nothing is uploaded to any server</small></p>
+        <p>Drag and drop a PDF file here or click to select</p>
+        <p><small>Processed locally - nothing is uploaded</small></p>
         <input type="file" id="file-input" accept=".pdf" class="hidden">
     </div>
     
@@ -112,6 +154,10 @@
     <div class="duplicate-groups" id="duplicate-groups">
         <!-- Results will be displayed here -->
     </div>
+
+    <footer>
+        Part of <a href="https://projects.colmryan.org">projects.colmryan.org</a>
+    </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script>

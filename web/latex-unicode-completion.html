@@ -5,23 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LaTeX to Unicode Completion</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             line-height: 1.6;
+            background-color: #fff;
+            color: #333;
         }
-        
+
         h1 {
             text-align: center;
-            margin-bottom: 10px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.75em;
+            font-weight: 600;
         }
         
         .subtitle {
             text-align: center;
             color: #666;
-            margin-bottom: 30px;
+            margin-top: 0;
+            margin-bottom: 24px;
         }
 
         .instructions {
@@ -110,18 +121,18 @@
         
         footer {
             margin-top: 40px;
-            text-align: center;
-            color: #666;
-            font-size: 0.9em;
-            border-top: 1px solid #ddd;
             padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #888;
+            font-size: 0.85em;
         }
-        
+
         footer a {
             color: #007bff;
             text-decoration: none;
         }
-        
+
         footer a:hover {
             text-decoration: underline;
         }
@@ -216,12 +227,7 @@
         </div>
         <div id="referenceList" class="reference-grid"></div>
     </div>
-    
-    <footer>
-        <p>LaTeX to Unicode mappings sourced from <a href="https://github.com/JuliaEditorSupport/unicode-latex" target="_blank">Julia Editor Support</a></p>
-        <p>Created by Colm Ryan with LLM help</p>
-    </footer>
-    
+
     <script>
         // LaTeX to Unicode mappings sourced from Julia Editor Support
         // Source: https://github.com/JuliaEditorSupport/unicode-latex/blob/678a7ebf86a7517ca8615e115133b39df0b062fe/src/latex.ts
@@ -3013,5 +3019,10 @@ const latexSymbols = {
             });
         });
     </script>
+
+    <footer>
+        <p>LaTeX to Unicode mappings sourced from <a href="https://github.com/JuliaEditorSupport/unicode-latex" target="_blank">Julia Editor Support</a></p>
+        Part of <a href="https://projects.colmryan.org">projects.colmryan.org</a>
+    </footer>
 </body>
 </html>
