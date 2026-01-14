@@ -993,20 +993,33 @@
                 bodyHTML += `<tr ${rowClass}>`;
                 bodyHTML += `<td>${metric.label}</td>`;
 
-                // Current column
-                if (metric.current !== null) {
-                    bodyHTML += `<td class="current-col">${metric.format(metric.current)}</td>`;
-                } else {
-                    bodyHTML += `<td class="current-col">--</td>`;
-                }
-
-                // Find best value among scenarios (excluding NaN and non-finite)
-                const validValues = metric.values.filter(v => !isNaN(v) && isFinite(v));
+                // Find best value including current (excluding NaN and non-finite)
+                const allValues = metric.current !== null ? [metric.current, ...metric.values] : metric.values;
+                const validValues = allValues.filter(v => !isNaN(v) && isFinite(v));
                 let bestValue = null;
-                if (validValues.length > 0) {
+                let worstValue = null;
+                if (validValues.length > 1) {
                     bestValue = metric.lowerIsBetter
                         ? Math.min(...validValues)
                         : Math.max(...validValues);
+                    worstValue = metric.lowerIsBetter
+                        ? Math.max(...validValues)
+                        : Math.min(...validValues);
+                }
+
+                // Current column
+                if (metric.current !== null) {
+                    let currentClass = 'current-col';
+                    if (validValues.length > 1 && !isNaN(metric.current) && isFinite(metric.current)) {
+                        if (metric.current === bestValue) {
+                            currentClass += ' best-value';
+                        } else if (metric.current === worstValue) {
+                            currentClass += ' worst-value';
+                        }
+                    }
+                    bodyHTML += `<td class="${currentClass}">${metric.format(metric.current)}</td>`;
+                } else {
+                    bodyHTML += `<td class="current-col">--</td>`;
                 }
 
                 // Scenario columns
@@ -1015,7 +1028,7 @@
                     if (!isNaN(value) && isFinite(value) && validValues.length > 1) {
                         if (value === bestValue) {
                             cellClass = 'best-value';
-                        } else if (metric.isHighlight && value < 0) {
+                        } else if (value === worstValue) {
                             cellClass = 'worst-value';
                         }
                     }
@@ -1144,16 +1157,7 @@
                 if (match) scenarioIndices.add(parseInt(match[1]));
             }
 
-            // Check for legacy single-scenario params (backward compatibility)
-            if (scenarioIndices.size === 0 && params.get('newRate')) {
-                const scenario = createScenario();
-                scenario.term = params.get('term') || '30';
-                scenario.rate = params.get('newRate') || '';
-                scenario.armAdjustedRate = params.get('armRate') || '';
-                scenario.points = params.get('pts') || '0';
-                scenario.closingCosts = params.get('costs') || '0';
-                state.scenarios = [scenario];
-            } else if (scenarioIndices.size > 0) {
+            if (scenarioIndices.size > 0) {
                 state.scenarios = [];
                 const sortedIndices = [...scenarioIndices].sort((a, b) => a - b);
 
