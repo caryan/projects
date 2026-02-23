@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Time Is It? - Learn to Tell Time</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: #E8F4FD;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            max-width: 420px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #2C3E50;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #7F8C8D;
+            text-align: center;
+            margin-top: -12px;
+        }
+
+        /* Level selector */
+        .level-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .level-btn {
+            padding: 6px 14px;
+            border: 2px solid #D5E8D4;
+            border-radius: 20px;
+            background: white;
+            color: #555;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .level-btn:hover {
+            background: #f0f9f0;
+        }
+
+        .level-btn.active {
+            background: #27AE60;
+            color: white;
+            border-color: #27AE60;
+        }
+
+        /* Streak */
+        .streak-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.1rem;
+            color: #F39C12;
+            min-height: 28px;
+            margin-bottom: -12px;
+        }
+
+        .streak-display .star {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .streak-display .star.pop {
+            animation: starPop 0.4s ease;
+        }
+
+        @keyframes starPop {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+
+        /* Clock */
+        .clock-container {
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-swatch {
+            width: 24px;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .legend-swatch.hour {
+            background: #4A90D9;
+            height: 8px;
+        }
+
+        .legend-swatch.minute {
+            background: #E74C3C;
+        }
+
+        /* Inputs */
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: #777;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 72px;
+            height: 52px;
+            text-align: center;
+            font-size: 1.5rem;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #4A90D9;
+        }
+
+        .colon {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #555;
+            margin-top: 16px;
+        }
+
+        .btn {
+            padding: 14px 36px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 140px;
+            min-height: 48px;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-check {
+            background: #4A90D9;
+            color: white;
+        }
+
+        .btn-check:hover {
+            background: #3A7BC8;
+        }
+
+        .btn-next {
+            background: #27AE60;
+            color: white;
+            display: none;
+        }
+
+        .btn-next:hover {
+            background: #219A52;
+        }
+
+        /* Feedback */
+        .feedback {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            min-height: 30px;
+            transition: opacity 0.3s;
+        }
+
+        .feedback.correct {
+            color: #27AE60;
+        }
+
+        .feedback.incorrect {
+            color: #E74C3C;
+        }
+
+        /* Animations */
+        @keyframes correctPulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+
+        .clock-correct {
+            animation: correctPulse 0.6s ease;
+            border-radius: 50%;
+        }
+
+        .clock-shake {
+            animation: shake 0.5s ease;
+        }
+
+        .level-up-msg {
+            font-size: 1rem;
+            color: #8E44AD;
+            font-weight: 600;
+            text-align: center;
+            animation: starPop 0.5s ease;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #999;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>What Time Is It?</h1>
+        <p class="subtitle">Learn to read an analog clock</p>
+
+        <div class="level-bar" role="group" aria-label="Difficulty level">
+            <button class="level-btn active" data-level="1" aria-pressed="true">Hours</button>
+            <button class="level-btn" data-level="2" aria-pressed="false">Quarter</button>
+            <button class="level-btn" data-level="3" aria-pressed="false">Fives</button>
+            <button class="level-btn" data-level="4" aria-pressed="false">Any Minute</button>
+        </div>
+
+        <div class="streak-display" aria-live="polite" aria-label="Current streak">
+        </div>
+
+        <div class="clock-container">
+            <canvas id="clock" width="336" height="336"></canvas>
+            <div class="legend">
+                <span class="legend-item"><span class="legend-swatch hour"></span> Hour</span>
+                <span class="legend-item"><span class="legend-swatch minute"></span> Minute</span>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label for="hour-input">Hour</label>
+                <input type="text" id="hour-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="--" aria-label="Hour (1 to 12)">
+            </div>
+            <span class="colon" id="colon">:</span>
+            <div class="input-group" id="minute-group">
+                <label for="minute-input">Minute</label>
+                <input type="text" id="minute-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="--" aria-label="Minute (0 to 59)">
+            </div>
+        </div>
+
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+
+        <button class="btn btn-check" id="check-btn" aria-label="Check your answer">Check</button>
+        <button class="btn btn-next" id="next-btn" aria-label="Next question">Next</button>
+
+        <div id="level-up-msg"></div>
+    </div>
+
+    <footer>
+        <a href="https://projects.colmryan.org">projects.colmryan.org</a>
+    </footer>
+
+    <script>
+        const CHEERFUL = [
+            "Great job!", "You got it!", "Awesome!", "Nice work!",
+            "Correct!", "Well done!", "Fantastic!", "Superb!"
+        ];
+
+        const ENCOURAGE = [
+            "Not quite — try again!", "Almost! Keep going!",
+            "Oops! Let's try another.", "Good effort!"
+        ];
+
+        const ADVANCE_THRESHOLD = 5;
+        const MAX_LEVEL = 4;
+
+        const state = {
+            level: 1,
+            currentHour: 0,
+            currentMinute: 0,
+            streak: 0,
+            bestStreak: 0,
+            answered: false
+        };
+
+        const canvas = document.getElementById('clock');
+        const ctx = canvas.getContext('2d');
+        const hourInput = document.getElementById('hour-input');
+        const minuteInput = document.getElementById('minute-input');
+        const minuteGroup = document.getElementById('minute-group');
+        const colonEl = document.getElementById('colon');
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackEl = document.getElementById('feedback');
+        const streakEl = document.querySelector('.streak-display');
+        const levelUpEl = document.getElementById('level-up-msg');
+        const clockContainer = document.querySelector('.clock-container');
+
+        // Level buttons
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setLevel(parseInt(btn.dataset.level));
+            });
+        });
+
+        // Only allow digit characters in inputs
+        [hourInput, minuteInput].forEach(input => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        checkBtn.addEventListener('click', checkAnswer);
+        nextBtn.addEventListener('click', nextQuestion);
+
+        // Enter key submits
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (state.answered) {
+                    nextQuestion();
+                } else {
+                    checkAnswer();
+                }
+            }
+        });
+
+        function setLevel(level) {
+            state.level = level;
+            state.streak = 0;
+
+            document.querySelectorAll('.level-btn').forEach(b => {
+                const isActive = parseInt(b.dataset.level) === level;
+                b.classList.toggle('active', isActive);
+                b.setAttribute('aria-pressed', isActive);
+            });
+
+            updateStreak();
+            levelUpEl.textContent = '';
+            nextQuestion();
+        }
+
+        function generateTime(level) {
+            const hour = Math.floor(Math.random() * 12) + 1;
+            let minute = 0;
+
+            if (level === 1) {
+                minute = 0;
+            } else if (level === 2) {
+                minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+            } else if (level === 3) {
+                minute = Math.floor(Math.random() * 12) * 5;
+            } else {
+                minute = Math.floor(Math.random() * 60);
+            }
+
+            return { hour, minute };
+        }
+
+        function drawClock(hour, minute) {
+            const size = canvas.width;
+            const cx = size / 2;
+            const cy = size / 2;
+            const r = size / 2 - 10;
+
+            ctx.clearRect(0, 0, size, size);
+
+            // Face
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFF9E6';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#2C3E50';
+            ctx.stroke();
+
+            // Tick marks
+            for (let i = 0; i < 60; i++) {
+                const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+                const isHour = i % 5 === 0;
+                const innerR = isHour ? r - 16 : r - 8;
+                const outerR = r - 3;
+
+                ctx.beginPath();
+                ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
+                ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
+                ctx.lineWidth = isHour ? 3 : 1;
+                ctx.strokeStyle = isHour ? '#2C3E50' : '#BDC3C7';
+                ctx.stroke();
+            }
+
+            // Numbers
+            ctx.fillStyle = '#2C3E50';
+            ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            for (let n = 1; n <= 12; n++) {
+                const angle = (n / 12) * Math.PI * 2 - Math.PI / 2;
+                const numR = r - 32;
+                ctx.fillText(n, cx + numR * Math.cos(angle), cy + numR * Math.sin(angle));
+            }
+
+            // Center dot
+            ctx.beginPath();
+            ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#2C3E50';
+            ctx.fill();
+
+            // Hour hand
+            const hourAngle = ((hour % 12) / 12 + minute / 720) * Math.PI * 2 - Math.PI / 2;
+            const hourLen = r * 0.5;
+            drawHand(cx, cy, hourAngle, hourLen, 7, '#4A90D9');
+
+            // Minute hand
+            const minuteAngle = (minute / 60) * Math.PI * 2 - Math.PI / 2;
+            const minuteLen = r * 0.75;
+            drawHand(cx, cy, minuteAngle, minuteLen, 4, '#E74C3C');
+
+            // Center cap
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#2C3E50';
+            ctx.fill();
+        }
+
+        function drawHand(cx, cy, angle, length, width, color) {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + length * Math.cos(angle), cy + length * Math.sin(angle));
+            ctx.lineWidth = width;
+            ctx.strokeStyle = color;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+
+        function checkAnswer() {
+            if (state.answered) return;
+
+            const h = parseInt(hourInput.value);
+            const m = state.level === 1 ? 0 : parseInt(minuteInput.value);
+
+            if (isNaN(h) || h < 1 || h > 12) {
+                feedbackEl.textContent = 'Enter an hour (1–12)';
+                feedbackEl.className = 'feedback incorrect';
+                return;
+            }
+
+            if (state.level > 1 && (isNaN(m) || m < 0 || m > 59)) {
+                feedbackEl.textContent = 'Enter minutes (0–59)';
+                feedbackEl.className = 'feedback incorrect';
+                return;
+            }
+
+            state.answered = true;
+            const correct = h === state.currentHour && m === state.currentMinute;
+
+            if (correct) {
+                state.streak++;
+                if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+                feedbackEl.textContent = CHEERFUL[Math.floor(Math.random() * CHEERFUL.length)];
+                feedbackEl.className = 'feedback correct';
+
+                canvas.classList.add('clock-correct');
+                setTimeout(() => canvas.classList.remove('clock-correct'), 600);
+
+                // Auto-advance
+                if (state.streak >= ADVANCE_THRESHOLD && state.level < MAX_LEVEL) {
+                    const newLevel = state.level + 1;
+                    levelUpEl.textContent = `Level up! Moving to Level ${newLevel}`;
+                    levelUpEl.className = 'level-up-msg';
+                    state.streak = 0;
+                    setTimeout(() => {
+                        setLevel(newLevel);
+                    }, 1500);
+                    return;
+                }
+            } else {
+                state.streak = 0;
+                const correctStr = formatTime(state.currentHour, state.currentMinute);
+                const msg = ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
+                feedbackEl.textContent = `${msg} It was ${correctStr}`;
+                feedbackEl.className = 'feedback incorrect';
+
+                canvas.classList.add('clock-shake');
+                setTimeout(() => canvas.classList.remove('clock-shake'), 500);
+            }
+
+            updateStreak();
+            checkBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-block';
+            nextBtn.focus();
+        }
+
+        function formatTime(h, m) {
+            return `${h}:${String(m).padStart(2, '0')}`;
+        }
+
+        function nextQuestion() {
+            const time = generateTime(state.level);
+            state.currentHour = time.hour;
+            state.currentMinute = time.minute;
+            state.answered = false;
+
+            drawClock(time.hour, time.minute);
+
+            hourInput.value = '';
+            minuteInput.value = '';
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'feedback';
+            levelUpEl.textContent = '';
+
+            checkBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+
+            // Hide minute input at level 1
+            const hideMinute = state.level === 1;
+            minuteGroup.style.display = hideMinute ? 'none' : '';
+            colonEl.style.display = hideMinute ? 'none' : '';
+
+            hourInput.focus();
+        }
+
+        function updateStreak() {
+            let stars = '';
+            for (let i = 0; i < state.streak; i++) {
+                stars += '<span class="star pop" style="animation-delay:' + (i * 0.05) + 's">&#11088;</span>';
+            }
+            streakEl.innerHTML = stars || '&nbsp;';
+        }
+
+        function init() {
+            updateStreak();
+            nextQuestion();
+        }
+
+        init();
+    </script>
+</body>
+</html>
