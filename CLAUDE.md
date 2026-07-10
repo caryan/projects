@@ -38,6 +38,5 @@
 - Local-only processing (will be served from a static website)
 
 ## Documentation
-- Add coding logs from Claude Code for new tools in `/coding_logs/`
 - Include clear usage instructions in UI
 - Document any unique algorithms or techniques used
