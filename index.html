@@ -3,81 +3,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projects - Colm Ryan</title>
+    <title>Projects — Colm Ryan</title>
+    <meta name="description" content="A collection of small single-file web tools by Colm Ryan.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
     <style>
+        /* ————— Engineering-pad design tokens (shared site identity) ————— */
+        :root {
+            --paper: #EEF2E3;
+            --grid-minor: rgba(90, 120, 84, 0.13);
+            --grid-major: rgba(90, 120, 84, 0.22);
+            --surface: #F6F8ED;
+            --ink: #243240;
+            --ink-soft: #5C6A5E;
+            --line: rgba(36, 50, 64, 0.30);
+            --line-faint: rgba(36, 50, 64, 0.16);
+            --copper: #9A5527;
+            --copper-strong: #8C4E26;
+            --serif: "STIX Two Text", "Times New Roman", serif;
+            --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --paper: #191F1A;
+                --grid-minor: rgba(190, 215, 185, 0.055);
+                --grid-major: rgba(190, 215, 185, 0.10);
+                --surface: #212822;
+                --ink: #DEE5D2;
+                --ink-soft: #95A291;
+                --line: rgba(222, 229, 210, 0.30);
+                --line-faint: rgba(222, 229, 210, 0.14);
+                --copper: #D28E58;
+                --copper-strong: #E2A46E;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { height: 100%; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            max-width: 800px;
+            font-family: var(--serif);
+            color: var(--ink);
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid-major) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+                linear-gradient(var(--grid-minor) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+            background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+            line-height: 1.55;
+            min-height: 100%;
+        }
+
+        a { color: inherit; }
+
+        :focus-visible {
+            outline: 2px solid var(--copper);
+            outline-offset: 3px;
+        }
+
+        .sheet {
+            max-width: 912px;
             margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
+            padding: 48px 24px 72px;
         }
+
+        /* ————— Masthead with drawing title block ————— */
+        .masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 48px;
+            padding-bottom: 28px;
+            border-bottom: 2px solid var(--ink);
+            position: relative;
+        }
+        .masthead::after {
+            /* double rule, like the frame line on a drawing sheet */
+            content: "";
+            position: absolute;
+            left: 0; right: 0; bottom: -6px;
+            border-bottom: 1px solid var(--ink);
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--copper);
+            margin-bottom: 14px;
+        }
+
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
+            font-size: clamp(2rem, 5.4vw, 2.9rem);
+            font-weight: 600;
+            line-height: 1.12;
+            letter-spacing: -0.01em;
+            margin-bottom: 12px;
         }
-        .projects-grid {
+        h1 em {
+            font-style: italic;
+            font-weight: 400;
+            color: var(--copper);
+        }
+
+        .lede {
+            font-size: 1.02rem;
+            font-style: italic;
+            color: var(--ink-soft);
+            max-width: 44ch;
+        }
+
+        /* Title block — the corner stamp of an engineering drawing */
+        .title-block {
+            flex-shrink: 0;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: auto auto;
+            border: 1px solid var(--ink);
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            background: var(--surface);
         }
-        .project-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .title-block > div {
+            padding: 7px 14px 6px;
+            border-top: 1px solid var(--line-faint);
         }
-        .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .title-block > div:nth-child(-n+2) { border-top: none; }
+        .title-block > div:nth-child(odd) {
+            color: var(--ink-soft);
+            letter-spacing: 0.14em;
+            border-right: 1px solid var(--line-faint);
         }
-        .project-card h2 {
-            margin-top: 0;
+        .title-block > div:nth-child(even) { font-weight: 500; }
+
+        /* ————— Index of tools ————— */
+        .section-label {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            margin: 44px 0 10px;
         }
-        .project-card p {
-            color: #555;
+
+        .toc { list-style: none; }
+
+        .toc li + li { border-top: 1px solid var(--line-faint); }
+
+        .toc a {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            padding: 20px 8px;
+            text-decoration: none;
         }
+
+        .glyph {
+            flex-shrink: 0;
+            width: 46px;
+            height: 46px;
+            color: var(--ink);
+        }
+        .glyph .accent { color: var(--copper); }
+        .glyph svg { display: block; width: 100%; height: 100%; }
+
+        .entry { flex: 1; min-width: 0; }
+
+        .entry-line {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .name {
+            font-size: 1.28rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .leader {
+            flex: 1;
+            border-bottom: 2px dotted var(--line);
+            transform: translateY(-4px);
+            min-width: 24px;
+        }
+
+        .tag {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.16em;
+            color: var(--ink-soft);
+        }
+
+        .desc {
+            display: block;
+            margin-top: 3px;
+            font-size: 0.94rem;
+            color: var(--ink-soft);
+            max-width: 58ch;
+        }
+
+        .toc a:hover .name { color: var(--copper-strong); }
+        .toc a:hover .leader { border-color: var(--copper); }
+        .toc a:hover .glyph { color: var(--copper-strong); }
+        @media (prefers-color-scheme: dark) {
+            .toc a:hover .name,
+            .toc a:hover .glyph { color: var(--copper); }
+        }
+
+        /* ————— Footer ————— */
         footer {
             margin-top: 40px;
-            text-align: center;
-            color: #666;
+            padding-top: 16px;
+            border-top: 1px solid var(--ink);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+        }
+
+        /* ————— Load choreography: glyphs draw themselves in ————— */
+        .toc li {
+            opacity: 0;
+            transform: translateY(8px);
+            animation: rise 0.45s ease-out forwards;
+        }
+        .toc li:nth-child(1) { animation-delay: 0.05s; }
+        .toc li:nth-child(2) { animation-delay: 0.13s; }
+        .toc li:nth-child(3) { animation-delay: 0.21s; }
+        .toc li:nth-child(4) { animation-delay: 0.29s; }
+        .toc li:nth-child(5) { animation-delay: 0.37s; }
+        .toc li:nth-child(6) { animation-delay: 0.45s; }
+        @keyframes rise { to { opacity: 1; transform: none; } }
+
+        .glyph path, .glyph circle, .glyph rect, .glyph line, .glyph polyline {
+            stroke-dasharray: 160;
+            stroke-dashoffset: 160;
+            animation: draw 1.1s ease-out forwards;
+            animation-delay: inherit;
+        }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .toc li { opacity: 1; transform: none; animation: none; }
+            .glyph path, .glyph circle, .glyph rect, .glyph line, .glyph polyline {
+                stroke-dasharray: none;
+                stroke-dashoffset: 0;
+                animation: none;
+            }
+        }
+
+        /* ————— Small screens ————— */
+        @media (max-width: 720px) {
+            .masthead { flex-direction: column; align-items: stretch; gap: 28px; }
+            .title-block { grid-template-columns: auto 1fr; }
+            .name { white-space: normal; }
+            .entry-line { flex-wrap: wrap; }
+            .leader { display: none; }
+            .toc a { gap: 16px; }
         }
     </style>
 </head>
 <body>
-    <h1>Colm's Projects Collection</h1>
-    
-    <div class="projects-grid">
+    <div class="sheet">
+        <header class="masthead">
+            <div>
+                <p class="eyebrow">projects.colmryan.org</p>
+                <h1>Small Tools <em>&amp;</em> Experiments</h1>
+                <p class="lede">Single-file tools drawn up at the bench with LLM assistance. Everything runs in your browser — nothing leaves the page.</p>
+            </div>
+            <div class="title-block" aria-label="Drawing title block">
+                <div>Drawn by</div><div>C. Ryan + LLM</div>
+                <div>Sheet</div><div>Index</div>
+                <div>Rev</div><div>2026-07</div>
+                <div>Scale</div><div>1 : 1</div>
+            </div>
+        </header>
 
-        <a href="web/pdf-find-duplicate-page.html" class="project-card">
-            <h2>PDF Duplicate Page Finder</h2>
-            <p>Find duplicate pages within a PDF document</p>
-        </a>
+        <main>
+            <p class="section-label">Index — 6 sheets</p>
+            <ol class="toc">
+                <li>
+                    <a href="web/cryo-attenuation-calculator.html">
+                        <span class="glyph" aria-hidden="true">
+                            <!-- variable attenuator schematic symbol -->
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="2" y1="24" x2="11" y2="24"/>
+                                <rect x="11" y="15" width="26" height="18"/>
+                                <line x1="37" y1="24" x2="46" y2="24"/>
+                                <path class="accent" stroke="currentColor" d="M13 37 L35 11 M35 11 l-6.5 1.5 M35 11 l-1.5 6.5"/>
+                            </svg>
+                        </span>
+                        <span class="entry">
+                            <span class="entry-line">
+                                <span class="name">Cryo Attenuation Calculator</span>
+                                <span class="leader"></span>
+                                <span class="tag">Lab</span>
+                            </span>
+                            <span class="desc">Thermal photon occupancy and the attenuation budget for each stage of a dilution refrigerator.</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="web/latex-unicode-completion.html">
+                        <span class="glyph" aria-hidden="true">
+                            <!-- \a → α -->
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 12 L14 30"/>
+                                <path d="M20 27 c0 4 -5.5 4.5 -5.5 0 c0 -4.5 5.5 -4 5.5 0 l1.5 3"/>
+                                <path class="accent" d="M26 24 h12 m0 0 l-4 -4 m4 4 l-4 4"/>
+                                <path d="M44.5 20.5 c-4 -2 -7 1 -7 4 c0 4 4.5 5 6.5 2 m0 -6 l1 8"/>
+                            </svg>
+                        </span>
+                        <span class="entry">
+                            <span class="entry-line">
+                                <span class="name">LaTeX to Unicode</span>
+                                <span class="leader"></span>
+                                <span class="tag">Lab</span>
+                            </span>
+                            <span class="desc">Type LaTeX commands and tab-complete them into Unicode — α, ℏ, ⊗ — for the places raw TeX can't go.</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="web/pdf-find-duplicate-page.html">
+                        <span class="glyph" aria-hidden="true">
+                            <!-- two identical pages -->
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="7" y="10" width="20" height="26"/>
+                                <polyline points="15,6 41,6 41,32"/>
+                                <path class="accent" d="M13 20 h8 M13 26 h8"/>
+                            </svg>
+                        </span>
+                        <span class="entry">
+                            <span class="entry-line">
+                                <span class="name">PDF Duplicate Page Finder</span>
+                                <span class="leader"></span>
+                                <span class="tag">Docs</span>
+                            </span>
+                            <span class="desc">Scan a PDF for repeated pages before you print it or send it on.</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="web/pdf-comparison-finder.html">
+                        <span class="glyph" aria-hidden="true">
+                            <!-- two pages, delta between -->
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="4" y="10" width="14" height="26"/>
+                                <rect x="30" y="10" width="14" height="26"/>
+                                <path class="accent" d="M24 19 l4.5 9 h-9 z"/>
+                            </svg>
+                        </span>
+                        <span class="entry">
+                            <span class="entry-line">
+                                <span class="name">PDF Comparison Tool</span>
+                                <span class="leader"></span>
+                                <span class="tag">Docs</span>
+                            </span>
+                            <span class="desc">Compare two PDFs page by page to spot the similarities and the differences.</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="web/mortgage-refinance-calculator.html">
+                        <span class="glyph" aria-hidden="true">
+                            <!-- house with percent -->
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 22 L24 8 L40 22"/>
+                                <path d="M12 20 v20 h24 v-20"/>
+                                <circle class="accent" cx="19" cy="27" r="2.6"/>
+                                <circle class="accent" cx="29" cy="35" r="2.6"/>
+                                <path class="accent" d="M30 25 L18 37"/>
+                            </svg>
+                        </span>
+                        <span class="entry">
+                            <span class="entry-line">
+                                <span class="name">Mortgage Refinance Calculator</span>
+                                <span class="leader"></span>
+                                <span class="tag">Home</span>
+                            </span>
+                            <span class="desc">Weigh refinance scenarios against your current loan — break-even point, interest saved, monthly change.</span>
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="web/learn-to-tell-time.html">
+                        <span class="glyph" aria-hidden="true">
+                            <!-- clock at ten past ten -->
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="24" cy="24" r="19"/>
+                                <path d="M24 7 v3 M24 38 v3 M7 24 h3 M38 24 h3"/>
+                                <path class="accent" d="M24 24 L16 17 M24 24 L30 13"/>
+                            </svg>
+                        </span>
+                        <span class="entry">
+                            <span class="entry-line">
+                                <span class="name">Learn to Tell Time</span>
+                                <span class="leader"></span>
+                                <span class="tag">Kids</span>
+                            </span>
+                            <span class="desc">A clock-reading game for kids, from o'clock all the way down to the minute.</span>
+                        </span>
+                    </a>
+                </li>
+            </ol>
+        </main>
 
-        <a href="web/pdf-comparison-finder.html" class="project-card">
-            <h2>PDF Comparison Finder</h2>
-            <p>Compare two PDFs to find similarities and differences</p>
-        </a>
-
-        <a href="web/latex-unicode-completion.html" class="project-card">
-            <h2>LaTeX to Unicode</h2>
-            <p>Convert LaTeX commands to Unicode characters with Tab completion</p>
-        </a>
-
-        <a href="web/mortgage-refinance-calculator.html" class="project-card">
-            <h2>Mortgage Refinance Calculator</h2>
-            <p>Calculate potential savings from refinancing</p>
-        </a>
-
-        <a href="web/learn-to-tell-time.html" class="project-card">
-            <h2>Learn to Tell Time</h2>
-            <p>A playful clock-reading game for kids with multiple difficulty levels</p>
-        </a>
-
+        <footer>
+            <span>Drawn by Colm Ryan · with LLM help</span>
+            <span>All processing stays on your machine</span>
+        </footer>
     </div>
-    
-    <footer>
-        <p>Created by Colm Ryan with LLM help</p>
-    </footer>
 </body>
 </html>

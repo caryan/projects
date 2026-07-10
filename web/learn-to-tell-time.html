@@ -4,7 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What Time Is It? - Learn to Tell Time</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
     <style>
+        /* Engineering-pad design tokens (shared site identity) */
+        :root {
+            --paper: #EEF2E3;
+            --grid-minor: rgba(90, 120, 84, 0.13);
+            --grid-major: rgba(90, 120, 84, 0.22);
+            --surface: #F6F8ED;
+            --well: #EAEEDC;
+            --ink: #243240;
+            --ink-soft: #5C6A5E;
+            --muted: #656F5B;
+            --line: rgba(36, 50, 64, 0.30);
+            --line-faint: rgba(36, 50, 64, 0.16);
+            --copper: #9A5527;
+            --copper-strong: #8C4E26;
+            --copper-contrast: #ffffff;
+            --good: #3E7A4E;
+            --good-contrast: #ffffff;
+            --bad: #B04438;
+            --crayon-blue: #3E74C0;
+            --crayon-red: #D0453A;
+            --serif: "STIX Two Text", "Times New Roman", serif;
+            --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --paper: #191F1A;
+                --grid-minor: rgba(190, 215, 185, 0.055);
+                --grid-major: rgba(190, 215, 185, 0.10);
+                --surface: #212822;
+                --well: #1A201B;
+                --ink: #DEE5D2;
+                --ink-soft: #95A291;
+                --muted: #7E8A7A;
+                --line: rgba(222, 229, 210, 0.30);
+                --line-faint: rgba(222, 229, 210, 0.14);
+                --copper: #D28E58;
+                --copper-strong: #E2A46E;
+                --copper-contrast: #191F1A;
+                --good: #7FB98B;
+                --good-contrast: #191F1A;
+                --bad: #E09C90;
+                --crayon-blue: #7FA8E0;
+                --crayon-red: #E28078;
+            }
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -12,8 +61,15 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background: #E8F4FD;
+            font-family: var(--serif);
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid-major) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+                linear-gradient(var(--grid-minor) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+            background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+            color: var(--ink);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -21,10 +77,29 @@
             padding: 20px;
         }
 
+        :focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+
+        .site-nav {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+        .site-nav a { color: var(--copper); text-decoration: none; }
+        .site-nav a:hover { color: var(--copper-strong); text-decoration: underline; }
+        .site-nav .sheet-tag { color: var(--muted); }
+
         .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: var(--surface);
+            border: 1px solid var(--line-faint);
+            border-radius: 2px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
             padding: 30px;
             max-width: 420px;
             width: 100%;
@@ -36,13 +111,15 @@
 
         h1 {
             font-size: 2rem;
-            color: #2C3E50;
+            font-weight: 600;
+            color: var(--ink);
             text-align: center;
         }
 
         .subtitle {
             font-size: 1rem;
-            color: #7F8C8D;
+            font-style: italic;
+            color: var(--ink-soft);
             text-align: center;
             margin-top: -12px;
         }
@@ -57,23 +134,25 @@
 
         .level-btn {
             padding: 6px 14px;
-            border: 2px solid #D5E8D4;
-            border-radius: 20px;
-            background: white;
-            color: #555;
-            font-size: 0.85rem;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            background: var(--well);
+            color: var(--ink-soft);
+            font-family: var(--mono);
+            font-size: 0.78rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
         }
 
         .level-btn:hover {
-            background: #f0f9f0;
+            border-color: var(--copper);
+            color: var(--copper-strong);
         }
 
         .level-btn.active {
-            background: #27AE60;
-            color: white;
-            border-color: #27AE60;
+            background: var(--copper);
+            color: var(--copper-contrast);
+            border-color: var(--copper);
         }
 
         /* Streak */
@@ -82,7 +161,6 @@
             align-items: center;
             gap: 4px;
             font-size: 1.1rem;
-            color: #F39C12;
             min-height: 28px;
             margin-bottom: -12px;
         }
@@ -116,7 +194,7 @@
             justify-content: center;
             gap: 20px;
             font-size: 0.9rem;
-            color: #555;
+            color: var(--ink-soft);
             margin-top: 8px;
         }
 
@@ -133,12 +211,12 @@
         }
 
         .legend-swatch.hour {
-            background: #4A90D9;
+            background: var(--crayon-blue);
             height: 8px;
         }
 
         .legend-swatch.minute {
-            background: #E74C3C;
+            background: var(--crayon-red);
         }
 
         /* Inputs */
@@ -157,41 +235,50 @@
         }
 
         .input-group label {
-            font-size: 0.85rem;
-            color: #777;
-            font-weight: 600;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
         }
 
         .input-group input {
             width: 72px;
             height: 52px;
             text-align: center;
+            font-family: var(--mono);
             font-size: 1.5rem;
-            border: 2px solid #ccc;
-            border-radius: 10px;
+            color: var(--ink);
+            background: var(--well);
+            border: 2px solid var(--line);
+            border-radius: 2px;
             outline: none;
             transition: border-color 0.2s;
         }
 
         .input-group input:focus {
-            border-color: #4A90D9;
+            border-color: var(--copper);
         }
 
         .colon {
+            font-family: var(--mono);
             font-size: 2rem;
             font-weight: bold;
-            color: #555;
+            color: var(--ink-soft);
             margin-top: 16px;
         }
 
         .btn {
             padding: 14px 36px;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            border-radius: 2px;
+            font-family: var(--mono);
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.2s, background-color 0.2s;
             min-width: 140px;
             min-height: 48px;
         }
@@ -201,22 +288,22 @@
         }
 
         .btn-check {
-            background: #4A90D9;
-            color: white;
+            background: var(--copper);
+            color: var(--copper-contrast);
         }
 
         .btn-check:hover {
-            background: #3A7BC8;
+            background: var(--copper-strong);
         }
 
         .btn-next {
-            background: #27AE60;
-            color: white;
+            background: var(--good);
+            color: var(--good-contrast);
             display: none;
         }
 
         .btn-next:hover {
-            background: #219A52;
+            filter: brightness(1.08);
         }
 
         /* Feedback */
@@ -229,18 +316,18 @@
         }
 
         .feedback.correct {
-            color: #27AE60;
+            color: var(--good);
         }
 
         .feedback.incorrect {
-            color: #E74C3C;
+            color: var(--bad);
         }
 
         /* Animations */
         @keyframes correctPulse {
-            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(39, 174, 96, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(62, 122, 78, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(62, 122, 78, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(62, 122, 78, 0); }
         }
 
         @keyframes shake {
@@ -262,7 +349,7 @@
 
         .level-up-msg {
             font-size: 1rem;
-            color: #8E44AD;
+            color: var(--copper-strong);
             font-weight: 600;
             text-align: center;
             animation: starPop 0.5s ease;
@@ -271,21 +358,35 @@
         footer {
             margin-top: 30px;
             text-align: center;
-            color: #999;
-            font-size: 0.85rem;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            color: var(--muted);
         }
 
         footer a {
-            color: #999;
+            color: var(--copper);
             text-decoration: none;
         }
 
         footer a:hover {
             text-decoration: underline;
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .streak-display .star.pop,
+            .clock-correct,
+            .clock-shake,
+            .level-up-msg { animation: none; }
+            .btn, .level-btn, .input-group input, .feedback { transition: none; }
+        }
     </style>
 </head>
 <body>
+    <nav class="site-nav">
+        <a href="../index.html">&#8592; Index</a>
+        <span class="sheet-tag">projects.colmryan.org &middot; Kids</span>
+    </nav>
     <div class="card">
         <h1>What Time Is It?</h1>
         <p class="subtitle">Learn to read an analog clock</p>
@@ -329,7 +430,7 @@
     </div>
 
     <footer>
-        <a href="https://projects.colmryan.org">projects.colmryan.org</a>
+        Drawn by Colm Ryan &middot; with LLM help &middot; <a href="../index.html">All projects</a>
     </footer>
 
     <script>
@@ -428,21 +529,32 @@
             return { hour, minute };
         }
 
+        // read a design token so the canvas clock follows the page palette
+        function cssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
         function drawClock(hour, minute) {
             const size = canvas.width;
             const cx = size / 2;
             const cy = size / 2;
             const r = size / 2 - 10;
 
+            const inkColor = cssVar('--ink');
+            const tickColor = cssVar('--muted');
+            const faceColor = cssVar('--well');
+            const hourColor = cssVar('--crayon-blue');
+            const minuteColor = cssVar('--crayon-red');
+
             ctx.clearRect(0, 0, size, size);
 
             // Face
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFF9E6';
+            ctx.fillStyle = faceColor;
             ctx.fill();
             ctx.lineWidth = 4;
-            ctx.strokeStyle = '#2C3E50';
+            ctx.strokeStyle = inkColor;
             ctx.stroke();
 
             // Tick marks
@@ -456,13 +568,13 @@
                 ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
                 ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
                 ctx.lineWidth = isHour ? 3 : 1;
-                ctx.strokeStyle = isHour ? '#2C3E50' : '#BDC3C7';
+                ctx.strokeStyle = isHour ? inkColor : tickColor;
                 ctx.stroke();
             }
 
             // Numbers
-            ctx.fillStyle = '#2C3E50';
-            ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
+            ctx.fillStyle = inkColor;
+            ctx.font = '500 22px "IBM Plex Mono", ui-monospace, monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
@@ -475,23 +587,23 @@
             // Center dot
             ctx.beginPath();
             ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-            ctx.fillStyle = '#2C3E50';
+            ctx.fillStyle = inkColor;
             ctx.fill();
 
             // Hour hand
             const hourAngle = ((hour % 12) / 12 + minute / 720) * Math.PI * 2 - Math.PI / 2;
             const hourLen = r * 0.5;
-            drawHand(cx, cy, hourAngle, hourLen, 7, '#4A90D9');
+            drawHand(cx, cy, hourAngle, hourLen, 7, hourColor);
 
             // Minute hand
             const minuteAngle = (minute / 60) * Math.PI * 2 - Math.PI / 2;
             const minuteLen = r * 0.75;
-            drawHand(cx, cy, minuteAngle, minuteLen, 4, '#E74C3C');
+            drawHand(cx, cy, minuteAngle, minuteLen, 4, minuteColor);
 
             // Center cap
             ctx.beginPath();
             ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-            ctx.fillStyle = '#2C3E50';
+            ctx.fillStyle = inkColor;
             ctx.fill();
         }
 
@@ -607,6 +719,16 @@
         }
 
         init();
+
+        // redraw once the web fonts arrive so the clock numbers use them,
+        // and when the color scheme flips so the canvas matches the palette
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => drawClock(state.currentHour, state.currentMinute));
+        }
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', () => drawClock(state.currentHour, state.currentMinute));
+        }
     </script>
 </body>
 </html>

@@ -4,16 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cryogenic Attenuation Thermal Photon Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
     <style>
+        /* Engineering-pad design tokens (shared site identity) */
         :root {
-            --page: #f9f9f7;
-            --surface-1: #fcfcfb;
-            --text-primary: #0b0b0b;
-            --text-secondary: #52514e;
-            --text-muted: #898781;
-            --grid: #e1e0d9;
-            --baseline: #c3c2b7;
-            --border: rgba(11, 11, 11, 0.10);
+            --paper: #EEF2E3;
+            --grid-minor: rgba(90, 120, 84, 0.13);
+            --grid-major: rgba(90, 120, 84, 0.22);
+            --surface: #F6F8ED;
+            --well: #EAEEDC;
+            --ink: #243240;
+            --ink-soft: #5C6A5E;
+            --muted: #656F5B;
+            --line: rgba(36, 50, 64, 0.30);
+            --line-faint: rgba(36, 50, 64, 0.16);
+            --copper: #9A5527;
+            --copper-strong: #8C4E26;
+            --copper-contrast: #ffffff;
+            --serif: "STIX Two Text", "Times New Roman", serif;
+            --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+            /* aliases kept for the chart script, which reads these at runtime */
+            --page: var(--paper);
+            --surface-1: var(--surface);
+            --text-primary: var(--ink);
+            --text-secondary: var(--ink-soft);
+            --text-muted: var(--muted);
+            --grid: #DDE2CC;
+            --baseline: #A9B29E;
+            --border: var(--line-faint);
             --series-1: #2a78d6;   /* blue    - input source */
             --series-2: #1baf7a;   /* aqua    - stage 1 */
             --series-3: #eda100;   /* yellow  - stage 2 */
@@ -22,18 +42,25 @@
             --series-6: #e34948;   /* red     - stage 5 */
             --series-7: #e87ba4;   /* magenta - stage 6 */
             --series-8: #eb6834;   /* orange  - stage 7 */
-            --accent: #2a78d6;
+            --accent: var(--copper);
         }
         @media (prefers-color-scheme: dark) {
             :root {
-                --page: #0d0d0d;
-                --surface-1: #1a1a19;
-                --text-primary: #ffffff;
-                --text-secondary: #c3c2b7;
-                --text-muted: #898781;
-                --grid: #2c2c2a;
-                --baseline: #383835;
-                --border: rgba(255, 255, 255, 0.10);
+                --paper: #191F1A;
+                --grid-minor: rgba(190, 215, 185, 0.055);
+                --grid-major: rgba(190, 215, 185, 0.10);
+                --surface: #212822;
+                --well: #1A201B;
+                --ink: #DEE5D2;
+                --ink-soft: #95A291;
+                --muted: #7E8A7A;
+                --line: rgba(222, 229, 210, 0.30);
+                --line-faint: rgba(222, 229, 210, 0.14);
+                --copper: #D28E58;
+                --copper-strong: #E2A46E;
+                --copper-contrast: #191F1A;
+                --grid: #2A322A;
+                --baseline: #465046;
                 --series-1: #3987e5;
                 --series-2: #199e70;
                 --series-3: #c98500;
@@ -42,31 +69,78 @@
                 --series-6: #e66767;
                 --series-7: #d55181;
                 --series-8: #d95926;
-                --accent: #3987e5;
             }
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            background: var(--page);
-            color: var(--text-primary);
-            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-            font-size: 15px;
-            line-height: 1.5;
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid-major) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+                linear-gradient(var(--grid-minor) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+            background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+            color: var(--ink);
+            font-family: var(--serif);
+            font-size: 16px;
+            line-height: 1.55;
         }
+        :focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
         .wrap {
             max-width: 980px;
             margin: 0 auto;
             padding: 24px 20px 60px;
         }
-        h1 { font-size: 1.5rem; margin: 0 0 4px; }
-        h2 { font-size: 1.05rem; margin: 0 0 12px; }
-        .subtitle { color: var(--text-secondary); margin: 0 0 24px; max-width: 72ch; }
+        .site-nav {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 26px;
+        }
+        .site-nav a { color: var(--copper); text-decoration: none; }
+        .site-nav a:hover { color: var(--copper-strong); text-decoration: underline; }
+        .site-nav .sheet-tag { color: var(--muted); }
+        .site-footer {
+            margin-top: 44px;
+            padding-top: 14px;
+            border-top: 1px solid var(--ink);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            color: var(--ink-soft);
+        }
+        .site-footer a { color: var(--copper); text-decoration: none; }
+        .site-footer a:hover { text-decoration: underline; }
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            line-height: 1.15;
+            margin: 0 0 8px;
+        }
+        h2 {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+            margin: 0 0 14px;
+        }
+        .subtitle { color: var(--ink-soft); margin: 0 0 24px; max-width: 72ch; }
         .subtitle a { color: var(--accent); }
         .card {
-            background: var(--surface-1);
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--line-faint);
+            border-radius: 2px;
             padding: 18px 20px;
             margin-bottom: 20px;
         }
@@ -77,48 +151,54 @@
             align-items: flex-end;
         }
         .field { display: flex; flex-direction: column; gap: 4px; }
-        .field label { font-size: 0.82rem; color: var(--text-secondary); }
+        .field label {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            color: var(--ink-soft);
+        }
         input[type="number"], input[type="text"] {
-            background: var(--page);
-            color: var(--text-primary);
-            border: 1px solid var(--baseline);
-            border-radius: 6px;
+            background: var(--well);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 2px;
             padding: 6px 9px;
-            font: inherit;
+            font-family: var(--mono);
+            font-size: 0.85rem;
             font-variant-numeric: tabular-nums;
             width: 130px;
         }
         input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
         .seg {
             display: inline-flex;
-            border: 1px solid var(--baseline);
-            border-radius: 6px;
+            border: 1px solid var(--line);
+            border-radius: 2px;
             overflow: hidden;
         }
         .seg button {
-            background: var(--page);
-            color: var(--text-secondary);
+            background: var(--well);
+            color: var(--ink-soft);
             border: none;
             padding: 6px 12px;
-            font: inherit;
-            font-size: 0.88rem;
+            font-family: var(--mono);
+            font-size: 0.78rem;
             cursor: pointer;
         }
         .seg button.active {
             background: var(--accent);
-            color: #fff;
+            color: var(--copper-contrast);
         }
         button.action {
-            background: var(--page);
-            color: var(--text-primary);
-            border: 1px solid var(--baseline);
-            border-radius: 6px;
+            background: var(--well);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 2px;
             padding: 6px 12px;
-            font: inherit;
-            font-size: 0.88rem;
+            font-family: var(--mono);
+            font-size: 0.78rem;
             cursor: pointer;
         }
-        button.action:hover { border-color: var(--text-muted); }
+        button.action:hover { border-color: var(--copper); color: var(--copper-strong); }
         button.action:disabled { opacity: 0.4; cursor: default; }
         table { border-collapse: collapse; width: 100%; }
         th, td {
@@ -127,7 +207,15 @@
             border-bottom: 1px solid var(--grid);
             font-variant-numeric: tabular-nums;
         }
-        th { color: var(--text-muted); font-weight: 500; font-size: 0.8rem; }
+        td.num { font-family: var(--mono); font-size: 0.85rem; }
+        th {
+            font-family: var(--mono);
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
         td.num, th.num { text-align: right; }
         #stage-table input[type="text"] { width: 180px; }
         #stage-table input[type="number"] { width: 96px; }
@@ -146,21 +234,32 @@
             margin-bottom: 20px;
         }
         .tile {
-            background: var(--surface-1);
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--line-faint);
+            border-radius: 2px;
             padding: 14px 18px;
         }
-        .tile .label { font-size: 0.82rem; color: var(--text-secondary); }
-        .tile .value { font-size: 1.7rem; font-weight: 600; margin-top: 2px; }
-        .tile .sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .tile .label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+        .tile .value {
+            font-family: var(--mono);
+            font-size: 1.55rem;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        .tile .sub { font-size: 0.85rem; font-style: italic; color: var(--muted); margin-top: 2px; }
         .legend {
             display: flex;
             flex-wrap: wrap;
             gap: 6px 18px;
             margin: 4px 0 10px;
             font-size: 0.82rem;
-            color: var(--text-secondary);
+            color: var(--ink-soft);
         }
         .legend .key { display: inline-flex; align-items: center; }
         #chart-box { position: relative; }
@@ -168,34 +267,39 @@
         #tooltip {
             position: absolute;
             pointer-events: none;
-            background: var(--surface-1);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 2px;
             box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
             padding: 8px 12px;
-            font-size: 0.8rem;
+            font-family: var(--mono);
+            font-size: 0.75rem;
             display: none;
             min-width: 170px;
             z-index: 5;
         }
-        #tooltip .tt-freq { color: var(--text-muted); margin-bottom: 4px; }
+        #tooltip .tt-freq { color: var(--muted); margin-bottom: 4px; }
         #tooltip .tt-row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         #tooltip .tt-val { font-weight: 600; font-variant-numeric: tabular-nums; }
-        #tooltip .tt-name { color: var(--text-secondary); }
-        .notes { color: var(--text-secondary); font-size: 0.92rem; }
+        #tooltip .tt-name { color: var(--ink-soft); }
+        .notes { color: var(--ink-soft); font-size: 0.95rem; }
         .notes .eq {
-            font-family: "Times New Roman", Times, serif;
+            font-family: var(--serif);
             font-size: 1.08rem;
-            color: var(--text-primary);
+            color: var(--ink);
             margin: 10px 0 10px 20px;
         }
-        .notes i { font-family: "Times New Roman", Times, serif; }
-        .muted { color: var(--text-muted); font-size: 0.82rem; }
+        .notes i { font-family: var(--serif); }
+        .muted { color: var(--muted); font-size: 0.85rem; font-style: italic; }
         .toolbar { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
 <div class="wrap">
+    <nav class="site-nav">
+        <a href="../index.html">&#8592; Index</a>
+        <span class="sheet-tag">projects.colmryan.org &middot; Lab</span>
+    </nav>
     <h1>Cryogenic Attenuation Thermal Photon Calculator</h1>
     <p class="subtitle">
         Estimates the residual thermal photon occupation <i>n&#772;</i> and equivalent noise temperature
@@ -357,6 +461,11 @@
             arXiv:1806.07862</a> for the application to cryogenic attenuation chains.
         </p>
     </div>
+
+    <footer class="site-footer">
+        <span>Drawn by Colm Ryan &middot; with LLM help</span>
+        <a href="../index.html">All projects</a>
+    </footer>
 </div>
 
 <script>
