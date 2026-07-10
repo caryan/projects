@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryogenic Attenuation Thermal Photon Calculator</title>
+    <style>
+        :root {
+            --page: #f9f9f7;
+            --surface-1: #fcfcfb;
+            --text-primary: #0b0b0b;
+            --text-secondary: #52514e;
+            --text-muted: #898781;
+            --grid: #e1e0d9;
+            --baseline: #c3c2b7;
+            --border: rgba(11, 11, 11, 0.10);
+            --series-1: #2a78d6;   /* blue    - input source */
+            --series-2: #1baf7a;   /* aqua    - stage 1 */
+            --series-3: #eda100;   /* yellow  - stage 2 */
+            --series-4: #008300;   /* green   - stage 3 */
+            --series-5: #4a3aa7;   /* violet  - stage 4 */
+            --series-6: #e34948;   /* red     - stage 5 */
+            --series-7: #e87ba4;   /* magenta - stage 6 */
+            --series-8: #eb6834;   /* orange  - stage 7 */
+            --accent: #2a78d6;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --page: #0d0d0d;
+                --surface-1: #1a1a19;
+                --text-primary: #ffffff;
+                --text-secondary: #c3c2b7;
+                --text-muted: #898781;
+                --grid: #2c2c2a;
+                --baseline: #383835;
+                --border: rgba(255, 255, 255, 0.10);
+                --series-1: #3987e5;
+                --series-2: #199e70;
+                --series-3: #c98500;
+                --series-4: #008300;
+                --series-5: #9085e9;
+                --series-6: #e66767;
+                --series-7: #d55181;
+                --series-8: #d95926;
+                --accent: #3987e5;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--page);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+        h1 { font-size: 1.5rem; margin: 0 0 4px; }
+        h2 { font-size: 1.05rem; margin: 0 0 12px; }
+        .subtitle { color: var(--text-secondary); margin: 0 0 24px; max-width: 72ch; }
+        .subtitle a { color: var(--accent); }
+        .card {
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 32px;
+            align-items: flex-end;
+        }
+        .field { display: flex; flex-direction: column; gap: 4px; }
+        .field label { font-size: 0.82rem; color: var(--text-secondary); }
+        input[type="number"], input[type="text"] {
+            background: var(--page);
+            color: var(--text-primary);
+            border: 1px solid var(--baseline);
+            border-radius: 6px;
+            padding: 6px 9px;
+            font: inherit;
+            font-variant-numeric: tabular-nums;
+            width: 130px;
+        }
+        input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+        .seg {
+            display: inline-flex;
+            border: 1px solid var(--baseline);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .seg button {
+            background: var(--page);
+            color: var(--text-secondary);
+            border: none;
+            padding: 6px 12px;
+            font: inherit;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        .seg button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        button.action {
+            background: var(--page);
+            color: var(--text-primary);
+            border: 1px solid var(--baseline);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font: inherit;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        button.action:hover { border-color: var(--text-muted); }
+        button.action:disabled { opacity: 0.4; cursor: default; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td {
+            text-align: left;
+            padding: 7px 12px 7px 0;
+            border-bottom: 1px solid var(--grid);
+            font-variant-numeric: tabular-nums;
+        }
+        th { color: var(--text-muted); font-weight: 500; font-size: 0.8rem; }
+        td.num, th.num { text-align: right; }
+        #stage-table input[type="text"] { width: 180px; }
+        #stage-table input[type="number"] { width: 96px; }
+        .swatch {
+            display: inline-block;
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .tiles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .tile {
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+        .tile .label { font-size: 0.82rem; color: var(--text-secondary); }
+        .tile .value { font-size: 1.7rem; font-weight: 600; margin-top: 2px; }
+        .tile .sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 18px;
+            margin: 4px 0 10px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .legend .key { display: inline-flex; align-items: center; }
+        #chart-box { position: relative; }
+        #chart { width: 100%; height: auto; display: block; }
+        #tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            display: none;
+            min-width: 170px;
+            z-index: 5;
+        }
+        #tooltip .tt-freq { color: var(--text-muted); margin-bottom: 4px; }
+        #tooltip .tt-row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        #tooltip .tt-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+        #tooltip .tt-name { color: var(--text-secondary); }
+        .notes { color: var(--text-secondary); font-size: 0.92rem; }
+        .notes .eq {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 1.08rem;
+            color: var(--text-primary);
+            margin: 10px 0 10px 20px;
+        }
+        .notes i { font-family: "Times New Roman", Times, serif; }
+        .muted { color: var(--text-muted); font-size: 0.82rem; }
+        .toolbar { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Cryogenic Attenuation Thermal Photon Calculator</h1>
+    <p class="subtitle">
+        Estimates the residual thermal photon occupation <i>n&#772;</i> and equivalent noise temperature
+        at the end of a microwave input line in a dilution refrigerator, given the attenuation and
+        physical temperature of each stage. Radiation from each stage propagates through a chain of
+        thermalized attenuators (beam-splitter model). Edit any field and results update immediately;
+        use "Copy link" to share your configuration.
+    </p>
+
+    <div class="card">
+        <h2>Inputs</h2>
+        <div class="controls-row">
+            <div class="field">
+                <label for="freq">Frequency (GHz)</label>
+                <input type="number" id="freq" min="0.001" step="0.1" value="6">
+            </div>
+            <div class="field">
+                <label>Input noise at 300 K specified as</label>
+                <span class="seg">
+                    <button type="button" id="mode-temp" class="active">Temperature</button>
+                    <button type="button" id="mode-psd">PSD (dBm/Hz)</button>
+                </span>
+            </div>
+            <div class="field" id="src-temp-field">
+                <label for="src-temp">Source noise temperature (K)</label>
+                <input type="number" id="src-temp" min="0" step="10" value="300">
+            </div>
+            <div class="field" id="src-psd-field" style="display:none">
+                <label for="src-psd">Source noise PSD (dBm/Hz)</label>
+                <input type="number" id="src-psd" step="1" value="-174">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Attenuation stages (top of fridge &#8594; device)</h2>
+        <table id="stage-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Stage</th>
+                    <th>Temperature (K)</th>
+                    <th>Attenuation (dB)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="toolbar">
+            <button type="button" class="action" id="add-stage">+ Add stage</button>
+            <button type="button" class="action" id="reset-stages">Reset to defaults</button>
+            <button type="button" class="action" id="copy-link">Copy link</button>
+            <span class="muted" id="copy-msg" style="align-self:center"></span>
+        </div>
+        <p class="muted" style="margin-bottom:0">
+            Attenuation is the total dissipative loss thermalized at that stage (attenuators plus
+            cable loss). A stage with 0 dB contributes no thermal radiation of its own.
+        </p>
+    </div>
+
+    <div class="tiles">
+        <div class="tile">
+            <div class="label">Photon occupation at device</div>
+            <div class="value" id="tile-n">&#8211;</div>
+            <div class="sub" id="tile-n-sub"></div>
+        </div>
+        <div class="tile">
+            <div class="label">Equivalent temperature</div>
+            <div class="value" id="tile-temp">&#8211;</div>
+            <div class="sub" id="tile-temp-sub"></div>
+        </div>
+        <div class="tile">
+            <div class="label">Total attenuation</div>
+            <div class="value" id="tile-atten">&#8211;</div>
+            <div class="sub">sum of all stages</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Photon occupation vs frequency</h2>
+        <div class="legend" id="legend"></div>
+        <div id="chart-box">
+            <svg id="chart" viewBox="0 0 860 460" role="img"
+                 aria-label="Log-log chart of thermal photon occupation versus frequency, showing each stage's contribution and the total"></svg>
+            <div id="tooltip"></div>
+        </div>
+        <p class="muted" style="margin-bottom:0">
+            Each curve is that source's contribution to the photon occupation at the device, after all
+            downstream attenuation. The vertical marker is the chosen frequency
+            <i>f</i><sub>0</sub>. Hover or focus the chart to read values; the table below carries the
+            same numbers at <i>f</i><sub>0</sub>.
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>Contributions at the chosen frequency</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Source</th>
+                    <th class="num">T (K)</th>
+                    <th class="num">Attenuation after source (dB)</th>
+                    <th class="num">n&#772; contribution</th>
+                    <th class="num">Share</th>
+                </tr>
+            </thead>
+            <tbody id="contrib-body"></tbody>
+        </table>
+    </div>
+
+    <div class="card notes">
+        <h2>How the calculation works</h2>
+        <p>
+            A resistive attenuator at physical temperature <i>T</i> both attenuates incident noise and
+            emits its own thermal (Johnson&#8211;Nyquist) radiation. For a matched 50&nbsp;&#937; line,
+            an attenuator with power attenuation <i>A</i> = 10<sup>dB/10</sup> transforms the photon
+            occupation of the incoming field as
+        </p>
+        <p class="eq">
+            n&#772;<sub>out</sub> = n&#772;<sub>in</sub>&thinsp;/&thinsp;A &nbsp;+&nbsp;
+            (1 &#8722; 1/A)&thinsp;&#183;&thinsp;n&#772;<sub>BE</sub>(T,&thinsp;f)
+        </p>
+        <p>where the Bose&#8211;Einstein occupation of a thermal source at temperature <i>T</i> is</p>
+        <p class="eq">
+            n&#772;<sub>BE</sub>(T,&thinsp;f) = 1&thinsp;/&thinsp;(e<sup>hf/k<sub>B</sub>T</sup> &#8722; 1).
+        </p>
+        <p>
+            The (1 &#8722; 1/A) emissivity follows from Kirchhoff's law (emissivity equals
+            absorptivity), or equivalently from modeling the attenuator as a beam splitter with
+            transmissivity 1/A that mixes the incoming field with a thermal mode at temperature
+            <i>T</i> &#8212; the standard input&#8211;output treatment of a lossy element
+            (Clerk&nbsp;et&nbsp;al.). Applying this stage by stage from the 300&nbsp;K input down to
+            the device gives the total occupation n&#772;, equivalent to summing each source's
+            emission attenuated by everything downstream of it, as done for cryogenic attenuation
+            chains in Krinner&nbsp;et&nbsp;al. The equivalent temperature is the temperature of a
+            single blackbody source that would produce the same occupation:
+        </p>
+        <p class="eq">
+            T<sub>eff</sub> = (hf&thinsp;/&thinsp;k<sub>B</sub>)&thinsp;/&thinsp;ln(1 + 1/n&#772;).
+        </p>
+        <p>
+            When the input is specified as a power spectral density <i>S</i> in dBm/Hz, the input
+            occupation is n&#772;<sub>in</sub> = <i>S</i>&thinsp;/&thinsp;hf (thermal emission
+            convention, vacuum energy excluded). For reference, a matched 300&nbsp;K source emits
+            about &#8722;174&nbsp;dBm/Hz at microwave frequencies. Assumptions: matched impedances
+            (no reflections), attenuators fully thermalized at their stage temperature, and no
+            attenuation between the last stage and the device.
+        </p>
+        <p style="margin-bottom:0">
+            References:
+            <a href="https://doi.org/10.1103/RevModPhys.82.1155" target="_blank" rel="noopener">A.&nbsp;A.&nbsp;Clerk
+            et&nbsp;al., "Introduction to quantum noise, measurement, and amplification",
+            Rev.&nbsp;Mod.&nbsp;Phys.&nbsp;82,&nbsp;1155&nbsp;(2010)</a> for the quantum treatment of
+            noise and lossy elements, and
+            <a href="https://arxiv.org/abs/1806.07862" target="_blank" rel="noopener">S.&nbsp;Krinner
+            et&nbsp;al., "Engineering cryogenic setups for 100-qubit scale superconducting circuit
+            systems", EPJ&nbsp;Quantum&nbsp;Technol.&nbsp;6,&nbsp;2&nbsp;(2019),
+            arXiv:1806.07862</a> for the application to cryogenic attenuation chains.
+        </p>
+    </div>
+</div>
+
+<script>
+    'use strict';
+
+    const PLANCK = 6.62607015e-34;   // J s
+    const BOLTZMANN = 1.380649e-23;  // J/K
+
+    const DEFAULT_STAGES = [
+        { name: '300 K plate', T: 300, dB: 0 },
+        { name: '50 K plate', T: 50, dB: 0 },
+        { name: '4 K plate', T: 4, dB: 20 },
+        { name: 'Still (700 mK)', T: 0.7, dB: 20 },
+        { name: 'Cold plate (100 mK)', T: 0.1, dB: 0 },
+        { name: 'MXC (20 mK)', T: 0.02, dB: 20 },
+    ];
+    const MAX_STAGES = 7; // input source + 7 stages = 8 fixed categorical color slots
+
+    const state = {
+        freqGHz: 6,
+        mode: 'temp',        // 'temp' | 'psd'
+        srcTempK: 300,
+        srcPsdDbm: -174,
+        stages: DEFAULT_STAGES.map(s => ({ ...s })),
+    };
+
+    // ---------- physics ----------
+
+    // Bose-Einstein occupation of a blackbody at temperature T (K) and frequency f (Hz)
+    function boseEinstein(tempK, freqHz) {
+        if (tempK <= 0 || freqHz <= 0) return 0;
+        const x = PLANCK * freqHz / (BOLTZMANN * tempK);
+        if (x > 700) return 0; // exp overflow; occupation is utterly negligible
+        return 1 / Math.expm1(x);
+    }
+
+    function inputOccupation(freqHz) {
+        if (state.mode === 'temp') return boseEinstein(state.srcTempK, freqHz);
+        const wattsPerHz = Math.pow(10, state.srcPsdDbm / 10) * 1e-3;
+        return wattsPerHz / (PLANCK * freqHz);
+    }
+
+    // Cascade the input plus every stage; returns per-source contributions and the total.
+    // Contribution of source i = its emission divided by all attenuation downstream of it.
+    function computeOccupation(freqHz) {
+        const downstream = new Array(state.stages.length + 1); // dB after source i
+        let cum = 0;
+        for (let i = state.stages.length - 1; i >= 0; i--) {
+            downstream[i + 1] = cum;         // attenuation after stage i's own attenuator
+            cum += state.stages[i].dB;
+        }
+        downstream[0] = cum;                 // input sees everything
+
+        const contribs = [];
+        const n0 = inputOccupation(freqHz);
+        contribs.push(n0 / Math.pow(10, downstream[0] / 10));
+        state.stages.forEach((s, i) => {
+            const A = Math.pow(10, Math.max(0, s.dB) / 10);
+            const emitted = (1 - 1 / A) * boseEinstein(s.T, freqHz);
+            contribs.push(emitted / Math.pow(10, downstream[i + 1] / 10));
+        });
+        const total = contribs.reduce((a, b) => a + b, 0);
+        return { contribs, total, totalDb: cum };
+    }
+
+    function equivalentTemperature(nBar, freqHz) {
+        if (nBar <= 0) return 0;
+        return (PLANCK * freqHz / BOLTZMANN) / Math.log1p(1 / nBar);
+    }
+
+    // ---------- formatting ----------
+
+    // strip trailing zeros only after a decimal point ("6.20" -> "6.2", "300" stays "300")
+    function trimZeros(str) {
+        return str.includes('.') ? str.replace(/0+$/, '').replace(/\.$/, '') : str;
+    }
+
+    function sciHtml(x) {
+        if (!isFinite(x)) return '&#8211;';
+        if (x === 0) return '0';
+        const exp = Math.floor(Math.log10(Math.abs(x)));
+        if (exp >= -2 && exp < 4) {
+            return trimZeros(x.toPrecision(3));
+        }
+        const mant = x / Math.pow(10, exp);
+        return mant.toFixed(2) + '&#215;10<sup>' + exp + '</sup>';
+    }
+
+    function sciText(x) {
+        if (!isFinite(x)) return '-';
+        if (x === 0) return '0';
+        const exp = Math.floor(Math.log10(Math.abs(x)));
+        if (exp >= -2 && exp < 4) return trimZeros(x.toPrecision(3));
+        return (x / Math.pow(10, exp)).toFixed(2) + 'e' + exp;
+    }
+
+    function formatTemp(tempK) {
+        if (!isFinite(tempK) || tempK <= 0) return '0 K';
+        if (tempK < 1) return trimZeros((tempK * 1000).toPrecision(3)) + ' mK';
+        return trimZeros(tempK.toPrecision(3)) + ' K';
+    }
+
+    function seriesColor(idx) {
+        // idx 0 = input source, 1..7 = stages, in the fixed categorical order
+        return getComputedStyle(document.documentElement)
+            .getPropertyValue('--series-' + (idx + 1)).trim();
+    }
+
+    function inkColor() {
+        return getComputedStyle(document.documentElement)
+            .getPropertyValue('--text-primary').trim();
+    }
+
+    function sourceNames() {
+        const src = state.mode === 'temp'
+            ? 'Input (' + formatTemp(state.srcTempK) + ')'
+            : 'Input (' + state.srcPsdDbm + ' dBm/Hz)';
+        return [src].concat(state.stages.map(s => s.name || 'Stage'));
+    }
+
+    // ---------- stage table ----------
+
+    const stageBody = document.querySelector('#stage-table tbody');
+
+    function renderStageTable() {
+        stageBody.textContent = '';
+        state.stages.forEach((s, i) => {
+            const tr = document.createElement('tr');
+
+            const tdSwatch = document.createElement('td');
+            const sw = document.createElement('span');
+            sw.className = 'swatch';
+            sw.style.background = seriesColor(i + 1);
+            tdSwatch.appendChild(sw);
+            tr.appendChild(tdSwatch);
+
+            const tdName = document.createElement('td');
+            const nameIn = document.createElement('input');
+            nameIn.type = 'text';
+            nameIn.value = s.name;
+            nameIn.addEventListener('input', () => { s.name = nameIn.value; update(false); });
+            tdName.appendChild(nameIn);
+            tr.appendChild(tdName);
+
+            const tdT = document.createElement('td');
+            const tIn = document.createElement('input');
+            tIn.type = 'number';
+            tIn.min = '0';
+            tIn.step = 'any';
+            tIn.value = s.T;
+            tIn.addEventListener('input', () => {
+                const v = parseFloat(tIn.value);
+                s.T = isFinite(v) && v >= 0 ? v : 0;
+                update(false);
+            });
+            tdT.appendChild(tIn);
+            tr.appendChild(tdT);
+
+            const tdDb = document.createElement('td');
+            const dbIn = document.createElement('input');
+            dbIn.type = 'number';
+            dbIn.min = '0';
+            dbIn.step = '1';
+            dbIn.value = s.dB;
+            dbIn.addEventListener('input', () => {
+                const v = parseFloat(dbIn.value);
+                s.dB = isFinite(v) && v >= 0 ? v : 0;
+                update(false);
+            });
+            tdDb.appendChild(dbIn);
+            tr.appendChild(tdDb);
+
+            const tdDel = document.createElement('td');
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'action';
+            del.textContent = 'Remove';
+            del.disabled = state.stages.length <= 1;
+            del.addEventListener('click', () => {
+                state.stages.splice(i, 1);
+                update(true);
+            });
+            tdDel.appendChild(del);
+            tr.appendChild(tdDel);
+
+            stageBody.appendChild(tr);
+        });
+        document.getElementById('add-stage').disabled = state.stages.length >= MAX_STAGES;
+    }
+
+    // ---------- results ----------
+
+    function renderTiles(result, freqHz) {
+        document.getElementById('tile-n').innerHTML = sciHtml(result.total);
+        document.getElementById('tile-n-sub').textContent =
+            'at ' + state.freqGHz + ' GHz';
+        const tEff = equivalentTemperature(result.total, freqHz);
+        document.getElementById('tile-temp').textContent = formatTemp(tEff);
+        document.getElementById('tile-temp-sub').textContent =
+            'blackbody with the same occupation';
+        document.getElementById('tile-atten').textContent = result.totalDb + ' dB';
+    }
+
+    function renderContribTable(result) {
+        const body = document.getElementById('contrib-body');
+        body.textContent = '';
+        const names = sourceNames();
+        // attenuation downstream of each source, for display
+        const downstream = [];
+        let cum = 0;
+        for (let i = state.stages.length - 1; i >= 0; i--) {
+            downstream[i + 1] = cum;
+            cum += state.stages[i].dB;
+        }
+        downstream[0] = cum;
+
+        names.forEach((name, i) => {
+            const tr = document.createElement('tr');
+
+            const tdSw = document.createElement('td');
+            const sw = document.createElement('span');
+            sw.className = 'swatch';
+            sw.style.background = seriesColor(i);
+            tdSw.appendChild(sw);
+            tr.appendChild(tdSw);
+
+            const tdName = document.createElement('td');
+            tdName.textContent = name;
+            tr.appendChild(tdName);
+
+            const tdT = document.createElement('td');
+            tdT.className = 'num';
+            tdT.textContent = i === 0
+                ? (state.mode === 'temp' ? String(state.srcTempK) : '–')
+                : String(state.stages[i - 1].T);
+            tr.appendChild(tdT);
+
+            const tdA = document.createElement('td');
+            tdA.className = 'num';
+            tdA.textContent = String(downstream[i]);
+            tr.appendChild(tdA);
+
+            const tdN = document.createElement('td');
+            tdN.className = 'num';
+            tdN.innerHTML = sciHtml(result.contribs[i]);
+            tr.appendChild(tdN);
+
+            const tdPct = document.createElement('td');
+            tdPct.className = 'num';
+            const pct = result.total > 0 ? 100 * result.contribs[i] / result.total : 0;
+            tdPct.textContent = pct >= 0.1 ? pct.toFixed(1) + '%'
+                : (pct > 0 ? '<0.1%' : '0%');
+            tr.appendChild(tdPct);
+
+            body.appendChild(tr);
+        });
+
+        const trTot = document.createElement('tr');
+        trTot.appendChild(document.createElement('td'));
+        const tdName = document.createElement('td');
+        tdName.textContent = 'Total';
+        tdName.style.fontWeight = '600';
+        trTot.appendChild(tdName);
+        trTot.appendChild(document.createElement('td'));
+        trTot.appendChild(document.createElement('td'));
+        const tdTot = document.createElement('td');
+        tdTot.className = 'num';
+        tdTot.style.fontWeight = '600';
+        tdTot.innerHTML = sciHtml(result.total);
+        trTot.appendChild(tdTot);
+        const tdPct = document.createElement('td');
+        tdPct.className = 'num';
+        tdPct.textContent = '100%';
+        trTot.appendChild(tdPct);
+        body.appendChild(trTot);
+    }
+
+    // ---------- chart ----------
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const CHART = { w: 860, h: 460, left: 74, right: 24, top: 16, bottom: 46 };
+    const FREQ_MIN = 1e8;   // 0.1 GHz
+    const FREQ_MAX = 1e12;  // 1000 GHz
+    const N_SAMPLES = 241;
+
+    let chartData = null; // { freqs, seriesVals, total, x(), y() }
+
+    function svgEl(tag, attrs) {
+        const el = document.createElementNS(SVG_NS, tag);
+        for (const k in attrs) el.setAttribute(k, attrs[k]);
+        return el;
+    }
+
+    function renderChart() {
+        const svg = document.getElementById('chart');
+        svg.textContent = '';
+
+        const freqs = [];
+        for (let i = 0; i < N_SAMPLES; i++) {
+            const t = i / (N_SAMPLES - 1);
+            freqs.push(FREQ_MIN * Math.pow(FREQ_MAX / FREQ_MIN, t));
+        }
+        const nSeries = state.stages.length + 1;
+        const seriesVals = Array.from({ length: nSeries }, () => new Array(N_SAMPLES));
+        const totalVals = new Array(N_SAMPLES);
+        freqs.forEach((f, k) => {
+            const r = computeOccupation(f);
+            r.contribs.forEach((c, i) => { seriesVals[i][k] = c; });
+            totalVals[k] = r.total;
+        });
+
+        // y-range: top decade above the max total, 12 decades tall (as in the paper's Fig. S2)
+        let maxVal = 0;
+        totalVals.forEach(v => { if (v > maxVal) maxVal = v; });
+        const yTopExp = maxVal > 0 ? Math.ceil(Math.log10(maxVal)) : 2;
+        const yBotExp = yTopExp - 12;
+
+        const plotW = CHART.w - CHART.left - CHART.right;
+        const plotH = CHART.h - CHART.top - CHART.bottom;
+        const x = f => CHART.left + plotW *
+            (Math.log10(f) - Math.log10(FREQ_MIN)) / (Math.log10(FREQ_MAX) - Math.log10(FREQ_MIN));
+        const y = n => {
+            const e = Math.log10(Math.max(n, 1e-300));
+            return CHART.top + plotH * (yTopExp - e) / (yTopExp - yBotExp);
+        };
+
+        // clip
+        const defs = svgEl('defs', {});
+        const clip = svgEl('clipPath', { id: 'plot-clip' });
+        clip.appendChild(svgEl('rect', {
+            x: CHART.left, y: CHART.top, width: plotW, height: plotH,
+        }));
+        defs.appendChild(clip);
+        svg.appendChild(defs);
+
+        const css = getComputedStyle(document.documentElement);
+        const gridColor = css.getPropertyValue('--grid').trim();
+        const baseColor = css.getPropertyValue('--baseline').trim();
+        const mutedColor = css.getPropertyValue('--text-muted').trim();
+
+        // gridlines + y ticks (every 2 decades)
+        for (let e = yBotExp; e <= yTopExp; e += 2) {
+            const yy = y(Math.pow(10, e));
+            svg.appendChild(svgEl('line', {
+                x1: CHART.left, x2: CHART.left + plotW, y1: yy, y2: yy,
+                stroke: gridColor, 'stroke-width': 1,
+            }));
+            const lab = svgEl('text', {
+                x: CHART.left - 8, y: yy + 4, 'text-anchor': 'end',
+                fill: mutedColor, 'font-size': 12,
+            });
+            if (e === 0) {
+                lab.textContent = '1';
+            } else {
+                lab.textContent = '10';
+                const sup = svgEl('tspan', { dy: -5, 'font-size': 9 });
+                sup.textContent = String(e);
+                lab.appendChild(sup);
+            }
+            svg.appendChild(lab);
+        }
+
+        // x ticks at decades
+        [1e8, 1e9, 1e10, 1e11, 1e12].forEach(f => {
+            const xx = x(f);
+            svg.appendChild(svgEl('line', {
+                x1: xx, x2: xx, y1: CHART.top, y2: CHART.top + plotH,
+                stroke: gridColor, 'stroke-width': 1,
+            }));
+            const lab = svgEl('text', {
+                x: xx, y: CHART.top + plotH + 20, 'text-anchor': 'middle',
+                fill: mutedColor, 'font-size': 12,
+            });
+            lab.textContent = (f / 1e9 >= 1 ? f / 1e9 : 0.1) + '';
+            svg.appendChild(lab);
+        });
+
+        // axes baselines
+        svg.appendChild(svgEl('line', {
+            x1: CHART.left, x2: CHART.left, y1: CHART.top, y2: CHART.top + plotH,
+            stroke: baseColor, 'stroke-width': 1,
+        }));
+        svg.appendChild(svgEl('line', {
+            x1: CHART.left, x2: CHART.left + plotW,
+            y1: CHART.top + plotH, y2: CHART.top + plotH,
+            stroke: baseColor, 'stroke-width': 1,
+        }));
+
+        // axis titles
+        const xTitle = svgEl('text', {
+            x: CHART.left + plotW / 2, y: CHART.h - 8, 'text-anchor': 'middle',
+            fill: mutedColor, 'font-size': 12,
+        });
+        xTitle.textContent = 'Frequency (GHz)';
+        svg.appendChild(xTitle);
+        const yTitle = svgEl('text', {
+            x: 16, y: CHART.top + plotH / 2, 'text-anchor': 'middle',
+            fill: mutedColor, 'font-size': 12,
+            transform: 'rotate(-90 16 ' + (CHART.top + plotH / 2) + ')',
+        });
+        yTitle.textContent = 'Photon occupation n̄';
+        svg.appendChild(yTitle);
+
+        // series paths (clipped)
+        const g = svgEl('g', { 'clip-path': 'url(#plot-clip)' });
+        function pathFor(vals) {
+            let d = '';
+            let pen = false;
+            vals.forEach((v, k) => {
+                if (v > 0 && isFinite(v)) {
+                    d += (pen ? 'L' : 'M') + x(freqs[k]).toFixed(1) + ' ' + y(v).toFixed(1);
+                    pen = true;
+                } else {
+                    pen = false;
+                }
+            });
+            return d;
+        }
+        for (let i = 0; i < nSeries; i++) {
+            const d = pathFor(seriesVals[i]);
+            if (!d) continue;
+            g.appendChild(svgEl('path', {
+                d, fill: 'none', stroke: seriesColor(i), 'stroke-width': 2,
+                'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+            }));
+        }
+        const dTot = pathFor(totalVals);
+        if (dTot) {
+            g.appendChild(svgEl('path', {
+                d: dTot, fill: 'none', stroke: inkColor(), 'stroke-width': 2.5,
+                'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+            }));
+        }
+        svg.appendChild(g);
+
+        // marker at the chosen frequency
+        const f0 = state.freqGHz * 1e9;
+        if (f0 >= FREQ_MIN && f0 <= FREQ_MAX) {
+            const xx = x(f0);
+            svg.appendChild(svgEl('line', {
+                x1: xx, x2: xx, y1: CHART.top, y2: CHART.top + plotH,
+                stroke: mutedColor, 'stroke-width': 1,
+            }));
+            const lab = svgEl('text', {
+                x: xx + 5, y: CHART.top + 14, fill: mutedColor, 'font-size': 12,
+            });
+            lab.textContent = 'f₀';
+            svg.appendChild(lab);
+        }
+
+        // crosshair (hidden until hover)
+        svg.appendChild(svgEl('line', {
+            id: 'crosshair', x1: 0, x2: 0, y1: CHART.top, y2: CHART.top + plotH,
+            stroke: baseColor, 'stroke-width': 1, visibility: 'hidden',
+        }));
+
+        chartData = { freqs, seriesVals, totalVals, x, y };
+        renderLegend();
+    }
+
+    function renderLegend() {
+        const legend = document.getElementById('legend');
+        legend.textContent = '';
+        const entries = [{ name: 'Total', color: inkColor() }];
+        sourceNames().forEach((name, i) => entries.push({ name, color: seriesColor(i) }));
+        entries.forEach(e => {
+            const key = document.createElement('span');
+            key.className = 'key';
+            const sw = document.createElement('span');
+            sw.className = 'swatch';
+            sw.style.background = e.color;
+            key.appendChild(sw);
+            key.appendChild(document.createTextNode(e.name));
+            legend.appendChild(key);
+        });
+    }
+
+    // crosshair + tooltip
+    const svg = document.getElementById('chart');
+    const tooltip = document.getElementById('tooltip');
+
+    function chartPointer(evt) {
+        if (!chartData) return;
+        const pt = new DOMPoint(evt.clientX, evt.clientY);
+        const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+        const plotW = CHART.w - CHART.left - CHART.right;
+        if (loc.x < CHART.left || loc.x > CHART.left + plotW ||
+            loc.y < CHART.top || loc.y > CHART.h - CHART.bottom) {
+            hideTooltip();
+            return;
+        }
+        const t = (loc.x - CHART.left) / plotW;
+        const k = Math.round(t * (N_SAMPLES - 1));
+        const f = chartData.freqs[k];
+        const xx = chartData.x(f);
+
+        const cross = document.getElementById('crosshair');
+        cross.setAttribute('x1', xx);
+        cross.setAttribute('x2', xx);
+        cross.setAttribute('visibility', 'visible');
+
+        tooltip.textContent = '';
+        const fr = document.createElement('div');
+        fr.className = 'tt-freq';
+        fr.textContent = trimZeros((f / 1e9).toPrecision(3)) + ' GHz';
+        tooltip.appendChild(fr);
+
+        const rows = [{ name: 'Total', color: inkColor(), val: chartData.totalVals[k] }];
+        sourceNames().forEach((name, i) =>
+            rows.push({ name, color: seriesColor(i), val: chartData.seriesVals[i][k] }));
+        rows.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'tt-row';
+            const sw = document.createElement('span');
+            sw.className = 'swatch';
+            sw.style.background = r.color;
+            row.appendChild(sw);
+            const val = document.createElement('span');
+            val.className = 'tt-val';
+            val.textContent = sciText(r.val);
+            row.appendChild(val);
+            const name = document.createElement('span');
+            name.className = 'tt-name';
+            name.textContent = r.name;
+            row.appendChild(name);
+            tooltip.appendChild(row);
+        });
+
+        tooltip.style.display = 'block';
+        const box = document.getElementById('chart-box').getBoundingClientRect();
+        const svgBox = svg.getBoundingClientRect();
+        const px = svgBox.left - box.left + (xx / CHART.w) * svgBox.width;
+        const flip = px > box.width * 0.62;
+        tooltip.style.left = flip ? (px - tooltip.offsetWidth - 14) + 'px' : (px + 14) + 'px';
+        tooltip.style.top = Math.max(0, loc.y / CHART.h * svgBox.height - 20) + 'px';
+    }
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
+        const cross = document.getElementById('crosshair');
+        if (cross) cross.setAttribute('visibility', 'hidden');
+    }
+
+    svg.addEventListener('pointermove', chartPointer);
+    svg.addEventListener('pointerleave', hideTooltip);
+
+    // ---------- URL params ----------
+
+    function writeUrl() {
+        const p = new URLSearchParams();
+        p.set('f', String(state.freqGHz));
+        p.set('mode', state.mode);
+        if (state.mode === 'temp') p.set('src', String(state.srcTempK));
+        else p.set('src', String(state.srcPsdDbm));
+        p.set('stages', state.stages
+            .map(s => [s.name.replace(/[~|]/g, ' '), s.T, s.dB].join('~')).join('|'));
+        history.replaceState(null, '', location.pathname + '?' + p.toString());
+    }
+
+    function readUrl() {
+        const p = new URLSearchParams(location.search);
+        if (p.has('f')) {
+            const v = parseFloat(p.get('f'));
+            if (isFinite(v) && v > 0) state.freqGHz = v;
+        }
+        if (p.get('mode') === 'psd') state.mode = 'psd';
+        if (p.has('src')) {
+            const v = parseFloat(p.get('src'));
+            if (isFinite(v)) {
+                if (state.mode === 'temp') { if (v >= 0) state.srcTempK = v; }
+                else state.srcPsdDbm = v;
+            }
+        }
+        if (p.has('stages')) {
+            const parsed = p.get('stages').split('|').map(chunk => {
+                const parts = chunk.split('~');
+                if (parts.length !== 3) return null;
+                const T = parseFloat(parts[1]);
+                const dB = parseFloat(parts[2]);
+                if (!isFinite(T) || !isFinite(dB) || T < 0 || dB < 0) return null;
+                return { name: parts[0], T, dB };
+            }).filter(Boolean).slice(0, MAX_STAGES);
+            if (parsed.length > 0) state.stages = parsed;
+        }
+    }
+
+    // ---------- wiring ----------
+
+    function syncModeUi() {
+        document.getElementById('mode-temp').classList.toggle('active', state.mode === 'temp');
+        document.getElementById('mode-psd').classList.toggle('active', state.mode === 'psd');
+        document.getElementById('src-temp-field').style.display =
+            state.mode === 'temp' ? '' : 'none';
+        document.getElementById('src-psd-field').style.display =
+            state.mode === 'psd' ? '' : 'none';
+    }
+
+    function update(rebuildStageTable) {
+        if (rebuildStageTable) renderStageTable();
+        const freqHz = state.freqGHz * 1e9;
+        const result = computeOccupation(freqHz);
+        renderTiles(result, freqHz);
+        renderContribTable(result);
+        renderChart();
+        writeUrl();
+    }
+
+    document.getElementById('freq').addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (isFinite(v) && v > 0) { state.freqGHz = v; update(false); }
+    });
+    document.getElementById('src-temp').addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (isFinite(v) && v >= 0) { state.srcTempK = v; update(false); }
+    });
+    document.getElementById('src-psd').addEventListener('input', e => {
+        const v = parseFloat(e.target.value);
+        if (isFinite(v)) { state.srcPsdDbm = v; update(false); }
+    });
+    document.getElementById('mode-temp').addEventListener('click', () => {
+        state.mode = 'temp'; syncModeUi(); update(false);
+    });
+    document.getElementById('mode-psd').addEventListener('click', () => {
+        state.mode = 'psd'; syncModeUi(); update(false);
+    });
+    document.getElementById('add-stage').addEventListener('click', () => {
+        if (state.stages.length >= MAX_STAGES) return;
+        const last = state.stages[state.stages.length - 1];
+        state.stages.push({
+            name: 'New stage',
+            T: last ? last.T : 0.02,
+            dB: 0,
+        });
+        update(true);
+    });
+    document.getElementById('reset-stages').addEventListener('click', () => {
+        state.stages = DEFAULT_STAGES.map(s => ({ ...s }));
+        update(true);
+    });
+    document.getElementById('copy-link').addEventListener('click', async () => {
+        writeUrl();
+        const msg = document.getElementById('copy-msg');
+        try {
+            await navigator.clipboard.writeText(location.href);
+            msg.textContent = 'Link copied';
+        } catch (err) {
+            msg.textContent = 'Copy failed - copy the address bar URL';
+        }
+        setTimeout(() => { msg.textContent = ''; }, 2500);
+    });
+
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener('change', () => update(true));
+    }
+
+    // ---------- init ----------
+
+    readUrl();
+    document.getElementById('freq').value = state.freqGHz;
+    document.getElementById('src-temp').value = state.srcTempK;
+    document.getElementById('src-psd').value = state.srcPsdDbm;
+    syncModeUi();
+    renderStageTable();
+    update(false);
+</script>
+</body>
+</html>
