@@ -6,15 +6,15 @@
     <title>What Time Is It? - Learn to Tell Time</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* Engineering-pad design tokens (shared site identity) */
+        /* Engineering-pad design tokens (shared site identity) + playful crayon accents */
         :root {
             --paper: #EEF2E3;
             --grid-minor: rgba(90, 120, 84, 0.13);
             --grid-major: rgba(90, 120, 84, 0.22);
             --surface: #F6F8ED;
-            --well: #EAEEDC;
+            --well: #FFFDF5;
             --ink: #243240;
             --ink-soft: #5C6A5E;
             --muted: #656F5B;
@@ -22,13 +22,19 @@
             --line-faint: rgba(36, 50, 64, 0.16);
             --copper: #9A5527;
             --copper-strong: #8C4E26;
-            --copper-contrast: #ffffff;
-            --good: #3E7A4E;
-            --good-contrast: #ffffff;
-            --bad: #B04438;
+            --good: #3E9A55;
+            --good-deep: #2C7140;
+            --bad: #D0453A;
+            --bad-deep: #9E3027;
             --crayon-blue: #3E74C0;
+            --crayon-blue-deep: #2B5591;
             --crayon-red: #D0453A;
-            --serif: "STIX Two Text", "Times New Roman", serif;
+            --sun: #F4B63F;
+            --sun-deep: #C98A1E;
+            --berry: #C7457E;
+            --berry-deep: #95305D;
+            --on-color: #ffffff;
+            --display: "Fredoka", "Trebuchet MS", "Avenir Next Rounded", system-ui, sans-serif;
             --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
         }
         @media (prefers-color-scheme: dark) {
@@ -37,31 +43,34 @@
                 --grid-minor: rgba(190, 215, 185, 0.055);
                 --grid-major: rgba(190, 215, 185, 0.10);
                 --surface: #212822;
-                --well: #1A201B;
+                --well: #2A322B;
                 --ink: #DEE5D2;
-                --ink-soft: #95A291;
+                --ink-soft: #A3B09F;
                 --muted: #7E8A7A;
                 --line: rgba(222, 229, 210, 0.30);
                 --line-faint: rgba(222, 229, 210, 0.14);
                 --copper: #D28E58;
                 --copper-strong: #E2A46E;
-                --copper-contrast: #191F1A;
-                --good: #7FB98B;
-                --good-contrast: #191F1A;
-                --bad: #E09C90;
-                --crayon-blue: #7FA8E0;
-                --crayon-red: #E28078;
+                --good: #5DB872;
+                --good-deep: #3A8A4E;
+                --bad: #E26A5E;
+                --bad-deep: #A9443A;
+                --crayon-blue: #6E9CE0;
+                --crayon-blue-deep: #3F6CB0;
+                --crayon-red: #EC6F64;
+                --sun: #E2A93E;
+                --sun-deep: #A8791F;
+                --berry: #D86A9A;
+                --berry-deep: #A24672;
+                --on-color: #141914;
             }
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        [hidden] { display: none !important; }
 
         body {
-            font-family: var(--serif);
+            font-family: var(--display);
             background-color: var(--paper);
             background-image:
                 linear-gradient(var(--grid-major) 1px, transparent 1px),
@@ -74,14 +83,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 20px 16px;
         }
 
-        :focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+        :focus-visible { outline: 3px solid var(--crayon-blue); outline-offset: 3px; }
 
         .site-nav {
             width: 100%;
-            max-width: 420px;
+            max-width: 460px;
             display: flex;
             justify-content: space-between;
             gap: 16px;
@@ -98,31 +107,58 @@
         .card {
             background: var(--surface);
             border: 1px solid var(--line-faint);
-            border-radius: 2px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            padding: 30px;
-            max-width: 420px;
+            border-radius: 22px;
+            box-shadow: 0 6px 0 var(--line-faint), 0 14px 34px rgba(0, 0, 0, 0.08);
+            padding: 22px 22px 26px;
+            max-width: 460px;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 14px;
+        }
+
+        /* Top bar: score chips + sound toggle */
+        .hud {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: var(--well);
+            border: 2px solid var(--line-faint);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .chip.bump { animation: bump 0.45s ease; }
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--line-faint);
+            background: var(--well);
+            font-size: 1.2rem;
+            cursor: pointer;
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--ink);
+            font-size: 2.1rem;
+            font-weight: 700;
             text-align: center;
+            line-height: 1.1;
         }
-
-        .subtitle {
-            font-size: 1rem;
-            font-style: italic;
-            color: var(--ink-soft);
-            text-align: center;
-            margin-top: -12px;
-        }
+        h1 .w1 { color: var(--crayon-blue); }
+        h1 .w2 { color: var(--crayon-red); }
+        h1 .w3 { color: var(--sun-deep); }
+        h1 .w4 { color: var(--berry); }
 
         /* Level selector */
         .level-bar {
@@ -131,254 +167,313 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-
         .level-btn {
-            padding: 6px 14px;
-            border: 1px solid var(--line);
-            border-radius: 2px;
+            padding: 6px 12px;
+            border: 2px solid var(--line-faint);
+            border-radius: 999px;
             background: var(--well);
             color: var(--ink-soft);
-            font-family: var(--mono);
-            font-size: 0.78rem;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 0.92rem;
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            transition: transform 0.15s, background-color 0.2s, color 0.2s;
         }
-
-        .level-btn:hover {
-            border-color: var(--copper);
-            color: var(--copper-strong);
-        }
-
+        .level-btn:hover { transform: translateY(-2px); color: var(--ink); }
         .level-btn.active {
-            background: var(--copper);
-            color: var(--copper-contrast);
-            border-color: var(--copper);
-        }
-
-        /* Streak */
-        .streak-display {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 1.1rem;
-            min-height: 28px;
-            margin-bottom: -12px;
-        }
-
-        .streak-display .star {
-            display: inline-block;
-            transition: transform 0.3s;
-        }
-
-        .streak-display .star.pop {
-            animation: starPop 0.4s ease;
-        }
-
-        @keyframes starPop {
-            0% { transform: scale(0); }
-            60% { transform: scale(1.4); }
-            100% { transform: scale(1); }
-        }
-
-        /* Clock */
-        .clock-container {
-            position: relative;
-        }
-
-        canvas {
-            display: block;
-        }
-
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            font-size: 0.9rem;
-            color: var(--ink-soft);
-            margin-top: 8px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legend-swatch {
-            width: 24px;
-            height: 6px;
-            border-radius: 3px;
-        }
-
-        .legend-swatch.hour {
             background: var(--crayon-blue);
-            height: 8px;
+            border-color: var(--crayon-blue-deep);
+            color: var(--on-color);
+            box-shadow: 0 3px 0 var(--crayon-blue-deep);
         }
 
-        .legend-swatch.minute {
-            background: var(--crayon-red);
-        }
-
-        /* Inputs */
-        .input-row {
+        /* Progress toward the next sticker */
+        .progress-wrap {
             display: flex;
             align-items: center;
             gap: 10px;
-            justify-content: center;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .input-group label {
-            font-family: var(--mono);
-            font-size: 0.72rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-size: 0.85rem;
             color: var(--ink-soft);
+            font-weight: 500;
+        }
+        .progress { display: flex; gap: 6px; }
+        .dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px dashed var(--line);
+            display: grid;
+            place-items: center;
+            font-size: 1rem;
+        }
+        .dot.on {
+            border: 2px solid var(--sun-deep);
+            background: var(--sun);
+            animation: starPop 0.45s ease;
         }
 
-        .input-group input {
-            width: 72px;
-            height: 52px;
+        /* Clock */
+        .clock-float { animation: bob 4s ease-in-out infinite; width: 100%; display: flex; justify-content: center; }
+        canvas#clock {
+            display: block;
+            width: min(330px, 100%);
+            aspect-ratio: 360 / 390;
+            height: auto;
+            transform-origin: 50% 60%;
+        }
+        .clock-ring { animation: ring 0.7s ease; }
+        .clock-shake { animation: shake 0.5s ease; }
+
+        /* Speech bubble from the clock */
+        .bubble {
+            position: relative;
+            width: 100%;
+            min-height: 58px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            background: var(--well);
+            border: 2px solid var(--line-faint);
             text-align: center;
-            font-family: var(--mono);
-            font-size: 1.5rem;
+            font-size: 1.15rem;
+            font-weight: 500;
+            line-height: 1.35;
+            display: grid;
+            place-items: center;
+        }
+        .bubble::before {
+            content: "";
+            position: absolute;
+            top: -11px;
+            left: 50%;
+            width: 18px;
+            height: 18px;
+            background: inherit;
+            border-left: 2px solid var(--line-faint);
+            border-top: 2px solid var(--line-faint);
+            transform: translateX(-50%) rotate(45deg);
+        }
+        .bubble.good { border-color: var(--good); color: var(--good-deep); }
+        .bubble.good::before { border-color: var(--good); }
+        .bubble.bad { border-color: var(--bad); color: var(--bad-deep); }
+        .bubble.bad::before { border-color: var(--bad); }
+        .bubble.hint { border-color: var(--sun-deep); }
+        .bubble.hint::before { border-color: var(--sun-deep); }
+        @media (prefers-color-scheme: dark) {
+            .bubble.good { color: var(--good); }
+            .bubble.bad { color: var(--bad); }
+        }
+        .bubble.pop { animation: bubblePop 0.35s ease; }
+
+        /* Answer mode toggle */
+        .mode-toggle {
+            display: inline-flex;
+            border: 2px solid var(--line-faint);
+            border-radius: 999px;
+            overflow: hidden;
+            background: var(--well);
+        }
+        .mode-toggle button {
+            border: none;
+            background: transparent;
+            padding: 5px 14px;
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--ink-soft);
+            cursor: pointer;
+        }
+        .mode-toggle button.active { background: var(--berry); color: var(--on-color); }
+
+        /* Multiple choice answers */
+        .choices {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .choice {
+            flex: 1 1 0;
+            min-width: 80px;
+            max-width: 140px;
+            padding: 12px 6px;
+            border-radius: 16px;
+            border: 3px solid var(--line);
+            background: var(--well);
+            color: var(--ink);
+            font-family: var(--display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 0 var(--line);
+            transition: transform 0.12s, box-shadow 0.12s;
+            line-height: 1.1;
+        }
+        .choice small { display: block; font-size: 0.75rem; font-weight: 500; color: var(--ink-soft); }
+        .choice:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 0 var(--line); }
+        .choice:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--line); }
+        .choice:disabled { cursor: default; opacity: 0.5; }
+        .choice.right {
+            opacity: 1;
+            background: var(--good);
+            border-color: var(--good-deep);
+            color: var(--on-color);
+            box-shadow: 0 5px 0 var(--good-deep);
+            animation: bump 0.45s ease;
+        }
+        .choice.right small { color: var(--on-color); }
+        .choice.wrong {
+            background: var(--bad);
+            border-color: var(--bad-deep);
+            color: var(--on-color);
+            box-shadow: 0 5px 0 var(--bad-deep);
+            animation: shake 0.45s ease;
+        }
+        .choice.wrong small { color: var(--on-color); }
+
+        /* Typed answers */
+        .input-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
+        .input-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        #hour-group label { color: var(--crayon-blue); }
+        #minute-group label { color: var(--crayon-red); }
+        .input-group input {
+            width: 84px;
+            height: 64px;
+            text-align: center;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 2rem;
             color: var(--ink);
             background: var(--well);
-            border: 2px solid var(--line);
-            border-radius: 2px;
+            border: 3px solid var(--line);
+            border-radius: 16px;
             outline: none;
             transition: border-color 0.2s;
         }
+        #hour-input:focus { border-color: var(--crayon-blue); }
+        #minute-input:focus { border-color: var(--crayon-red); }
+        .colon { font-size: 2.2rem; font-weight: 700; color: var(--ink-soft); margin-top: 20px; }
 
-        .input-group input:focus {
-            border-color: var(--copper);
-        }
-
-        .colon {
-            font-family: var(--mono);
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--ink-soft);
-            margin-top: 16px;
-        }
-
+        /* Chunky buttons */
+        .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .btn {
-            padding: 14px 36px;
+            padding: 12px 26px;
             border: none;
-            border-radius: 2px;
-            font-family: var(--mono);
-            font-size: 1rem;
-            font-weight: 500;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            border-radius: 16px;
+            font-family: var(--display);
+            font-size: 1.15rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
-            min-width: 140px;
-            min-height: 48px;
+            min-height: 52px;
+            transition: transform 0.12s, box-shadow 0.12s;
         }
+        .btn:active:not(:disabled) { transform: translateY(3px); }
+        .btn:disabled { opacity: 0.45; cursor: default; }
+        .btn-check { background: var(--crayon-blue); color: var(--on-color); box-shadow: 0 5px 0 var(--crayon-blue-deep); }
+        .btn-next { background: var(--good); color: var(--on-color); box-shadow: 0 5px 0 var(--good-deep); }
+        .btn-hint { background: var(--sun); color: #3a2a10; box-shadow: 0 5px 0 var(--sun-deep); }
+        .btn-go { background: var(--berry); color: var(--on-color); box-shadow: 0 5px 0 var(--berry-deep); }
+        .btn:active:not(:disabled) { box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
+        .btn-next.wiggle { animation: wiggle 1.2s ease 0.4s 2; }
 
-        .btn:active {
-            transform: scale(0.96);
-        }
-
-        .btn-check {
-            background: var(--copper);
-            color: var(--copper-contrast);
-        }
-
-        .btn-check:hover {
-            background: var(--copper-strong);
-        }
-
-        .btn-next {
-            background: var(--good);
-            color: var(--good-contrast);
-            display: none;
-        }
-
-        .btn-next:hover {
-            filter: brightness(1.08);
-        }
-
-        /* Feedback */
-        .feedback {
-            font-size: 1.2rem;
-            font-weight: 600;
+        /* Sticker book */
+        .sticker-book {
+            width: 100%;
+            border-top: 2px dashed var(--line-faint);
+            padding-top: 12px;
             text-align: center;
-            min-height: 30px;
-            transition: opacity 0.3s;
         }
+        .sticker-book h2 { font-size: 0.95rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+        .stickers { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 1.7rem; min-height: 2rem; }
+        .stickers .empty { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
+        .stickers span.new { animation: starPop 0.6s ease; }
 
-        .feedback.correct {
-            color: var(--good);
-        }
-
-        .feedback.incorrect {
-            color: var(--bad);
-        }
-
-        /* Animations */
-        @keyframes correctPulse {
-            0% { box-shadow: 0 0 0 0 rgba(62, 122, 78, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(62, 122, 78, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(62, 122, 78, 0); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-6px); }
-            80% { transform: translateX(6px); }
-        }
-
-        .clock-correct {
-            animation: correctPulse 0.6s ease;
-            border-radius: 50%;
-        }
-
-        .clock-shake {
-            animation: shake 0.5s ease;
-        }
-
-        .level-up-msg {
-            font-size: 1rem;
-            color: var(--copper-strong);
-            font-weight: 600;
+        .help {
+            font-size: 0.85rem;
+            color: var(--ink-soft);
             text-align: center;
-            animation: starPop 0.5s ease;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* Celebration overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 25, 20, 0.45);
+            display: grid;
+            place-items: center;
+            padding: 16px;
+            z-index: 40;
+        }
+        .celebrate-card {
+            background: var(--surface);
+            border-radius: 26px;
+            padding: 28px 26px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 0 var(--berry-deep), 0 20px 50px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--berry);
+            animation: zoomIn 0.5s cubic-bezier(.2, 1.6, .4, 1);
+        }
+        .big-sticker { font-size: 5rem; line-height: 1.1; animation: spinIn 0.9s ease; }
+        .celebrate-card h2 { font-size: 2rem; color: var(--berry); margin: 6px 0; }
+        .celebrate-card p { font-size: 1.1rem; margin-bottom: 18px; line-height: 1.4; }
+
+        #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+        .float-text {
+            position: fixed;
+            pointer-events: none;
+            font-family: var(--display);
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--sun-deep);
+            z-index: 45;
+            animation: floatUp 1s ease-out forwards;
         }
 
         footer {
-            margin-top: 30px;
+            margin-top: 26px;
             text-align: center;
             font-family: var(--mono);
             font-size: 0.72rem;
             letter-spacing: 0.08em;
             color: var(--muted);
         }
+        footer a { color: var(--copper); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
 
-        footer a {
-            color: var(--copper);
-            text-decoration: none;
+        @keyframes starPop { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+        @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes ring {
+            0%, 100% { transform: rotate(0); }
+            15% { transform: rotate(-7deg); } 30% { transform: rotate(7deg); }
+            45% { transform: rotate(-5deg); } 60% { transform: rotate(5deg); }
+            75% { transform: rotate(-2deg); } 90% { transform: rotate(2deg); }
         }
-
-        footer a:hover {
-            text-decoration: underline;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); } 40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); } 80% { transform: translateX(6px); }
         }
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0); } 10% { transform: rotate(-4deg); }
+            20% { transform: rotate(4deg); } 30% { transform: rotate(0); }
+        }
+        @keyframes bubblePop { 0% { transform: scale(0.92); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        @keyframes zoomIn { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes spinIn { from { transform: rotate(-200deg) scale(0); } to { transform: rotate(0) scale(1); } }
+        @keyframes floatUp { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -70px); opacity: 0; } }
 
         @media (prefers-reduced-motion: reduce) {
-            .streak-display .star.pop,
-            .clock-correct,
-            .clock-shake,
-            .level-up-msg { animation: none; }
-            .btn, .level-btn, .input-group input, .feedback { transition: none; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
         }
     </style>
 </head>
@@ -387,348 +482,948 @@
         <a href="../index.html">&#8592; Index</a>
         <span class="sheet-tag">projects.colmryan.org &middot; Kids</span>
     </nav>
-    <div class="card">
-        <h1>What Time Is It?</h1>
-        <p class="subtitle">Learn to read an analog clock</p>
+
+    <main class="card">
+        <div class="hud">
+            <div class="chips">
+                <span class="chip" id="stars-chip" title="Stars earned">⭐ <span id="star-count">0</span></span>
+                <span class="chip" id="streak-chip" title="Correct in a row">🔥 <span id="streak-count">0</span></span>
+            </div>
+            <button class="icon-btn" id="sound-btn" aria-label="Turn sound off" title="Sound on/off">🔊</button>
+        </div>
+
+        <h1><span class="w1">What</span> <span class="w2">Time</span> <span class="w3">Is</span> <span class="w4">It?</span></h1>
 
         <div class="level-bar" role="group" aria-label="Difficulty level">
-            <button class="level-btn active" data-level="1" aria-pressed="true">Hours</button>
-            <button class="level-btn" data-level="2" aria-pressed="false">Quarter</button>
-            <button class="level-btn" data-level="3" aria-pressed="false">Fives</button>
-            <button class="level-btn" data-level="4" aria-pressed="false">Any Minute</button>
+            <button class="level-btn active" data-level="1" aria-pressed="true">🕐 Hours</button>
+            <button class="level-btn" data-level="2" aria-pressed="false">🕞 Quarters</button>
+            <button class="level-btn" data-level="3" aria-pressed="false">🖐️ Fives</button>
+            <button class="level-btn" data-level="4" aria-pressed="false">⏱️ Any Minute</button>
         </div>
 
-        <div class="streak-display" aria-live="polite" aria-label="Current streak">
+        <div class="progress-wrap">
+            <span>5 in a row:</span>
+            <div class="progress" id="progress" aria-label="Progress to next sticker"></div>
         </div>
 
-        <div class="clock-container">
-            <canvas id="clock" width="336" height="336"></canvas>
-            <div class="legend">
-                <span class="legend-item"><span class="legend-swatch hour"></span> Hour</span>
-                <span class="legend-item"><span class="legend-swatch minute"></span> Minute</span>
+        <div class="clock-float">
+            <canvas id="clock" role="img" aria-label="Analog clock"></canvas>
+        </div>
+
+        <div class="bubble" id="bubble" aria-live="polite">What time does my clock say?</div>
+
+        <div class="mode-toggle" role="group" aria-label="How to answer">
+            <button data-mode="tap" class="active" aria-pressed="true">👆 Tap</button>
+            <button data-mode="type" aria-pressed="false">⌨️ Type</button>
+        </div>
+
+        <div class="choices" id="choices"></div>
+
+        <div id="type-area" hidden>
+            <div class="input-row">
+                <div class="input-group" id="hour-group">
+                    <label for="hour-input">Hour</label>
+                    <input type="text" id="hour-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="--" autocomplete="off">
+                </div>
+                <span class="colon" id="colon">:</span>
+                <div class="input-group" id="minute-group">
+                    <label for="minute-input">Minute</label>
+                    <input type="text" id="minute-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="--" autocomplete="off">
+                </div>
             </div>
         </div>
 
-        <div class="input-row">
-            <div class="input-group">
-                <label for="hour-input">Hour</label>
-                <input type="text" id="hour-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="--" aria-label="Hour (1 to 12)">
-            </div>
-            <span class="colon" id="colon">:</span>
-            <div class="input-group" id="minute-group">
-                <label for="minute-input">Minute</label>
-                <input type="text" id="minute-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="--" aria-label="Minute (0 to 59)">
-            </div>
+        <div class="actions">
+            <button class="btn btn-hint" id="hint-btn">💡 Hint</button>
+            <button class="btn btn-check" id="check-btn" hidden>Check ✓</button>
+            <button class="btn btn-next" id="next-btn" hidden>Next ➜</button>
         </div>
 
-        <div id="feedback" class="feedback" aria-live="polite"></div>
+        <p class="help">The <b style="color:var(--crayon-blue)">short blue hand</b> tells the hour.
+            The <b style="color:var(--crayon-red)">long red hand</b> tells the minutes.
+            Get 5 right in a row to win a sticker!</p>
 
-        <button class="btn btn-check" id="check-btn" aria-label="Check your answer">Check</button>
-        <button class="btn btn-next" id="next-btn" aria-label="Next question">Next</button>
-
-        <div id="level-up-msg"></div>
-    </div>
+        <section class="sticker-book">
+            <h2>📒 My Sticker Book</h2>
+            <div class="stickers" id="stickers"></div>
+        </section>
+    </main>
 
     <footer>
         Drawn by Colm Ryan &middot; with LLM help &middot; <a href="../index.html">All projects</a>
     </footer>
 
+    <div class="overlay" id="celebrate" hidden>
+        <div class="celebrate-card" role="dialog" aria-modal="true" aria-labelledby="cel-title">
+            <div class="big-sticker" id="cel-sticker">🦄</div>
+            <h2 id="cel-title">Level up!</h2>
+            <p id="cel-text"></p>
+            <button class="btn btn-go" id="cel-btn">Let's go! 🚀</button>
+        </div>
+    </div>
+
+    <canvas id="confetti"></canvas>
+
     <script>
-        const CHEERFUL = [
-            "Great job!", "You got it!", "Awesome!", "Nice work!",
-            "Correct!", "Well done!", "Fantastic!", "Superb!"
-        ];
-
-        const ENCOURAGE = [
-            "Not quite — try again!", "Almost! Keep going!",
-            "Oops! Let's try another.", "Good effort!"
-        ];
-
-        const ADVANCE_THRESHOLD = 5;
+        /* ---------- Content ---------- */
+        const CHEERS = ["Yes!", "You got it!", "Awesome!", "Super!", "Woo-hoo!", "Brilliant!", "Fantastic!", "Spot on!", "Nailed it!"];
+        const PROMPTS = ["What time does my clock say?", "Tick tock… what time is it?", "Can you read my hands?", "Look closely — what time?", "Ding dong! What time is it now?"];
+        const STICKERS = ["🦄", "🚀", "🐙", "🦖", "🌈", "🐝", "🍩", "🦊", "🐢", "🎈", "🐳", "🦁", "🍉", "🐸", "⚡", "🐧", "🦋", "🍦", "🎸", "🐼", "🌻", "🏆"];
+        const LEVEL_NAMES = { 1: "o'clock hours", 2: "quarter hours", 3: "counting by fives", 4: "any minute" };
+        const ROW_FOR_STICKER = 5;
         const MAX_LEVEL = 4;
+        const STORE_KEY = 'learnToTellTime.v2';
+        const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+        /* ---------- State (some of it saved between visits) ---------- */
         const state = {
             level: 1,
-            currentHour: 0,
-            currentMinute: 0,
+            mode: 'tap',
+            muted: false,
+            stars: 0,
+            stickers: [],
             streak: 0,
-            bestStreak: 0,
-            answered: false
+            progress: 0,
+            hour: 12,
+            minute: 0,
+            attempts: 0,
+            answered: false,
+            choices: [],
+            hint: null // { count, target, done } while the counting hint is showing
         };
 
-        const canvas = document.getElementById('clock');
+        function loadSaved() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+                if ([1, 2, 3, 4].includes(saved.level)) state.level = saved.level;
+                if (saved.mode === 'tap' || saved.mode === 'type') state.mode = saved.mode;
+                state.muted = !!saved.muted;
+                if (Number.isFinite(saved.stars)) state.stars = saved.stars;
+                if (Array.isArray(saved.stickers)) state.stickers = saved.stickers.filter(s => typeof s === 'string');
+            } catch (e) { /* storage unavailable: start fresh */ }
+        }
+
+        function save() {
+            try {
+                localStorage.setItem(STORE_KEY, JSON.stringify({
+                    level: state.level, mode: state.mode, muted: state.muted,
+                    stars: state.stars, stickers: state.stickers
+                }));
+            } catch (e) { /* ignore */ }
+        }
+
+        /* ---------- Elements ---------- */
+        const $ = id => document.getElementById(id);
+        const canvas = $('clock');
         const ctx = canvas.getContext('2d');
-        const hourInput = document.getElementById('hour-input');
-        const minuteInput = document.getElementById('minute-input');
-        const minuteGroup = document.getElementById('minute-group');
-        const colonEl = document.getElementById('colon');
-        const checkBtn = document.getElementById('check-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const feedbackEl = document.getElementById('feedback');
-        const streakEl = document.querySelector('.streak-display');
-        const levelUpEl = document.getElementById('level-up-msg');
-        const clockContainer = document.querySelector('.clock-container');
+        const bubble = $('bubble');
+        const choicesEl = $('choices');
+        const typeArea = $('type-area');
+        const hourInput = $('hour-input');
+        const minuteInput = $('minute-input');
+        const minuteGroup = $('minute-group');
+        const colonEl = $('colon');
+        const hintBtn = $('hint-btn');
+        const checkBtn = $('check-btn');
+        const nextBtn = $('next-btn');
+        const soundBtn = $('sound-btn');
+        const overlay = $('celebrate');
 
-        // Level buttons
-        document.querySelectorAll('.level-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                setLevel(parseInt(btn.dataset.level));
-            });
-        });
+        /* ---------- Sound (tiny Web Audio synth, no files) ---------- */
+        let audioCtx = null;
+        let userHasInteracted = false;
+        ['pointerdown', 'keydown'].forEach(evt =>
+            window.addEventListener(evt, () => { userHasInteracted = true; }, { capture: true, once: false }));
 
-        // Only allow digit characters in inputs
-        [hourInput, minuteInput].forEach(input => {
-            input.addEventListener('input', () => {
-                input.value = input.value.replace(/[^0-9]/g, '');
-            });
-        });
-
-        checkBtn.addEventListener('click', checkAnswer);
-        nextBtn.addEventListener('click', nextQuestion);
-
-        // Enter key submits
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (state.answered) {
-                    nextQuestion();
-                } else {
-                    checkAnswer();
-                }
+        function getAudio() {
+            if (!userHasInteracted) return null; // browsers block audio before a gesture
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return null;
+                audioCtx = new AC();
             }
-        });
-
-        function setLevel(level) {
-            state.level = level;
-            state.streak = 0;
-
-            document.querySelectorAll('.level-btn').forEach(b => {
-                const isActive = parseInt(b.dataset.level) === level;
-                b.classList.toggle('active', isActive);
-                b.setAttribute('aria-pressed', isActive);
-            });
-
-            updateStreak();
-            levelUpEl.textContent = '';
-            nextQuestion();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
         }
 
-        function generateTime(level) {
-            const hour = Math.floor(Math.random() * 12) + 1;
-            let minute = 0;
-
-            if (level === 1) {
-                minute = 0;
-            } else if (level === 2) {
-                minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
-            } else if (level === 3) {
-                minute = Math.floor(Math.random() * 12) * 5;
-            } else {
-                minute = Math.floor(Math.random() * 60);
-            }
-
-            return { hour, minute };
+        function tone(freq, delay, dur, type = 'triangle', vol = 0.15) {
+            if (state.muted) return;
+            const a = getAudio();
+            if (!a) return;
+            const osc = a.createOscillator();
+            const gain = a.createGain();
+            const t0 = a.currentTime + delay;
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, t0);
+            gain.gain.setValueAtTime(0.0001, t0);
+            gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+            osc.connect(gain).connect(a.destination);
+            osc.start(t0);
+            osc.stop(t0 + dur + 0.05);
         }
 
-        // read a design token so the canvas clock follows the page palette
+        const sfx = {
+            tick: () => tone(2200, 0, 0.025, 'square', 0.025),
+            tap: () => tone(660, 0, 0.08, 'sine', 0.08),
+            count: n => tone(520 * Math.pow(2, n / 12), 0, 0.14, 'sine', 0.12),
+            correct: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.08, 0.28)),
+            wrong: () => { tone(330, 0, 0.18, 'sine', 0.12); tone(247, 0.16, 0.3, 'sine', 0.12); },
+            bells: () => { for (let i = 0; i < 8; i++) tone(i % 2 ? 1320 : 1560, i * 0.045, 0.06, 'square', 0.025); },
+            fanfare: () => [[523, 0], [659, 0.12], [784, 0.24], [1047, 0.36], [784, 0.52], [1047, 0.64]]
+                .forEach(([f, t], i) => tone(f, t, i === 5 ? 0.6 : 0.2, 'triangle', 0.16))
+        };
+
+        /* ---------- Clock drawing ---------- */
+        const W = 360, H = 390;      // logical canvas size
+        const CX = 180, CY = 200;    // clock centre
+        const R = 148;               // outer edge of the yellow ring
+        const RF = R - 22;           // clock face radius (inside the ring)
+
+        // displayed time in minutes past 12:00, can be fractional while the hands spin
+        const display = { total: 0 };
+        let spin = null;
+
         function cssVar(name) {
             return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
         }
+        const isDark = () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        function drawClock(hour, minute) {
-            const size = canvas.width;
-            const cx = size / 2;
-            const cy = size / 2;
-            const r = size / 2 - 10;
+        function setupCanvas() {
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
 
-            const inkColor = cssVar('--ink');
-            const tickColor = cssVar('--muted');
-            const faceColor = cssVar('--well');
-            const hourColor = cssVar('--crayon-blue');
-            const minuteColor = cssVar('--crayon-red');
+        const angleFor = fractionOfTurn => fractionOfTurn * Math.PI * 2 - Math.PI / 2;
 
-            ctx.clearRect(0, 0, size, size);
+        function render() {
+            const ink = cssVar('--ink');
+            const muted = cssVar('--muted');
+            const face = cssVar('--well');
+            const sun = cssVar('--sun');
+            const berry = cssVar('--berry');
+            const blue = cssVar('--crayon-blue');
+            const red = cssVar('--crayon-red');
+            const dark = isDark();
+
+            ctx.clearRect(0, 0, W, H);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Little feet
+            [-1, 1].forEach(side => {
+                const a = Math.PI / 2 + side * 0.72;
+                ctx.beginPath();
+                ctx.moveTo(CX + (R - 8) * Math.cos(a), CY + (R - 8) * Math.sin(a));
+                ctx.lineTo(CX + (R + 20) * Math.cos(a), CY + (R + 20) * Math.sin(a));
+                ctx.lineWidth = 13;
+                ctx.strokeStyle = ink;
+                ctx.stroke();
+            });
+
+            // Alarm bells (domes pointing outward) and the hammer on top
+            ctx.beginPath();
+            ctx.moveTo(CX, CY - R);
+            ctx.lineTo(CX, CY - R - 16);
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = ink;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(CX, CY - R - 18, 7, 0, Math.PI * 2);
+            ctx.fillStyle = berry;
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            [-1, 1].forEach(side => {
+                const a = -Math.PI / 2 + side * 0.7;
+                ctx.save();
+                ctx.translate(CX + (R + 2) * Math.cos(a), CY + (R + 2) * Math.sin(a));
+                ctx.rotate(a + Math.PI / 2);
+                ctx.beginPath();
+                ctx.arc(0, 0, 30, Math.PI, 0);
+                ctx.closePath();
+                ctx.fillStyle = berry;
+                ctx.fill();
+                ctx.lineWidth = 3.5;
+                ctx.strokeStyle = ink;
+                ctx.stroke();
+                ctx.beginPath(); // shine
+                ctx.arc(0, 0, 21, Math.PI * 1.15, Math.PI * 1.45);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // Yellow ring
+            ctx.beginPath();
+            ctx.arc(CX, CY, R, 0, Math.PI * 2);
+            ctx.fillStyle = sun;
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = ink;
+            ctx.stroke();
 
             // Face
             ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, Math.PI * 2);
-            ctx.fillStyle = faceColor;
+            ctx.arc(CX, CY, RF, 0, Math.PI * 2);
+            ctx.fillStyle = face;
             ctx.fill();
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = inkColor;
+
+            // Rainbow wedges: the wedge after number n (up to n+1) is where the
+            // hour hand sits during hour n — handy for the hour hint.
+            for (let n = 1; n <= 12; n++) {
+                const highlight = state.hint && n === state.hour;
+                ctx.beginPath();
+                ctx.moveTo(CX, CY);
+                ctx.arc(CX, CY, RF, angleFor(n / 12), angleFor((n + 1) / 12));
+                ctx.closePath();
+                const alpha = highlight ? (dark ? 0.55 : 0.6) : (dark ? 0.16 : 0.22);
+                ctx.fillStyle = dark ? `hsla(${n * 30}, 45%, 45%, ${alpha})` : `hsla(${n * 30}, 85%, 70%, ${alpha})`;
+                ctx.fill();
+            }
+            ctx.beginPath();
+            ctx.arc(CX, CY, RF, 0, Math.PI * 2);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = ink;
             ctx.stroke();
 
             // Tick marks
             for (let i = 0; i < 60; i++) {
-                const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
-                const isHour = i % 5 === 0;
-                const innerR = isHour ? r - 16 : r - 8;
-                const outerR = r - 3;
-
+                const a = angleFor(i / 60);
+                const isHourTick = i % 5 === 0;
+                const inner = isHourTick ? RF - 14 : RF - 7;
                 ctx.beginPath();
-                ctx.moveTo(cx + innerR * Math.cos(angle), cy + innerR * Math.sin(angle));
-                ctx.lineTo(cx + outerR * Math.cos(angle), cy + outerR * Math.sin(angle));
-                ctx.lineWidth = isHour ? 3 : 1;
-                ctx.strokeStyle = isHour ? inkColor : tickColor;
+                ctx.moveTo(CX + inner * Math.cos(a), CY + inner * Math.sin(a));
+                ctx.lineTo(CX + (RF - 3) * Math.cos(a), CY + (RF - 3) * Math.sin(a));
+                ctx.lineWidth = isHourTick ? 3 : 1.3;
+                ctx.strokeStyle = isHourTick ? ink : muted;
                 ctx.stroke();
             }
 
-            // Numbers
-            ctx.fillStyle = inkColor;
-            ctx.font = '500 22px "IBM Plex Mono", ui-monospace, monospace';
+            // Hour numbers (the hinted hour gets a blue badge)
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-
             for (let n = 1; n <= 12; n++) {
-                const angle = (n / 12) * Math.PI * 2 - Math.PI / 2;
-                const numR = r - 32;
-                ctx.fillText(n, cx + numR * Math.cos(angle), cy + numR * Math.sin(angle));
+                const a = angleFor(n / 12);
+                const x = CX + (RF - 32) * Math.cos(a);
+                const y = CY + (RF - 32) * Math.sin(a) + 1;
+                if (state.hint && n === state.hour) {
+                    ctx.beginPath();
+                    ctx.arc(x, y - 1, 17, 0, Math.PI * 2);
+                    ctx.fillStyle = blue;
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                } else {
+                    ctx.fillStyle = ink;
+                }
+                ctx.font = '600 25px Fredoka, "Trebuchet MS", sans-serif';
+                ctx.fillText(n, x, y);
             }
 
-            // Center dot
+            // Minute labels on the yellow ring: decoration dots normally,
+            // counting-by-fives numbers while the hint is showing.
+            for (let k = 0; k < 12; k++) {
+                const a = angleFor(k / 12);
+                const x = CX + (R - 11) * Math.cos(a);
+                const y = CY + (R - 11) * Math.sin(a);
+                const h = state.hint;
+                const shown = h && (h.done || (k >= 1 && k <= h.count));
+                if (!shown) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.fill();
+                    continue;
+                }
+                const isTarget = k === h.target;
+                const counted = k >= 1 && k <= h.target;
+                if (isTarget) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 13, 0, Math.PI * 2);
+                    ctx.fillStyle = red;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = isTarget || counted || h.target === 0 ? 1 : 0.5;
+                ctx.fillStyle = isTarget ? '#fff' : '#3a2a10';
+                ctx.font = `700 ${isTarget ? 14 : 12}px Fredoka, "Trebuchet MS", sans-serif`;
+                ctx.fillText(k === 0 ? '00' : k * 5, x, y + 1);
+                ctx.globalAlpha = 1;
+            }
+
+            // Hands
+            const t = ((display.total % 720) + 720) % 720;
+            drawHand(angleFor(t / 720), RF * 0.52, 10, blue);
+            drawHand(angleFor((t % 60) / 60), RF * 0.8, 6, red);
+
+            // Centre cap
             ctx.beginPath();
-            ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-            ctx.fillStyle = inkColor;
+            ctx.arc(CX, CY, 9, 0, Math.PI * 2);
+            ctx.fillStyle = sun;
             ctx.fill();
-
-            // Hour hand
-            const hourAngle = ((hour % 12) / 12 + minute / 720) * Math.PI * 2 - Math.PI / 2;
-            const hourLen = r * 0.5;
-            drawHand(cx, cy, hourAngle, hourLen, 7, hourColor);
-
-            // Minute hand
-            const minuteAngle = (minute / 60) * Math.PI * 2 - Math.PI / 2;
-            const minuteLen = r * 0.75;
-            drawHand(cx, cy, minuteAngle, minuteLen, 4, minuteColor);
-
-            // Center cap
-            ctx.beginPath();
-            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-            ctx.fillStyle = inkColor;
-            ctx.fill();
-        }
-
-        function drawHand(cx, cy, angle, length, width, color) {
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(cx + length * Math.cos(angle), cy + length * Math.sin(angle));
-            ctx.lineWidth = width;
-            ctx.strokeStyle = color;
-            ctx.lineCap = 'round';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = ink;
             ctx.stroke();
         }
 
-        function checkAnswer() {
-            if (state.answered) return;
+        function drawHand(angle, length, width, color) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.18)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
+            ctx.beginPath();
+            ctx.moveTo(CX - 12 * Math.cos(angle), CY - 12 * Math.sin(angle));
+            ctx.lineTo(CX + length * Math.cos(angle), CY + length * Math.sin(angle));
+            ctx.lineWidth = width;
+            ctx.strokeStyle = color;
+            ctx.stroke();
+            ctx.restore();
+            // round tip
+            ctx.beginPath();
+            ctx.arc(CX + length * Math.cos(angle), CY + length * Math.sin(angle), width * 0.75, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
 
-            const h = parseInt(hourInput.value);
-            const m = state.level === 1 ? 0 : parseInt(minuteInput.value);
-
-            if (isNaN(h) || h < 1 || h > 12) {
-                feedbackEl.textContent = 'Enter an hour (1–12)';
-                feedbackEl.className = 'feedback incorrect';
+        // Spin the hands forward to the new time with a little overshoot ("boing").
+        function spinTo(targetTotal) {
+            const from = ((display.total % 720) + 720) % 720;
+            let distance = ((targetTotal - from) % 720 + 720) % 720;
+            if (distance < 180) distance += 720; // always make a satisfying spin
+            if (reducedMotion) {
+                display.total = targetTotal;
+                render();
                 return;
             }
+            spin = { from, distance, start: performance.now(), duration: Math.min(1500, 800 + distance * 0.5), lastHour: Math.floor(from / 60) };
+            requestAnimationFrame(spinFrame);
+        }
 
-            if (state.level > 1 && (isNaN(m) || m < 0 || m > 59)) {
-                feedbackEl.textContent = 'Enter minutes (0–59)';
-                feedbackEl.className = 'feedback incorrect';
-                return;
-            }
+        function easeOutBack(x) {
+            const c1 = 1.25, c3 = c1 + 1;
+            return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        }
 
-            state.answered = true;
-            const correct = h === state.currentHour && m === state.currentMinute;
-
-            if (correct) {
-                state.streak++;
-                if (state.streak > state.bestStreak) state.bestStreak = state.streak;
-
-                feedbackEl.textContent = CHEERFUL[Math.floor(Math.random() * CHEERFUL.length)];
-                feedbackEl.className = 'feedback correct';
-
-                canvas.classList.add('clock-correct');
-                setTimeout(() => canvas.classList.remove('clock-correct'), 600);
-
-                // Auto-advance
-                if (state.streak >= ADVANCE_THRESHOLD && state.level < MAX_LEVEL) {
-                    const newLevel = state.level + 1;
-                    levelUpEl.textContent = `Level up! Moving to Level ${newLevel}`;
-                    levelUpEl.className = 'level-up-msg';
-                    state.streak = 0;
-                    setTimeout(() => {
-                        setLevel(newLevel);
-                    }, 1500);
-                    return;
-                }
+        function spinFrame(now) {
+            if (!spin) return;
+            const progress = Math.min(1, (now - spin.start) / spin.duration);
+            display.total = spin.from + spin.distance * easeOutBack(progress);
+            const hourMark = Math.floor(display.total / 60);
+            if (hourMark !== spin.lastHour) { spin.lastHour = hourMark; sfx.tick(); }
+            render();
+            if (progress < 1) {
+                requestAnimationFrame(spinFrame);
             } else {
-                state.streak = 0;
-                const correctStr = formatTime(state.currentHour, state.currentMinute);
-                const msg = ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
-                feedbackEl.textContent = `${msg} It was ${correctStr}`;
-                feedbackEl.className = 'feedback incorrect';
-
-                canvas.classList.add('clock-shake');
-                setTimeout(() => canvas.classList.remove('clock-shake'), 500);
+                display.total = spin.from + spin.distance;
+                spin = null;
+                render();
             }
-
-            updateStreak();
-            checkBtn.style.display = 'none';
-            nextBtn.style.display = 'inline-block';
-            nextBtn.focus();
         }
 
-        function formatTime(h, m) {
-            return `${h}:${String(m).padStart(2, '0')}`;
+        /* ---------- Confetti ---------- */
+        const confettiCanvas = $('confetti');
+        const cctx = confettiCanvas.getContext('2d');
+        let particles = [];
+        let confettiRunning = false;
+
+        function sizeConfetti() {
+            const dpr = Math.max(1, window.devicePixelRatio || 1);
+            confettiCanvas.width = window.innerWidth * dpr;
+            confettiCanvas.height = window.innerHeight * dpr;
+            cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
+        function burst(x, y, count, power = 1) {
+            if (reducedMotion) return;
+            const colors = ['--crayon-blue', '--crayon-red', '--sun', '--berry', '--good'].map(cssVar);
+            for (let i = 0; i < count; i++) {
+                const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.3;
+                const speed = (4 + Math.random() * 7) * power;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    rot: Math.random() * Math.PI,
+                    vr: (Math.random() - 0.5) * 0.4,
+                    size: 6 + Math.random() * 6,
+                    color: colors[i % colors.length],
+                    round: Math.random() < 0.35,
+                    life: 0
+                });
+            }
+            if (!confettiRunning) {
+                confettiRunning = true;
+                requestAnimationFrame(confettiFrame);
+            }
+        }
+
+        function confettiFrame() {
+            cctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            particles = particles.filter(p => p.y < window.innerHeight + 30 && p.life < 240);
+            particles.forEach(p => {
+                p.life++;
+                p.vy += 0.22;
+                p.vx *= 0.985;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rot += p.vr;
+                cctx.save();
+                cctx.translate(p.x, p.y);
+                cctx.rotate(p.rot);
+                cctx.fillStyle = p.color;
+                if (p.round) {
+                    cctx.beginPath();
+                    cctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+                    cctx.fill();
+                } else {
+                    cctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                }
+                cctx.restore();
+            });
+            if (particles.length) {
+                requestAnimationFrame(confettiFrame);
+            } else {
+                confettiRunning = false;
+                cctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            }
+        }
+
+        function centerOf(el) {
+            const r = el.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }
+
+        function floatText(el, text) {
+            const { x, y } = centerOf(el);
+            const span = document.createElement('span');
+            span.className = 'float-text';
+            span.textContent = text;
+            span.style.left = x + 'px';
+            span.style.top = (y - 20) + 'px';
+            document.body.appendChild(span);
+            setTimeout(() => span.remove(), 1000);
+        }
+
+        function replayAnimation(el, className) {
+            el.classList.remove(className);
+            void el.offsetWidth; // force reflow so the animation restarts
+            el.classList.add(className);
+        }
+
+        /* ---------- Time helpers ---------- */
+        const formatTime = (h, m) => `${h}:${String(m).padStart(2, '0')}`;
+        const wrapHour = h => ((h - 1 + 120) % 12) + 1;
+
+        // "quarter past 3", "20 minutes to 5", etc.
+        function timeInWords(h, m) {
+            const next = wrapHour(h + 1);
+            if (m === 0) return `${h} o'clock`;
+            if (m === 15) return `quarter past ${h}`;
+            if (m === 30) return `half past ${h}`;
+            if (m === 45) return `quarter to ${next}`;
+            if (m < 30) return `${m} minute${m === 1 ? '' : 's'} past ${h}`;
+            const left = 60 - m;
+            return `${left} minute${left === 1 ? '' : 's'} to ${next}`;
+        }
+
+        function generateTime(level) {
+            let hour, minute;
+            do {
+                hour = Math.floor(Math.random() * 12) + 1;
+                if (level === 1) minute = 0;
+                else if (level === 2) minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+                else if (level === 3) minute = Math.floor(Math.random() * 12) * 5;
+                else minute = Math.floor(Math.random() * 60);
+            } while (hour === state.hour && minute === state.minute); // never repeat the last one
+            return { hour, minute };
+        }
+
+        // Wrong answers that mirror real mistakes kids make: mixing up the hands,
+        // or reading the hour hand as the *next* hour when it's nearly there.
+        function makeChoices(h, m, level) {
+            const seen = new Set([h * 60 + m]);
+            const make = (hh, mm) => {
+                hh = wrapHour(hh);
+                mm = level === 1 ? 0 : ((mm % 60) + 60) % 60;
+                const key = hh * 60 + mm;
+                if (seen.has(key)) return null;
+                return { h: hh, m: mm, key };
+            };
+            const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+
+            const hourMixUp = make(m >= 30 ? h + 1 : h - 1, m) || make(h + 1, m);
+            const others = [];
+            if (m > 0 && m % 5 === 0) others.push(make(m / 5, h * 5)); // swapped hands
+            if (level === 1) others.push(make(h + 6, 0), make(h + 2, 0), make(h - 2, 0));
+            if (level === 2) others.push(make(h, m + 15), make(h, m + 30), make(h, m - 15));
+            if (level === 3) others.push(make(h, m + 5), make(h, m - 5), make(h, 60 - m));
+            if (level === 4) others.push(make(h, m + 1), make(h, m - 1), make(h, m + 5), make(h, m - 5));
+
+            const picked = [];
+            const take = c => { if (c && !seen.has(c.key)) { seen.add(c.key); picked.push(c); } };
+            take(hourMixUp);
+            shuffle(others.filter(Boolean)).forEach(c => { if (picked.length < 2) take(c); });
+            while (picked.length < 2) {
+                const t = generateTime(level);
+                take(make(t.hour, t.minute));
+            }
+            return shuffle([{ h, m, correct: true }, ...picked]);
+        }
+
+        /* ---------- UI updates ---------- */
+        function say(text, mood = '') {
+            bubble.textContent = text;
+            bubble.className = 'bubble' + (mood ? ' ' + mood : '');
+            replayAnimation(bubble, 'pop');
+        }
+
+        function updateHud(bumpStars = false) {
+            $('star-count').textContent = state.stars;
+            $('streak-count').textContent = state.streak;
+            if (bumpStars) replayAnimation($('stars-chip'), 'bump');
+            if (state.streak > 0) replayAnimation($('streak-chip'), 'bump');
+
+            const progressEl = $('progress');
+            const before = progressEl.querySelectorAll('.dot.on').length;
+            progressEl.innerHTML = '';
+            for (let i = 0; i < ROW_FOR_STICKER; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'dot' + (i < state.progress ? ' on' : '');
+                if (i < state.progress) dot.textContent = '⭐';
+                if (i < before) dot.style.animation = 'none'; // only the new one pops
+                progressEl.appendChild(dot);
+            }
+            progressEl.setAttribute('aria-label', `${state.progress} of ${ROW_FOR_STICKER} in a row`);
+        }
+
+        function renderStickers(newest = false) {
+            const el = $('stickers');
+            el.innerHTML = '';
+            if (!state.stickers.length) {
+                el.innerHTML = '<span class="empty">No stickers yet — get 5 in a row!</span>';
+                return;
+            }
+            state.stickers.forEach((s, i) => {
+                const span = document.createElement('span');
+                span.textContent = s;
+                if (newest && i === state.stickers.length - 1) span.className = 'new';
+                el.appendChild(span);
+            });
+        }
+
+        function updateSoundButton() {
+            soundBtn.textContent = state.muted ? '🔇' : '🔊';
+            soundBtn.setAttribute('aria-label', state.muted ? 'Turn sound on' : 'Turn sound off');
+        }
+
+        function updateModeUI() {
+            document.querySelectorAll('.mode-toggle button').forEach(b => {
+                const active = b.dataset.mode === state.mode;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-pressed', active);
+            });
+            choicesEl.hidden = state.mode !== 'tap';
+            typeArea.hidden = state.mode !== 'type';
+            checkBtn.hidden = state.mode !== 'type' || state.answered;
+            const hideMinute = state.level === 1;
+            minuteGroup.hidden = hideMinute;
+            colonEl.hidden = hideMinute;
+        }
+
+        function updateLevelButtons() {
+            document.querySelectorAll('.level-btn').forEach(b => {
+                const active = parseInt(b.dataset.level, 10) === state.level;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-pressed', active);
+            });
+        }
+
+        function buildChoices() {
+            choicesEl.innerHTML = '';
+            state.choices.forEach((c, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice';
+                btn.innerHTML = state.level === 1
+                    ? `${c.h}<small>o'clock</small>`
+                    : `${formatTime(c.h, c.m)}`;
+                btn.setAttribute('aria-label', `Choice ${i + 1}: ${timeInWords(c.h, c.m)}`);
+                btn.addEventListener('click', () => submit(c.h, c.m, btn));
+                c.button = btn;
+                choicesEl.appendChild(btn);
+            });
+        }
+
+        /* ---------- Hint: highlight the hour, then count the minutes by fives ---------- */
+        let hintTimer = null;
+
+        function hintText(h, m) {
+            let text = m === 0
+                ? `The short blue hand points at ${h}, so the hour is ${h}. `
+                : `The short blue hand has just passed ${h}, so the hour is ${h}. `;
+            if (state.level === 1 || m === 0) {
+                text += `The long red hand points straight up to 12, so it's ${h} o'clock!`;
+            } else if (m % 5 === 0) {
+                text += `The long red hand points at ${m / 5}. Count by fives: ${m} minutes!`;
+            } else {
+                const base = Math.floor(m / 5) * 5;
+                const extra = m - base;
+                text += `Count by fives to ${base}, then ${extra} more little tick${extra === 1 ? '' : 's'}: ${m}!`;
+            }
+            return text;
+        }
+
+        function showHint() {
+            if (state.hint || state.answered) return;
+            clearInterval(hintTimer);
+            const target = Math.floor(state.minute / 5);
+            state.hint = { count: 0, target, done: target === 0 };
+            say('💡 ' + hintText(state.hour, state.minute), 'hint');
+            hintBtn.disabled = true;
+            render();
+            if (state.hint.done) return;
+            const step = reducedMotion ? 0 : 280;
+            hintTimer = setInterval(() => {
+                if (!state.hint) { clearInterval(hintTimer); return; }
+                state.hint.count++;
+                sfx.count(state.hint.count);
+                if (state.hint.count >= state.hint.target) {
+                    clearInterval(hintTimer);
+                    setTimeout(() => { if (state.hint) { state.hint.done = true; render(); } }, 400);
+                }
+                render();
+            }, step);
+        }
+
+        function clearHint() {
+            clearInterval(hintTimer);
+            state.hint = null;
+            hintBtn.disabled = false;
+        }
+
+        /* ---------- Game flow ---------- */
         function nextQuestion() {
-            const time = generateTime(state.level);
-            state.currentHour = time.hour;
-            state.currentMinute = time.minute;
+            clearHint();
+            const { hour, minute } = generateTime(state.level);
+            state.hour = hour;
+            state.minute = minute;
+            state.attempts = 0;
             state.answered = false;
+            state.choices = makeChoices(hour, minute, state.level);
 
-            drawClock(time.hour, time.minute);
-
+            spinTo(hour % 12 * 60 + minute);
+            say(PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
+            buildChoices();
             hourInput.value = '';
             minuteInput.value = '';
-            feedbackEl.textContent = '';
-            feedbackEl.className = 'feedback';
-            levelUpEl.textContent = '';
-
-            checkBtn.style.display = 'inline-block';
-            nextBtn.style.display = 'none';
-
-            // Hide minute input at level 1
-            const hideMinute = state.level === 1;
-            minuteGroup.style.display = hideMinute ? 'none' : '';
-            colonEl.style.display = hideMinute ? 'none' : '';
-
-            hourInput.focus();
+            nextBtn.hidden = true;
+            nextBtn.classList.remove('wiggle');
+            hintBtn.hidden = false;
+            updateModeUI();
+            if (state.mode === 'type') hourInput.focus({ preventScroll: true });
         }
 
-        function updateStreak() {
-            let stars = '';
-            for (let i = 0; i < state.streak; i++) {
-                stars += '<span class="star pop" style="animation-delay:' + (i * 0.05) + 's">&#11088;</span>';
+        function submitTyped() {
+            if (state.answered) return;
+            const h = parseInt(hourInput.value, 10);
+            const m = state.level === 1 ? 0 : parseInt(minuteInput.value, 10);
+            if (isNaN(h) || h < 1 || h > 12) {
+                say('Type an hour from 1 to 12 in the blue box 👆', 'bad');
+                hourInput.focus();
+                return;
             }
-            streakEl.innerHTML = stars || '&nbsp;';
+            if (state.level > 1 && (isNaN(m) || m < 0 || m > 59)) {
+                say('Type the minutes (0 to 59) in the red box 👆', 'bad');
+                minuteInput.focus();
+                return;
+            }
+            submit(h, m, checkBtn);
         }
 
-        function init() {
-            updateStreak();
+        function submit(h, m, sourceEl) {
+            if (state.answered) return;
+            const correct = h === state.hour && m === state.minute;
+
+            if (correct) {
+                state.answered = true;
+                const firstTry = state.attempts === 0;
+                state.stars++;
+                if (firstTry) {
+                    state.streak++;
+                    state.progress++;
+                }
+                clearInterval(hintTimer);
+                const cheer = firstTry ? CHEERS[Math.floor(Math.random() * CHEERS.length)] : 'There you go!';
+                say(`${cheer} It's ${timeInWords(state.hour, state.minute)} 🎉`, 'good');
+                sfx.correct();
+                setTimeout(sfx.bells, 250);
+                replayAnimation(canvas, 'clock-ring');
+                const c = centerOf(canvas);
+                burst(c.x, c.y - 40, firstTry ? 60 : 25);
+                floatText(sourceEl, '+1 ⭐');
+                markChoices(true, sourceEl);
+                finishQuestion();
+                updateHud(true);
+                save();
+                if (state.progress >= ROW_FOR_STICKER) setTimeout(celebrate, 900);
+                return;
+            }
+
+            // Wrong answer: one more go with a hint, then show the answer
+            state.attempts++;
+            state.streak = 0;
+            state.progress = 0;
+            sfx.wrong();
+            replayAnimation(canvas, 'clock-shake');
+            if (sourceEl.classList.contains('choice')) {
+                sourceEl.classList.add('wrong');
+                sourceEl.disabled = true;
+            }
+            if (state.attempts === 1) {
+                showHint();
+                say('Not quite! 👀 ' + hintText(state.hour, state.minute), 'bad');
+                if (state.mode === 'type') { hourInput.select(); hourInput.focus(); }
+            } else {
+                state.answered = true;
+                clearInterval(hintTimer);
+                if (state.hint) state.hint.done = true;
+                render();
+                say(`It's ${formatTime(state.hour, state.minute)} — ${timeInWords(state.hour, state.minute)}. You'll get the next one! 💪`, 'bad');
+                markChoices(false);
+                finishQuestion();
+            }
+            updateHud();
+        }
+
+        function markChoices(wasCorrect, sourceEl) {
+            state.choices.forEach(c => {
+                if (!c.button) return;
+                c.button.disabled = true;
+                if (c.correct) {
+                    c.button.classList.remove('wrong');
+                    c.button.classList.add('right');
+                }
+            });
+        }
+
+        function finishQuestion() {
+            checkBtn.hidden = true;
+            hintBtn.hidden = true;
+            nextBtn.hidden = false;
+            nextBtn.classList.add('wiggle');
+            nextBtn.focus({ preventScroll: true });
+        }
+
+        function celebrate() {
+            const sticker = STICKERS[state.stickers.length % STICKERS.length];
+            state.stickers.push(sticker);
+            state.progress = 0;
+            save();
+            renderStickers(true);
+            updateHud();
+
+            const levelingUp = state.level < MAX_LEVEL;
+            $('cel-sticker').textContent = sticker;
+            $('cel-title').textContent = levelingUp ? 'Level up!' : 'New sticker!';
+            $('cel-text').textContent = levelingUp
+                ? `5 in a row! You've learned ${LEVEL_NAMES[state.level]}. Next up: ${LEVEL_NAMES[state.level + 1]}!`
+                : `5 in a row on any minute! You're a real time wizard. 🧙`;
+            overlay.dataset.levelUp = levelingUp ? '1' : '';
+            overlay.hidden = false;
+            $('cel-btn').focus();
+            sfx.fanfare();
+            const w = window.innerWidth;
+            [0.2, 0.5, 0.8].forEach((f, i) => setTimeout(() => burst(w * f, window.innerHeight * 0.6, 70, 1.3), i * 180));
+        }
+
+        function closeCelebration() {
+            if (overlay.hidden) return;
+            overlay.hidden = true;
+            sfx.tap();
+            if (overlay.dataset.levelUp) setLevel(state.level + 1);
+            else nextQuestion();
+        }
+
+        function setLevel(level) {
+            state.level = level;
+            state.progress = 0;
+            updateLevelButtons();
+            updateHud();
+            save();
             nextQuestion();
         }
 
-        init();
+        /* ---------- Events ---------- */
+        document.querySelectorAll('.level-btn').forEach(btn =>
+            btn.addEventListener('click', () => { sfx.tap(); setLevel(parseInt(btn.dataset.level, 10)); }));
 
-        // redraw once the web fonts arrive so the clock numbers use them,
-        // and when the color scheme flips so the canvas matches the palette
-        if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(() => drawClock(state.currentHour, state.currentMinute));
-        }
+        document.querySelectorAll('.mode-toggle button').forEach(btn =>
+            btn.addEventListener('click', () => {
+                sfx.tap();
+                state.mode = btn.dataset.mode;
+                save();
+                updateModeUI();
+                if (state.mode === 'type' && !state.answered) hourInput.focus();
+            }));
+
+        soundBtn.addEventListener('click', () => {
+            state.muted = !state.muted;
+            updateSoundButton();
+            save();
+            sfx.tap();
+        });
+
+        [hourInput, minuteInput].forEach(input =>
+            input.addEventListener('input', () => { input.value = input.value.replace(/[^0-9]/g, ''); }));
+
+        // Jump to the minute box once the hour can't be anything else (2–9, or two digits)
+        hourInput.addEventListener('input', () => {
+            const v = hourInput.value;
+            if (state.level > 1 && (v.length === 2 || (v.length === 1 && v !== '1' && v !== '0'))) minuteInput.focus();
+        });
+
+        hintBtn.addEventListener('click', () => { sfx.tap(); showHint(); });
+        checkBtn.addEventListener('click', submitTyped);
+        nextBtn.addEventListener('click', () => { sfx.tap(); nextQuestion(); });
+        $('cel-btn').addEventListener('click', closeCelebration);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeCelebration(); });
+
+        document.addEventListener('keydown', e => {
+            if (!overlay.hidden) {
+                if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') { e.preventDefault(); closeCelebration(); }
+                return;
+            }
+            const inInput = e.target.tagName === 'INPUT';
+            if (e.key === 'Enter') {
+                if (e.target.tagName === 'BUTTON' && !inInput) return; // let the focused button handle it
+                e.preventDefault();
+                if (state.answered) nextQuestion();
+                else if (state.mode === 'type') submitTyped();
+            } else if (!inInput && state.mode === 'tap' && !state.answered && ['1', '2', '3'].includes(e.key)) {
+                const choice = state.choices[parseInt(e.key, 10) - 1];
+                if (choice && !choice.button.disabled) submit(choice.h, choice.m, choice.button);
+            } else if (!inInput && (e.key === 'h' || e.key === 'H')) {
+                showHint();
+            }
+        });
+
+        window.addEventListener('resize', sizeConfetti);
         if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)')
-                .addEventListener('change', () => drawClock(state.currentHour, state.currentMinute));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
         }
+        // redraw once the web font arrives so the clock numbers use it
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+
+        /* ---------- Start ---------- */
+        loadSaved();
+        setupCanvas();
+        sizeConfetti();
+        updateLevelButtons();
+        updateSoundButton();
+        renderStickers();
+        updateHud();
+        nextQuestion();
     </script>
 </body>
 </html>
