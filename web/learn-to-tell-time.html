@@ -392,6 +392,23 @@
         .stickers .empty { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
         .stickers span.new { animation: starPop 0.6s ease; }
 
+        /* Grown-up reset control: deliberately small and quiet, with an inline "are you sure?" step */
+        .reset-area { margin-top: 10px; font-size: 0.8rem; color: var(--muted); }
+        .reset-area .confirm { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
+        .link-btn {
+            background: none;
+            border: none;
+            padding: 4px 6px;
+            font: inherit;
+            font-weight: 600;
+            color: var(--muted);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            cursor: pointer;
+        }
+        .link-btn:hover { color: var(--ink-soft); }
+        .link-btn.danger { color: var(--bad-deep); }
+
         .help {
             font-size: 0.85rem;
             color: var(--ink-soft);
@@ -546,6 +563,14 @@
         <section class="sticker-book">
             <h2>📒 My Sticker Book</h2>
             <div class="stickers" id="stickers"></div>
+            <div class="reset-area">
+                <button class="link-btn" id="reset-btn" type="button">Reset stars &amp; stickers</button>
+                <span class="confirm" id="reset-confirm" hidden>
+                    <span>Clear all stars, stickers and the streak?</span>
+                    <button class="link-btn danger" id="reset-yes" type="button">Yes, reset</button>
+                    <button class="link-btn" id="reset-no" type="button">Cancel</button>
+                </span>
+            </div>
         </section>
     </main>
 
@@ -1388,6 +1413,28 @@
         nextBtn.addEventListener('click', () => { sfx.tap(); nextQuestion(); });
         $('cel-btn').addEventListener('click', closeCelebration);
         overlay.addEventListener('click', e => { if (e.target === overlay) closeCelebration(); });
+
+        /* ---------- Reset progress (stars, stickers, streak; keeps level/mode/sound settings) ---------- */
+        const resetBtn = $('reset-btn');
+        const resetConfirm = $('reset-confirm');
+        function showResetConfirm(show) {
+            resetBtn.hidden = show;
+            resetConfirm.hidden = !show;
+            (show ? $('reset-no') : resetBtn).focus();
+        }
+        resetBtn.addEventListener('click', () => showResetConfirm(true));
+        $('reset-no').addEventListener('click', () => showResetConfirm(false));
+        $('reset-yes').addEventListener('click', () => {
+            state.stars = 0;
+            state.stickers = [];
+            state.streak = 0;
+            state.progress = 0;
+            save();
+            renderStickers();
+            updateHud();
+            showResetConfirm(false);
+            say('All fresh! Let’s collect some stickers. 🌟');
+        });
 
         document.addEventListener('keydown', e => {
             if (!overlay.hidden) {
