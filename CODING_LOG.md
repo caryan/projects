@@ -11,6 +11,11 @@ Get the usage numbers for the current session with `uv run python/session_usage.
 - **Tokens:** N in · N cache write · N cache read · N out · ~$N est. at API list prices
 -->
 
+## 2026-11-21 · QR Pair (new) · `web/qr-pair.html`
+- **Precis:** Prototype for pairing two laptops on the same wifi with no server: each shows a QR code to the other's webcam, which sets up a direct WebRTC data channel, with a shared sketchpad as the demo. Only the essential WebRTC fields (ICE username and password, certificate fingerprint, addresses) are packed into a ~104-character Crockford base32 code, which the other side rebuilds into a full description. The pairing kit is a self-contained block meant to be copied into future two-player games.
+- **Harness / model:** Claude Code 2.1.330 · claude-opus-5-5 (11 calls)
+- **Tokens:** 26 in · 50.5k cache write · 614.7k cache read · 37.7k out · ~$1.28 est. at API list prices (snapshot taken while the session was still running)
+
 ## 2026-11-21 · Hedgehog Dash (new) · `web/hedgehog-dash-typing.html`
 - **Precis:** Learn-to-type game: hedgehogs chase the player and typing the prompted letters and words keeps them ahead. Getting caught means being beamed up by aliens.
 - **Harness / model:** Claude Code 2.1.330 · claude-opus-5-5 (28 calls)
