@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hedgehog Dash - Learn to Type</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Engineering-pad design tokens (shared site identity) + playful crayon accents */
+        :root {
+            --paper: #EEF2E3;
+            --grid-minor: rgba(90, 120, 84, 0.13);
+            --grid-major: rgba(90, 120, 84, 0.22);
+            --surface: #F6F8ED;
+            --well: #FFFDF5;
+            --ink: #243240;
+            --ink-soft: #5C6A5E;
+            --muted: #656F5B;
+            --line: rgba(36, 50, 64, 0.30);
+            --line-faint: rgba(36, 50, 64, 0.16);
+            --copper: #9A5527;
+            --copper-strong: #8C4E26;
+            --good: #3E9A55;
+            --good-deep: #2C7140;
+            --bad: #D0453A;
+            --bad-deep: #9E3027;
+            --blue: #3E74C0;
+            --blue-deep: #2B5591;
+            --sun: #F4B63F;
+            --sun-deep: #C98A1E;
+            --berry: #C7457E;
+            --berry-deep: #95305D;
+            --alien: #5DBB4A;
+            --on-color: #ffffff;
+            /* finger colours for the keyboard */
+            --f-pinky: #E6D3F3;
+            --f-ring: #CFE1F7;
+            --f-middle: #D2EED6;
+            --f-pointer: #FBE3BB;
+            --f-thumb: #E9E6DC;
+            --key-text: #243240;
+            --display: "Fredoka", "Trebuchet MS", "Avenir Next Rounded", system-ui, sans-serif;
+            --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --paper: #191F1A;
+                --grid-minor: rgba(190, 215, 185, 0.055);
+                --grid-major: rgba(190, 215, 185, 0.10);
+                --surface: #212822;
+                --well: #2A322B;
+                --ink: #DEE5D2;
+                --ink-soft: #A3B09F;
+                --muted: #7E8A7A;
+                --line: rgba(222, 229, 210, 0.30);
+                --line-faint: rgba(222, 229, 210, 0.14);
+                --copper: #D28E58;
+                --copper-strong: #E2A46E;
+                --good: #5DB872;
+                --good-deep: #3A8A4E;
+                --bad: #E26A5E;
+                --bad-deep: #A9443A;
+                --blue: #6E9CE0;
+                --blue-deep: #3F6CB0;
+                --sun: #E2A93E;
+                --sun-deep: #A8791F;
+                --berry: #D86A9A;
+                --berry-deep: #A24672;
+                --alien: #7DD66A;
+                --on-color: #141914;
+                --f-pinky: #4A3B57;
+                --f-ring: #33465E;
+                --f-middle: #344D3A;
+                --f-pointer: #5A4A2C;
+                --f-thumb: #3A3F38;
+                --key-text: #E9EEDF;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        [hidden] { display: none !important; }
+
+        body {
+            font-family: var(--display);
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid-major) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+                linear-gradient(var(--grid-minor) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+            background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px 32px;
+        }
+
+        :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+        .site-nav {
+            width: 100%;
+            max-width: 880px;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .site-nav a { color: var(--copper); text-decoration: none; }
+        .site-nav a:hover { color: var(--copper-strong); text-decoration: underline; }
+        .site-nav .sheet-tag { color: var(--muted); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line-faint);
+            border-radius: 22px;
+            box-shadow: 0 6px 0 var(--line-faint), 0 14px 34px rgba(0, 0, 0, 0.08);
+            padding: 16px;
+            max-width: 880px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ————— HUD ————— */
+        .hud {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .hud .lesson-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-right: auto;
+        }
+        .pill {
+            background: var(--well);
+            border: 1px solid var(--line-faint);
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        .pill small { color: var(--muted); font-weight: 500; margin-left: 3px; }
+        .icon-btn {
+            border: 1px solid var(--line-faint);
+            background: var(--well);
+            color: var(--ink);
+            border-radius: 999px;
+            font: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 4px 12px;
+            cursor: pointer;
+        }
+        .icon-btn:hover { border-color: var(--line); }
+
+        /* ————— Scene ————— */
+        .scene-wrap {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid var(--line);
+            background: #9FD3EA;
+            touch-action: manipulation;
+        }
+        canvas#scene { display: block; width: 100%; }
+        #typeInput {
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 1px; height: 1px;
+            opacity: 0;
+            border: 0;
+            pointer-events: none;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 12px;
+            background: rgba(15, 25, 35, 0.28);
+        }
+        .panel {
+            background: var(--surface);
+            border: 3px solid var(--ink);
+            border-radius: 20px;
+            box-shadow: 0 6px 0 var(--ink);
+            padding: 16px 20px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            animation: pop 0.4s cubic-bezier(.2, 1.6, .4, 1);
+        }
+        .panel h2 {
+            font-size: clamp(1.5rem, 5vw, 2.1rem);
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+        .panel h2 .hog { color: var(--copper); }
+        .panel p { font-size: 1rem; line-height: 1.35; color: var(--ink-soft); margin-bottom: 10px; font-weight: 500; }
+        .panel .stars { font-size: 2rem; letter-spacing: 4px; color: var(--sun); margin-bottom: 2px; }
+        .panel .stars .off { color: var(--line-faint); }
+        .panel .stats { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .btn-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+
+        .btn {
+            font: inherit;
+            font-weight: 700;
+            font-size: 1.05rem;
+            border: none;
+            border-radius: 14px;
+            padding: 10px 18px;
+            cursor: pointer;
+            color: var(--on-color);
+            background: var(--good);
+            box-shadow: 0 4px 0 var(--good-deep);
+            transition: transform 0.08s;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--good-deep); }
+        .btn.alt { background: var(--blue); box-shadow: 0 4px 0 var(--blue-deep); }
+        .btn.alt:active { box-shadow: 0 1px 0 var(--blue-deep); }
+        .btn.plain { background: var(--well); color: var(--ink); box-shadow: 0 4px 0 var(--line); border: 1px solid var(--line-faint); }
+        .btn.plain:active { box-shadow: 0 1px 0 var(--line); }
+        .btn.big { font-size: 1.3rem; padding: 12px 28px; }
+
+        @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+        /* ————— Progress track ————— */
+        .track {
+            position: relative;
+            height: 30px;
+            margin: 0 18px;
+        }
+        .track .rail {
+            position: absolute;
+            left: 0; right: 0; top: 13px;
+            height: 6px;
+            border-radius: 3px;
+            background: repeating-linear-gradient(90deg, var(--line-faint) 0 10px, transparent 10px 16px);
+        }
+        .track .fill {
+            position: absolute;
+            left: 0; top: 13px;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--good);
+            width: 0;
+        }
+        .track .marker {
+            position: absolute;
+            top: 0;
+            font-size: 22px;
+            line-height: 30px;
+            transform: translateX(-50%);
+        }
+        .track .home { right: -14px; transform: none; }
+
+        /* ————— Text strip ————— */
+        .strip {
+            position: relative;
+            height: 74px;
+            overflow: hidden;
+            background: var(--well);
+            border: 2px solid var(--line-faint);
+            border-radius: 16px;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+        }
+        .strip-inner {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            display: flex;
+            white-space: pre;
+            transform: translate(0, -50%);
+            transition: transform 0.16s ease-out;
+        }
+        .ch {
+            position: relative;
+            font-size: 2.3rem;
+            font-weight: 600;
+            padding: 0 2px;
+            line-height: 1.3;
+            color: var(--ink);
+            border-radius: 8px;
+        }
+        .ch.done { color: var(--good); }
+        .ch.fixed { color: var(--sun-deep); }
+        .ch.cur {
+            background: var(--blue);
+            color: var(--on-color);
+            animation: nudge 0.9s ease-in-out infinite;
+        }
+        .ch.cur.oops { background: var(--bad); animation: shake 0.3s; }
+        .ch.space { color: transparent; min-width: 0.55em; }
+        .ch.space::after {
+            content: "·";
+            position: absolute;
+            inset: 0;
+            text-align: center;
+            color: var(--line);
+        }
+        .ch.space.done::after { color: var(--good); opacity: 0.5; }
+        .ch.space.cur::after { content: "␣"; color: var(--on-color); }
+        @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        .hint {
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.05rem;
+            min-height: 1.4em;
+            color: var(--ink-soft);
+        }
+        .hint b {
+            display: inline-block;
+            min-width: 1.6em;
+            padding: 0 6px;
+            border-radius: 6px;
+            background: var(--blue);
+            color: var(--on-color);
+        }
+
+        /* ————— Keyboard ————— */
+        .keyboard {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+            user-select: none;
+        }
+        .kb-row { display: flex; gap: 5px; width: 100%; max-width: 640px; }
+        .kb-row.r1 { padding-left: 2%; }
+        .kb-row.r2 { padding-left: 5%; }
+        .kb-row.r4 { justify-content: center; }
+        .key {
+            flex: 1 1 0;
+            min-width: 0;
+            height: 44px;
+            border-radius: 9px;
+            display: grid;
+            place-items: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--key-text);
+            border: 1px solid var(--line-faint);
+            box-shadow: 0 3px 0 var(--line);
+            position: relative;
+            transition: transform 0.08s;
+        }
+        .key.wide { flex-grow: 1.9; font-size: 0.8rem; }
+        .key.space { flex: 0 0 52%; font-size: 0.8rem; }
+        .key.bump::after {
+            content: "";
+            position: absolute;
+            bottom: 7px;
+            width: 12px;
+            height: 2px;
+            border-radius: 2px;
+            background: currentColor;
+            opacity: 0.6;
+        }
+        .key.lp, .key.rp { background: var(--f-pinky); }
+        .key.lr, .key.rr { background: var(--f-ring); }
+        .key.lm, .key.rm { background: var(--f-middle); }
+        .key.li, .key.ri { background: var(--f-pointer); }
+        .key.th { background: var(--f-thumb); }
+        .key.dim { opacity: 0.38; }
+        .key.next {
+            background: var(--blue);
+            color: var(--on-color);
+            opacity: 1;
+            box-shadow: 0 3px 0 var(--blue-deep), 0 0 0 4px color-mix(in srgb, var(--blue) 35%, transparent);
+            animation: nudge 0.9s ease-in-out infinite;
+            z-index: 1;
+        }
+        .key.press { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
+        .key.oops { background: var(--bad); color: var(--on-color); animation: shake 0.3s; }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px 14px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        .legend span::before {
+            content: "";
+            display: inline-block;
+            width: 11px; height: 11px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: -1px;
+            border: 1px solid var(--line-faint);
+        }
+        .legend .lg-p::before { background: var(--f-pinky); }
+        .legend .lg-r::before { background: var(--f-ring); }
+        .legend .lg-m::before { background: var(--f-middle); }
+        .legend .lg-i::before { background: var(--f-pointer); }
+        .legend .lg-t::before { background: var(--f-thumb); }
+
+        /* ————— Setup (lesson + speed picker) ————— */
+        .setup h3 {
+            font-size: 1.05rem;
+            margin: 6px 0 8px;
+        }
+        .setup h3 span { color: var(--muted); font-weight: 500; font-size: 0.9rem; }
+        .lessons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+        }
+        .lesson-btn, .speed-btn {
+            font: inherit;
+            text-align: left;
+            background: var(--well);
+            color: var(--ink);
+            border: 2px solid var(--line-faint);
+            border-radius: 14px;
+            padding: 8px 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .lesson-btn:hover, .speed-btn:hover { border-color: var(--line); }
+        .lesson-btn[aria-pressed="true"], .speed-btn[aria-pressed="true"] {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px var(--blue) inset;
+        }
+        .lesson-btn .num { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; }
+        .lesson-btn .title { font-weight: 700; font-size: 1rem; }
+        .lesson-btn .lstars { color: var(--sun); font-size: 0.95rem; letter-spacing: 1px; }
+        .lesson-btn .lstars .off { color: var(--line-faint); }
+        .speeds {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+        }
+        .speed-btn .title { font-weight: 700; }
+        .speed-btn .sub { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+        .tip {
+            margin-top: 10px;
+            font-size: 0.92rem;
+            color: var(--ink-soft);
+            font-weight: 500;
+            text-align: center;
+        }
+        .how {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1.45;
+            font-weight: 500;
+        }
+
+        footer {
+            margin-top: 18px;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        @media (max-width: 560px) {
+            .card { padding: 12px; }
+            .key { height: 36px; font-size: 0.9rem; border-radius: 7px; }
+            .kb-row { gap: 3px; }
+            .keyboard { gap: 3px; }
+            .ch { font-size: 1.8rem; }
+            .strip { height: 60px; }
+            .hud .lesson-name { width: 100%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ch.cur, .key.next { animation: none; }
+            .strip-inner { transition: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a href="../index.html">&#8592; Index</a>
+        <span class="sheet-tag">projects.colmryan.org &middot; Kids</span>
+    </nav>
+
+    <main class="card">
+        <div class="hud">
+            <span class="lesson-name" id="hudLesson">Hedgehog Dash</span>
+            <span class="pill" title="Carrots collected this run">🥕 <span id="hudCarrots">0</span></span>
+            <span class="pill" title="Words per minute"><span id="hudWpm">–</span><small>wpm</small></span>
+            <span class="pill" title="Accuracy"><span id="hudAcc">–</span><small>right</small></span>
+            <span class="pill" title="Correct keys in a row">🔥 <span id="hudStreak">0</span></span>
+            <button class="icon-btn" id="muteBtn" type="button" aria-pressed="false">🔊 Sound</button>
+            <button class="icon-btn" id="quitBtn" type="button" hidden>✕ Lessons</button>
+        </div>
+
+        <div class="scene-wrap" id="sceneWrap">
+            <canvas id="scene" aria-label="A bunny running from hedgehogs. Type the letters to keep running."></canvas>
+            <input id="typeInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Typing input">
+            <div class="overlay" id="overlay"></div>
+        </div>
+
+        <div class="track" id="track" aria-hidden="true">
+            <div class="rail"></div>
+            <div class="fill" id="trackFill"></div>
+            <span class="marker" id="trackHog">🦔</span>
+            <span class="marker" id="trackBunny">🐰</span>
+            <span class="marker home">🏡</span>
+        </div>
+
+        <section id="playArea" hidden>
+            <div class="strip" id="strip" aria-live="off"><div class="strip-inner" id="stripInner"></div></div>
+            <p class="hint" id="hint" style="margin: 10px 0;"></p>
+            <div class="keyboard" id="keyboard"></div>
+            <div class="legend" style="margin-top: 10px;">
+                <span class="lg-p">pinky</span>
+                <span class="lg-r">ring</span>
+                <span class="lg-m">middle</span>
+                <span class="lg-i">pointer</span>
+                <span class="lg-t">thumb</span>
+            </div>
+        </section>
+
+        <section class="setup" id="setup">
+            <h3>1. Pick a lesson <span>— start at the top and work down</span></h3>
+            <div class="lessons" id="lessons"></div>
+            <h3 style="margin-top: 14px;">2. How fast are the hedgehogs?</h3>
+            <div class="speeds" id="speeds"></div>
+            <p class="tip" id="lessonTip"></p>
+            <p class="how">
+                Type the blue letter to make the bunny run. Every word grabs a carrot 🥕.
+                Get 12 right in a row and the hedgehogs trip over! If they catch you&hellip; the aliens beam you up 🛸.
+                Press <b>Esc</b> to pause.
+            </p>
+        </section>
+    </main>
+
+    <footer>Everything runs in your browser</footer>
+
+    <script>
+    'use strict';
+
+    // ————————————————————————————————————————————————————————————
+    // Lessons, word bank and text generation
+    // ————————————————————————————————————————————————————————————
+
+    // Lessons build up the keyboard a pair of keys at a time, starting from the home row.
+    const LESSONS = [
+        { id: 'fj',   title: 'F and J',        add: 'fj',   len: 48,  tip: 'Feel the little bumps on F and J — your pointer fingers live there!' },
+        { id: 'dk',   title: 'D and K',        add: 'dk',   len: 56,  tip: 'Middle fingers rest on D and K, right next to your pointers.' },
+        { id: 'sl',   title: 'S and L',        add: 'sl',   len: 64,  tip: 'Ring fingers go on S and L.' },
+        { id: 'a;',   title: 'A and ;',        add: 'a;',   len: 72,  tip: 'Pinkies on A and ; — now all eight fingers are on the home row!' },
+        { id: 'ei',   title: 'E and I',        add: 'ei',   len: 80,  tip: 'Reach up with your middle fingers for E and I, then come back home.' },
+        { id: 'ru',   title: 'R and U',        add: 'ru',   len: 84,  tip: 'Pointer fingers reach up to R and U.' },
+        { id: 'gh',   title: 'G and H',        add: 'gh',   len: 88,  tip: 'Pointer fingers slide sideways to G and H.' },
+        { id: 'ty',   title: 'T and Y',        add: 'ty',   len: 92,  tip: 'T and Y are a long stretch up for your pointer fingers.' },
+        { id: 'ow',   title: 'O and W',        add: 'ow',   len: 96,  tip: 'Ring fingers reach up to W and O.' },
+        { id: 'qp',   title: 'Q and P',        add: 'qp',   len: 100, tip: 'Pinkies reach up to Q and P.' },
+        { id: 'cnm',  title: 'C, N and M',     add: 'cnm',  len: 104, tip: 'Time for the bottom row! Middle finger down to C, pointer down to N and M.' },
+        { id: 'vbxz', title: 'V, B, X and Z',  add: 'vbxz', len: 110, tip: 'Pointer down for V and B, ring for X, pinky for Z.' },
+        { id: 'all',  title: 'All the letters', add: '',    len: 130, tip: 'Every letter, lots of words. How far can you run?' },
+        { id: 'big',  title: 'Big letters & dots', add: '', len: 120, sentences: true, tip: 'Hold Shift with the other hand’s pinky to make a big letter.' },
+    ];
+    // Each lesson can use its own new keys plus everything learned before it.
+    (() => {
+        let known = '';
+        for (const lesson of LESSONS) {
+            known += lesson.add;
+            lesson.keys = lesson.id === 'all' || lesson.id === 'big' ? 'abcdefghijklmnopqrstuvwxyz' : known;
+            lesson.newKeys = lesson.add;
+        }
+    })();
+
+    const WORD_BANK = `a as ask asks add adds all dad dads sad lad lads fad fall falls alas lass salad salads flask flasks
+        jaks ad sass
+        see seed seeds sea seal seals said sail sails side sides slide slides desk desks file files life like likes
+        kid kids lid lids fed feel feels lake lakes safe fake idea ideas deal deals leaf less slid silk skid sled
+        disk dies die ill kiss jelly fill fills sill
+        red read reads ride rides rule rules sure rude rake rakes fur jar jars dark lark ruler deer far rail free
+        fried fries user sir dear ear ears fire fear
+        high light right huge hug hugs hide dig digs egg eggs his her here hair hall hills she shed fish dish
+        sugar shake shark shell hush gas gill flag flags glad glee
+        the this that these they them toy toys try tries yes yet tea tree trees tired sky yard day days say stay
+        street kitty daisy story ready treat test tray tail tall try yell yelled tiger tight great girl gate
+        third shirt their there they year eight sixty
+        owl owls word words show slow row rows wow who how was were what where water yellow toad goat dog dogs
+        frog frogs hot old told go so to two food good look took work wolf house worry shadow tooth hello world
+        flower flowers tower door floor short sweet sheep goose wish sow
+        pop pup pig pigs pet pets pie pies play happy puppy apple apples paper purple quiet quick quilt party
+        sleepy soup stop top hop hope help hippo pear sheep queen quest stripes jump pool pirate pillow
+        cat cats can come cake moon name nice night money monkey animal music snack clock chicken cookie
+        moon mom man men run sun fun fan ant ants ice cold cup car cars king corn green cream lemon melon
+        clown scary snail snake town mouse camp coin no not now nap nest net
+        box fox zoo zebra buzz brave very seven cave love lizard bubble bus big bike river five jazz fizz wax
+        bear bird bees blue brown baby bunny bunnies zap zip vet van vase velvet extra bob dozen lazy crazy
+        hedgehog hedgehogs alien aliens rocket space planet carrot carrots spaceship
+        `.split(/\s+/).filter(Boolean);
+
+    const SENTENCES = [
+        'The bunny runs home.', 'Hedgehogs like to roll.', 'Is that a flying saucer?', 'Run, bunny, run.',
+        'The aliens say hello.', 'My hat is red.', 'We can see the moon.', 'Can you type fast?',
+        'Tom and Ana play tag.', 'The sun is hot today.', 'Look up at the sky.', 'I like green apples.',
+        'Where is my sock?', 'A frog sat on a log.', 'The zebra has stripes.', 'Carrots are yummy.',
+        'Dad has a big blue van.', 'Do aliens eat carrots?', 'Mia hops over the hill.', 'Hedgehogs are spiky.',
+    ];
+
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // Build a random practice line for a lesson: real words when enough of them fit
+    // the allowed keys, sprinkled with short drills that lean on the newest keys.
+    const buildText = (lesson) => {
+        if (lesson.sentences) {
+            const pool = [...SENTENCES].sort(() => Math.random() - 0.5);
+            const out = [];
+            let len = 0;
+            while (len < lesson.len && pool.length) {
+                const s = pool.pop();
+                out.push(s);
+                len += s.length + 1;
+            }
+            return out.join(' ');
+        }
+        const allowed = new Set(lesson.keys);
+        const words = WORD_BANK.filter((w) => [...w].every((c) => allowed.has(c)));
+        const newSet = [...lesson.newKeys];
+        // words that use a new key are twice as likely to be chosen
+        const weighted = words.flatMap((w) => newSet.some((k) => w.includes(k)) ? [w, w] : [w]);
+        const wordShare = words.length >= 30 ? 0.95 : words.length >= 8 ? 0.65 : 0;
+        const keys = [...lesson.keys];
+        const drill = () => {
+            const n = 2 + Math.floor(Math.random() * 3);
+            let s = '';
+            for (let i = 0; i < n; i++) {
+                s += Math.random() < 0.6 && newSet.length ? pick(newSet) : pick(keys);
+            }
+            return s;
+        };
+        const out = [];
+        let len = 0;
+        while (len < lesson.len) {
+            let w;
+            let tries = 0;
+            do {
+                w = Math.random() < wordShare ? pick(weighted) : drill();
+            } while (w === out[out.length - 1] && tries++ < 5);
+            out.push(w);
+            len += w.length + 1;
+        }
+        return out.join(' ');
+    };
+
+    const SPEEDS = [
+        { id: 'sleepy',   title: '😴 Sleepy',   sub: 'Brand-new typists',    cps: 0.55 },
+        { id: 'trotting', title: '🚶 Trotting', sub: 'Getting the hang of it', cps: 0.9 },
+        { id: 'speedy',   title: '🏃 Speedy',   sub: 'Quick fingers',         cps: 1.4 },
+        { id: 'zoomy',    title: '🚀 Zoomy',    sub: 'Typing champions',      cps: 2.2 },
+    ];
+
+    // ————————————————————————————————————————————————————————————
+    // Keyboard layout and finger map
+    // ————————————————————————————————————————————————————————————
+
+    const KB_ROWS = [
+        ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+        ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'"],
+        ['shiftL', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'shiftR'],
+        ['space'],
+    ];
+    const FINGER = {};
+    const assign = (keys, finger) => [...keys].forEach((k) => { FINGER[k] = finger; });
+    assign('qaz', 'lp'); assign('wsx', 'lr'); assign('edc', 'lm'); assign('rfvtgb', 'li');
+    assign('yhnujm', 'ri'); assign('ik,', 'rm'); assign('ol.', 'rr'); assign("p;/'", 'rp');
+    FINGER.shiftL = 'lp'; FINGER.shiftR = 'rp'; FINGER.space = 'th';
+    const FINGER_NAME = {
+        lp: 'left pinky', lr: 'left ring finger', lm: 'left middle finger', li: 'left pointer finger',
+        ri: 'right pointer finger', rm: 'right middle finger', rr: 'right ring finger', rp: 'right pinky',
+        th: 'thumb',
+    };
+    const SHIFTED = { ':': ';', '"': "'", '?': '/', '<': ',', '>': '.' };
+
+    // Which physical key (and whether Shift) produces a character.
+    const keyFor = (ch) => {
+        if (ch === ' ') return { key: 'space', shift: false };
+        if (SHIFTED[ch]) return { key: SHIFTED[ch], shift: true };
+        const lower = ch.toLowerCase();
+        return { key: lower, shift: ch !== lower };
+    };
+    const isLeftHand = (key) => FINGER[key] && FINGER[key][0] === 'l';
+
+    // ————————————————————————————————————————————————————————————
+    // Persistence (best-effort; the game works without it)
+    // ————————————————————————————————————————————————————————————
+
+    const STORE_KEY = 'hedgehog-dash-v1';
+    const saved = (() => {
+        try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; } catch { return {}; }
+    })();
+    const progress = {
+        stars: saved.stars && typeof saved.stars === 'object' ? saved.stars : {},
+        totalCarrots: Number(saved.totalCarrots) || 0,
+        lessonIdx: Math.min(Math.max(Number(saved.lessonIdx) || 0, 0), LESSONS.length - 1),
+        speedIdx: Math.min(Math.max(Number(saved.speedIdx) || 0, 0), SPEEDS.length - 1),
+        muted: !!saved.muted,
+    };
+    const saveProgress = () => {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch { /* storage unavailable */ }
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Sound effects (tiny Web Audio synth, no files)
+    // ————————————————————————————————————————————————————————————
+
+    let audioCtx = null;
+    const ensureAudio = () => {
+        if (progress.muted) return null;
+        try {
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) return null;
+                audioCtx = new AC();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        } catch { return null; }
+        return audioCtx;
+    };
+    const tone = ({ freq = 440, to = null, dur = 0.1, type = 'sine', vol = 0.1, delay = 0, wobble = 0 }) => {
+        const ac = ensureAudio();
+        if (!ac) return;
+        const t0 = ac.currentTime + delay;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t0);
+        if (to) osc.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+        if (wobble) {
+            // vibrato for that classic flying-saucer warble
+            const lfo = ac.createOscillator();
+            const lfoGain = ac.createGain();
+            lfo.frequency.value = 7;
+            lfoGain.gain.value = wobble;
+            lfo.connect(lfoGain).connect(osc.frequency);
+            lfo.start(t0);
+            lfo.stop(t0 + dur);
+        }
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(gain).connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+    };
+    const sfx = {
+        tick: () => tone({ freq: 600 + Math.random() * 160, dur: 0.05, type: 'triangle', vol: 0.06 }),
+        oops: () => tone({ freq: 170, to: 110, dur: 0.16, type: 'square', vol: 0.05 }),
+        carrot: () => { tone({ freq: 880, dur: 0.08, vol: 0.08 }); tone({ freq: 1320, dur: 0.12, vol: 0.08, delay: 0.06 }); },
+        trip: () => { tone({ freq: 300, to: 1200, dur: 0.25, type: 'sawtooth', vol: 0.04 }); tone({ freq: 500, to: 180, dur: 0.3, type: 'triangle', vol: 0.08, delay: 0.22 }); },
+        wake: () => { tone({ freq: 1500, to: 2100, dur: 0.08, vol: 0.07 }); tone({ freq: 1600, to: 2300, dur: 0.08, vol: 0.07, delay: 0.12 }); },
+        squeak: () => tone({ freq: 1700, to: 2400, dur: 0.07, vol: 0.05 }),
+        beat: () => { tone({ freq: 75, dur: 0.12, vol: 0.22 }); tone({ freq: 65, dur: 0.12, vol: 0.18, delay: 0.17 }); },
+        roll: () => tone({ freq: 140, to: 320, dur: 0.35, type: 'triangle', vol: 0.05 }),
+        thud: () => tone({ freq: 180, to: 60, dur: 0.25, type: 'triangle', vol: 0.15 }),
+        ufo: () => tone({ freq: 520, to: 700, dur: 1.4, vol: 0.06, wobble: 90 }),
+        beam: () => tone({ freq: 180, to: 1100, dur: 1.6, type: 'triangle', vol: 0.07, wobble: 25 }),
+        zip: () => tone({ freq: 400, to: 2400, dur: 0.45, vol: 0.06 }),
+        win: () => [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.22, type: 'triangle', vol: 0.1, delay: i * 0.11 })),
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // DOM references
+    // ————————————————————————————————————————————————————————————
+
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('scene');
+    const ctx = canvas.getContext('2d');
+    const overlay = $('overlay');
+    const typeInput = $('typeInput');
+    const stripInner = $('stripInner');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    // ————————————————————————————————————————————————————————————
+    // World constants. The scene is drawn in a virtual space 300 units tall;
+    // the width (VW) follows the canvas aspect ratio.
+    // ————————————————————————————————————————————————————————————
+
+    const VH = 300;
+    const GROUND = 240;          // y of the characters' feet
+    const STEP = 30;             // how far the bunny moves per correct key
+    const START_GAP = 220;       // head start before the hedgehogs wake up
+    const CATCH_DIST = 52;       // bunny-to-hedgehog distance that counts as caught
+    const STREAK_TRIP = 12;      // correct keys in a row that trip the hedgehogs
+    const HOG_SPACING = 44;
+    let VW = 800;
+    let viewScale = 1;
+
+    const resize = () => {
+        const width = Math.max(280, canvas.parentElement.clientWidth);
+        const height = width < 560 ? 230 : 300;
+        canvas.style.height = `${height}px`;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        viewScale = height / VH;
+        VW = width / viewScale;
+        ctx.setTransform(dpr * viewScale, 0, 0, dpr * viewScale, 0, 0);
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Game state
+    // ————————————————————————————————————————————————————————————
+
+    const game = {
+        phase: 'menu',   // menu | ready | running | paused | caught | won | results
+        lessonIdx: progress.lessonIdx,
+        speedIdx: progress.speedIdx,
+        text: '',
+        index: 0,
+        correct: 0,
+        errors: 0,
+        streak: 0,
+        bestStreak: 0,
+        errAt: new Set(),
+        startTime: 0,
+        endTime: 0,
+        pausedAt: 0,
+        playerX: 0,
+        playerTargetX: 0,
+        runPhase: 0,
+        moving: 0,
+        stumble: 0,
+        hogX: -START_GAP,
+        hogPhase: 0,
+        hogMoving: 0,
+        hogRolling: false,
+        hogRoll: 0,
+        hogStun: 0,
+        hogAwake: false,
+        hogFlee: false,
+        camX: 0,
+        carrots: [],
+        carrotCount: 0,
+        houseX: 0,
+        caughtT: 0,
+        wonT: 0,
+        ufo: { x: 0, y: -100, beam: 0 },
+        bunnyLift: 0,
+        bunnyAlpha: 1,
+        particles: [],
+        floaters: [],
+        lastBeat: 0,
+        lastSqueak: 0,
+        shake: 0,
+        menuUfo: -400,
+        t: 0,
+        resultShown: false,
+    };
+
+    const lesson = () => LESSONS[game.lessonIdx];
+    const now = () => performance.now() / 1000;
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const ease = (x) => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+    const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+    const resetRun = () => {
+        const L = lesson();
+        Object.assign(game, {
+            text: buildText(L), index: 0, correct: 0, errors: 0, streak: 0, bestStreak: 0,
+            errAt: new Set(), startTime: 0, endTime: 0, playerX: 0, playerTargetX: 0, moving: 0,
+            stumble: 0, hogX: -START_GAP, hogRolling: false, hogStun: 0, hogAwake: false, hogFlee: false,
+            carrotCount: 0, caughtT: 0, wonT: 0, bunnyLift: 0, bunnyAlpha: 1, particles: [], floaters: [],
+            shake: 0, resultShown: false, ufo: { x: 0, y: -100, beam: 0 }, won: false, homeT: 0, zipped: false, danger: 0,
+        });
+        game.camX = game.playerX - VW * 0.6;
+        game.houseX = game.text.length * STEP + 80;
+        // a carrot sits at the end of every word
+        game.carrots = [];
+        for (let i = 0; i < game.text.length; i++) {
+            const endsWord = game.text[i] !== ' ' && (i === game.text.length - 1 || game.text[i + 1] === ' ');
+            if (endsWord) game.carrots.push({ x: (i + 1) * STEP - 2, got: false });
+        }
+        buildStrip();
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Text strip + on-screen keyboard
+    // ————————————————————————————————————————————————————————————
+
+    let stripSpans = [];
+    const buildStrip = () => {
+        stripInner.innerHTML = '';
+        stripSpans = [...game.text].map((ch) => {
+            const span = document.createElement('span');
+            span.className = ch === ' ' ? 'ch space' : 'ch';
+            span.textContent = ch === ' ' ? ' ' : ch;
+            stripInner.appendChild(span);
+            return span;
+        });
+        updateStrip();
+    };
+    const updateStrip = () => {
+        stripSpans.forEach((span, i) => {
+            span.classList.toggle('done', i < game.index && !game.errAt.has(i));
+            span.classList.toggle('fixed', i < game.index && game.errAt.has(i));
+            span.classList.toggle('cur', i === game.index);
+            if (i !== game.index) span.classList.remove('oops');
+        });
+        // keep the current letter in the middle of the strip
+        const cur = stripSpans[Math.min(game.index, stripSpans.length - 1)];
+        if (cur) {
+            const center = $('strip').clientWidth / 2;
+            const offset = center - (cur.offsetLeft + cur.offsetWidth / 2) - (game.index >= stripSpans.length ? cur.offsetWidth : 0);
+            stripInner.style.transform = `translate(${offset}px, -50%)`;
+        }
+        updateKeyboard();
+    };
+
+    const keyEls = {};
+    const buildKeyboard = () => {
+        const kb = $('keyboard');
+        KB_ROWS.forEach((row, r) => {
+            const rowEl = document.createElement('div');
+            rowEl.className = `kb-row r${r + 1}`;
+            row.forEach((k) => {
+                const el = document.createElement('div');
+                el.className = `key ${FINGER[k]}`;
+                if (k === 'shiftL' || k === 'shiftR') { el.classList.add('wide'); el.textContent = 'shift'; }
+                else if (k === 'space') { el.classList.add('space'); el.textContent = 'space'; }
+                else el.textContent = k.toUpperCase();
+                if (k === 'f' || k === 'j') el.classList.add('bump');
+                keyEls[k] = el;
+                rowEl.appendChild(el);
+            });
+            kb.appendChild(rowEl);
+        });
+    };
+    const updateKeyboard = () => {
+        const L = lesson();
+        const allowed = new Set([...L.keys, 'space', ...(L.sentences ? ['shiftL', 'shiftR', '.', ',', '/'] : [])]);
+        Object.entries(keyEls).forEach(([k, el]) => {
+            el.classList.remove('next');
+            el.classList.toggle('dim', !allowed.has(k));
+        });
+        const ch = game.text[game.index];
+        const hint = $('hint');
+        if (ch === undefined || !['ready', 'running', 'paused'].includes(game.phase)) {
+            hint.textContent = '';
+            return;
+        }
+        const { key, shift } = keyFor(ch);
+        keyEls[key]?.classList.add('next');
+        const label = key === 'space' ? 'space' : (key.length === 1 ? ch : key);
+        if (key === 'space') {
+            hint.innerHTML = 'Press the <b>space bar</b> with your thumb';
+        } else if (shift) {
+            const shiftKey = isLeftHand(key) ? 'shiftR' : 'shiftL';
+            keyEls[shiftKey].classList.add('next');
+            hint.innerHTML = `Hold <b>shift</b> with your ${FINGER_NAME[FINGER[shiftKey]]}, then press <b>${escapeHtml(label)}</b> with your ${FINGER_NAME[FINGER[key]]}`;
+        } else {
+            hint.innerHTML = `Press <b>${escapeHtml(label)}</b> with your ${FINGER_NAME[FINGER[key]] || 'finger'}`;
+        }
+    };
+    const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const flashKey = (ch, cls) => {
+        const el = keyEls[keyFor(ch).key];
+        if (!el) return;
+        el.classList.remove(cls);
+        void el.offsetWidth; // restart the animation
+        el.classList.add(cls);
+        setTimeout(() => el.classList.remove(cls), cls === 'press' ? 90 : 300);
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Setup panel (lessons + speeds)
+    // ————————————————————————————————————————————————————————————
+
+    const starsHtml = (n) => '★'.repeat(n) + `<span class="off">${'★'.repeat(3 - n)}</span>`;
+
+    const renderSetup = () => {
+        const lessonsEl = $('lessons');
+        lessonsEl.innerHTML = '';
+        LESSONS.forEach((L, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'lesson-btn';
+            b.setAttribute('aria-pressed', String(i === game.lessonIdx));
+            b.innerHTML = `<span class="num">LESSON ${i + 1}</span><span class="title">${escapeHtml(L.title)}</span><span class="lstars">${starsHtml(progress.stars[L.id] || 0)}</span>`;
+            b.addEventListener('click', () => { game.lessonIdx = i; progress.lessonIdx = i; saveProgress(); renderSetup(); });
+            lessonsEl.appendChild(b);
+        });
+        const speedsEl = $('speeds');
+        speedsEl.innerHTML = '';
+        SPEEDS.forEach((s, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'speed-btn';
+            b.setAttribute('aria-pressed', String(i === game.speedIdx));
+            b.innerHTML = `<span class="title">${s.title}</span><span class="sub">${s.sub}</span>`;
+            b.addEventListener('click', () => { game.speedIdx = i; progress.speedIdx = i; saveProgress(); renderSetup(); });
+            speedsEl.appendChild(b);
+        });
+        $('lessonTip').textContent = `💡 ${lesson().tip}`;
+        $('hudLesson').textContent = `Lesson ${game.lessonIdx + 1}: ${lesson().title}`;
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Phases and overlays
+    // ————————————————————————————————————————————————————————————
+
+    const showOverlay = (html) => { overlay.innerHTML = `<div class="panel">${html}</div>`; overlay.hidden = false; };
+    const hideOverlay = () => { overlay.hidden = true; overlay.innerHTML = ''; };
+    const focusPrimary = () => overlay.querySelector('[data-primary]')?.focus({ preventScroll: true });
+
+    const goMenu = () => {
+        game.phase = 'menu';
+        resetRun();
+        $('setup').hidden = false;
+        $('playArea').hidden = true;
+        $('quitBtn').hidden = true;
+        renderSetup();
+        showOverlay(`
+            <h2>Hedgehog <span class="hog">Dash</span></h2>
+            <p>Type the letters to run! Stay ahead of the hedgehogs&hellip; or the aliens will beam you up! 🛸</p>
+            ${progress.totalCarrots ? `<p>🥕 ${progress.totalCarrots} carrots collected so far</p>` : ''}
+            <button class="btn big" data-action="start" data-primary>Start running!</button>
+        `);
+        updateHud(true);
+    };
+
+    const startLesson = () => {
+        ensureAudio();
+        resetRun();
+        game.phase = 'ready';
+        hideOverlay();
+        $('setup').hidden = true;
+        $('playArea').hidden = false;
+        $('quitBtn').hidden = false;
+        $('hudLesson').textContent = `Lesson ${game.lessonIdx + 1}: ${lesson().title}`;
+        requestAnimationFrame(updateStrip);
+        focusTyping();
+        updateHud(true);
+    };
+
+    const focusTyping = () => {
+        if (document.activeElement && document.activeElement !== typeInput) document.activeElement.blur();
+        typeInput.focus({ preventScroll: true });
+    };
+
+    const beginRun = () => {
+        game.phase = 'running';
+        game.startTime = now();
+        game.hogAwake = true;
+        sfx.wake();
+        addFloater(game.hogX, GROUND - 60, '!', '#D0453A', 30);
+        addFloater(game.hogX - HOG_SPACING, GROUND - 56, '!', '#D0453A', 30);
+    };
+
+    const pause = () => {
+        if (game.phase !== 'running' && game.phase !== 'ready') return;
+        game.pausedFrom = game.phase;
+        game.phase = 'paused';
+        game.pausedAt = now();
+        showOverlay(`
+            <h2>Paused</h2>
+            <p>The hedgehogs are having a little nap.</p>
+            <div class="btn-row">
+                <button class="btn" data-action="resume" data-primary>Keep going</button>
+                <button class="btn plain" data-action="menu">Lessons</button>
+            </div>
+        `);
+        focusPrimary();
+        updateKeyboard();
+    };
+    const resume = () => {
+        if (game.phase !== 'paused') return;
+        if (game.startTime) game.startTime += now() - game.pausedAt;
+        game.phase = game.pausedFrom || 'running';
+        hideOverlay();
+        focusTyping();
+        updateKeyboard();
+    };
+
+    const stats = () => {
+        const end = game.endTime || now();
+        const minutes = game.startTime ? (end - game.startTime) / 60 : 0;
+        const wpm = minutes > 0.03 ? Math.round((game.correct / 5) / minutes) : null;
+        const total = game.correct + game.errors;
+        const acc = total ? Math.round((game.correct / total) * 100) : null;
+        return { wpm, acc };
+    };
+
+    const updateHud = (force = false) => {
+        if (!force && Math.floor(game.t * 5) === Math.floor((game.t - 1 / 60) * 5)) return;
+        const { wpm, acc } = stats();
+        $('hudCarrots').textContent = game.carrotCount;
+        $('hudWpm').textContent = wpm ?? '–';
+        $('hudAcc').textContent = acc === null ? '–' : `${acc}%`;
+        $('hudStreak').textContent = game.streak;
+        // progress track: bunny and lead hedgehog between start and home
+        const span = game.text.length * STEP + START_GAP;
+        const pct = (x) => clamp((x + START_GAP) / span, 0, 1) * 100;
+        $('trackBunny').style.left = `${pct(game.playerX)}%`;
+        $('trackHog').style.left = `${pct(game.hogX)}%`;
+        $('trackFill').style.width = `${pct(game.playerX)}%`;
+    };
+
+    const startCaught = () => {
+        game.phase = 'caught';
+        game.endTime = now();
+        game.caughtT = 0;
+        game.ufo = { x: game.playerX + 10, y: -80, beam: 0 };
+        game.shake = 0.35;
+        sfx.thud();
+        setTimeout(() => sfx.ufo(), 250);
+        updateKeyboard();
+    };
+
+    const startWin = () => {
+        game.phase = 'won';
+        game.endTime = now();
+        game.wonT = 0;
+        game.playerTargetX = game.houseX;
+        game.hogStun = 99;
+        updateKeyboard();
+    };
+
+    const showResults = (won) => {
+        game.phase = 'results';
+        game.resultShown = true;
+        const { wpm, acc } = stats();
+        const statLine = `
+            <div class="stats">
+                <span class="pill">🥕 ${game.carrotCount}</span>
+                <span class="pill">${wpm ?? '–'}<small>wpm</small></span>
+                <span class="pill">${acc ?? '–'}%<small>right</small></span>
+                <span class="pill">🔥 ${game.bestStreak}<small>best</small></span>
+            </div>`;
+        progress.totalCarrots += game.carrotCount;
+        if (won) {
+            const stars = acc >= 97 ? 3 : acc >= 90 ? 2 : 1;
+            const L = lesson();
+            const prevBest = progress.stars[L.id] || 0;
+            progress.stars[L.id] = Math.max(prevBest, stars);
+            const hasNext = game.lessonIdx < LESSONS.length - 1;
+            const msg = stars === 3 ? 'Perfect fingers! The hedgehogs never stood a chance.'
+                : stars === 2 ? 'Great running! Fewer oopses gets you 3 stars.'
+                : 'You made it! Try for fewer mistakes to earn more stars.';
+            showOverlay(`
+                <h2>Home safe! 🏡</h2>
+                <div class="stars">${starsHtml(stars)}</div>
+                <p>${msg}${stars > prevBest && prevBest ? ' New best!' : ''}</p>
+                ${statLine}
+                <div class="btn-row">
+                    ${hasNext ? '<button class="btn" data-action="next" data-primary>Next lesson →</button>' : ''}
+                    <button class="btn alt" data-action="retry" ${hasNext ? '' : 'data-primary'}>Run again</button>
+                    <button class="btn plain" data-action="menu">Lessons</button>
+                </div>
+            `);
+        } else {
+            const pct = Math.round((game.index / game.text.length) * 100);
+            const canSlow = game.speedIdx > 0;
+            showOverlay(`
+                <h2>Beamed up! 👽</h2>
+                <p>The hedgehogs caught you and the aliens took you for a spin. You got ${pct}% of the way home!</p>
+                ${statLine}
+                <div class="btn-row">
+                    <button class="btn" data-action="retry" data-primary>Try again</button>
+                    ${canSlow ? '<button class="btn alt" data-action="slower">Sleepier hedgehogs</button>' : ''}
+                    <button class="btn plain" data-action="menu">Lessons</button>
+                </div>
+            `);
+        }
+        saveProgress();
+        focusPrimary();
+    };
+
+    overlay.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'start' || action === 'retry') startLesson();
+        else if (action === 'next') { game.lessonIdx = Math.min(game.lessonIdx + 1, LESSONS.length - 1); progress.lessonIdx = game.lessonIdx; saveProgress(); renderSetup(); startLesson(); }
+        else if (action === 'slower') { game.speedIdx = Math.max(0, game.speedIdx - 1); progress.speedIdx = game.speedIdx; saveProgress(); renderSetup(); startLesson(); }
+        else if (action === 'menu') goMenu();
+        else if (action === 'resume') resume();
+    });
+    $('quitBtn').addEventListener('click', goMenu);
+    const renderMute = () => {
+        $('muteBtn').textContent = progress.muted ? '🔇 Sound off' : '🔊 Sound';
+        $('muteBtn').setAttribute('aria-pressed', String(progress.muted));
+    };
+    $('muteBtn').addEventListener('click', () => {
+        progress.muted = !progress.muted;
+        saveProgress();
+        renderMute();
+        if (game.phase === 'ready' || game.phase === 'running') focusTyping();
+    });
+
+    // ————————————————————————————————————————————————————————————
+    // Typing input
+    // ————————————————————————————————————————————————————————————
+
+    const handleChar = (ch) => {
+        if (game.phase !== 'ready' && game.phase !== 'running') return;
+        const expected = game.text[game.index];
+        if (expected === undefined) return;
+        if (ch === expected) {
+            if (game.phase === 'ready') beginRun();
+            game.correct++;
+            game.streak++;
+            game.bestStreak = Math.max(game.bestStreak, game.streak);
+            game.index++;
+            game.playerTargetX = game.index * STEP;
+            sfx.tick();
+            flashKey(ch, 'press');
+            if (game.streak % STREAK_TRIP === 0) tripHogs();
+            if (game.index >= game.text.length) startWin();
+            updateStrip();
+        } else {
+            if (game.phase === 'ready') {
+                // before the run starts, just a gentle nudge — no penalty
+                sfx.oops();
+                flashKey(ch, 'oops');
+                return;
+            }
+            game.errors++;
+            game.streak = 0;
+            game.errAt.add(game.index);
+            game.stumble = 0.25;
+            sfx.oops();
+            flashKey(ch, 'oops');
+            const cur = stripSpans[game.index];
+            if (cur) { cur.classList.remove('oops'); void cur.offsetWidth; cur.classList.add('oops'); }
+            if (capsLockOn && /[a-z]/i.test(ch)) addFloater(game.playerX, GROUND - 80, 'Caps Lock is on!', '#D0453A', 17);
+            else if (Math.random() < 0.5) addFloater(game.playerX, GROUND - 78, 'oops!', '#D0453A', 18);
+        }
+        updateHud(true);
+    };
+
+    const tripHogs = () => {
+        if (!game.hogAwake || game.hogRolling) return;
+        game.hogStun = 1.6;
+        sfx.trip();
+        addFloater(game.playerX, GROUND - 90, `${game.streak} in a row!`, '#C98A1E', 22);
+        addFloater(game.hogX, GROUND - 60, 'bonk!', '#9A5527', 18);
+        for (let i = 0; i < 3; i++) burst(game.hogX - i * HOG_SPACING, GROUND - 20, ['#F4B63F', '#ffffff'], 6);
+    };
+
+    let capsLockOn = false;
+    document.addEventListener('keydown', (e) => {
+        capsLockOn = !!e.getModifierState?.('CapsLock');
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const onButton = e.target instanceof HTMLButtonElement;
+        if (e.key === 'Escape') {
+            if (game.phase === 'paused') resume(); else pause();
+            e.preventDefault();
+            return;
+        }
+        if (game.phase === 'ready' || game.phase === 'running') {
+            if (e.key.length === 1) {
+                e.preventDefault();
+                handleChar(e.key);
+            } else if (e.key === 'Backspace' || e.key === 'Tab') {
+                e.preventDefault(); // no going back — just type the blue letter
+            }
+            return;
+        }
+        if (e.key === 'Enter' && !onButton) {
+            const primary = overlay.querySelector('[data-primary]');
+            if (primary) { e.preventDefault(); primary.click(); }
+        }
+    });
+    // Mobile virtual keyboards often don't report keys on keydown; read the input instead.
+    typeInput.addEventListener('input', () => {
+        const value = typeInput.value;
+        typeInput.value = '';
+        for (const ch of value) handleChar(ch);
+    });
+    $('sceneWrap').addEventListener('pointerdown', (e) => {
+        if ((game.phase === 'ready' || game.phase === 'running') && !e.target.closest('.panel')) {
+            e.preventDefault();
+            focusTyping();
+        }
+    });
+    window.addEventListener('blur', () => { if (game.phase === 'running') pause(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && game.phase === 'running') pause(); });
+
+    // ————————————————————————————————————————————————————————————
+    // Particles and floating text
+    // ————————————————————————————————————————————————————————————
+
+    const addFloater = (x, y, text, color, size = 20) => game.floaters.push({ x, y, text, color, size, life: 1.1, max: 1.1 });
+    const burst = (x, y, colors, n = 10, opts = {}) => {
+        for (let i = 0; i < n; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const sp = (opts.speed || 90) * (0.4 + Math.random() * 0.8);
+            game.particles.push({
+                x, y,
+                vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (opts.up || 40),
+                g: opts.g ?? 160, life: opts.life || 0.7, max: opts.life || 0.7,
+                size: opts.size || 3 + Math.random() * 2, color: pick(colors),
+                kind: opts.kind || 'dot', spin: Math.random() * 6,
+            });
+        }
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Update loop
+    // ————————————————————————————————————————————————————————————
+
+    const update = (dt) => {
+        game.t += dt;
+        const phase = game.phase;
+        if (phase === 'paused') return;
+
+        // Bunny eases toward its target spot; run cycle follows distance travelled.
+        const before = game.playerX;
+        if (phase === 'won' || (phase === 'results' && game.won)) {
+            // trot steadily to the front door
+            game.playerX = Math.min(game.playerTargetX, before + 90 * dt);
+        } else {
+            game.playerX += (game.playerTargetX - game.playerX) * Math.min(1, dt * 12);
+        }
+        const moved = game.playerX - before;
+        game.runPhase += moved * 0.16;
+        game.moving += (clamp(moved / dt / 40, 0, 1) - game.moving) * Math.min(1, dt * 10);
+        game.stumble = Math.max(0, game.stumble - dt);
+        if (game.moving > 0.4 && Math.random() < dt * 14) {
+            game.particles.push({ x: game.playerX - 16, y: GROUND - 2, vx: -30 - Math.random() * 30, vy: -10 - Math.random() * 20, g: 0, life: 0.5, max: 0.5, size: 4 + Math.random() * 3, color: 'dust', kind: 'puff' });
+        }
+
+        // Carrots get collected as the bunny runs past them.
+        for (const c of game.carrots) {
+            if (!c.got && game.playerX >= c.x - 4 && phase !== 'menu') {
+                c.got = true;
+                game.carrotCount++;
+                sfx.carrot();
+                burst(c.x, GROUND - 14, ['#F08A24', '#F4B63F', '#5DB872'], 8, { speed: 70 });
+                addFloater(c.x, GROUND - 40, '+1 🥕', '#C98A1E', 16);
+                updateHud(true);
+            }
+        }
+
+        // Hedgehogs chase.
+        if (phase === 'running') {
+            const base = SPEEDS[game.speedIdx].cps * STEP;
+            const progressFrac = game.index / game.text.length;
+            let speed = base * (1 + 0.2 * progressFrac);
+            const gap = game.playerX - game.hogX;
+            // rubber band: if the bunny gets far ahead, hedgehogs curl up and roll to catch up
+            const far = Math.min(300, VW * 0.6 - 40);
+            if (!game.hogRolling && gap > far) { game.hogRolling = true; sfx.roll(); }
+            else if (game.hogRolling && gap < far - 80) game.hogRolling = false;
+            if (game.hogRolling) speed = Math.max(speed * 2.6, 90, (gap - far + 90) * 1.5);
+            if (game.hogStun > 0) { game.hogStun -= dt; speed = 0; }
+            game.hogX += speed * dt;
+            game.hogMoving = speed > 0 ? 1 : 0;
+            game.hogPhase += speed * dt * 0.28;
+            game.hogRoll += speed * dt / 16;
+
+            const danger = clamp((150 - (gap - CATCH_DIST)) / 150, 0, 1);
+            game.danger = danger;
+            if (danger > 0.55 && game.t - game.lastBeat > 0.75) { game.lastBeat = game.t; sfx.beat(); }
+            if (danger > 0.7 && game.t - game.lastSqueak > 2.2) {
+                game.lastSqueak = game.t;
+                sfx.squeak();
+                addFloater(game.hogX + 10, GROUND - 50, pick(['squeak!', 'got you!', 'hee hee!', 'wait up!']), '#9A5527', 15);
+            }
+            if (gap < CATCH_DIST) startCaught();
+        } else {
+            game.danger = Math.max(0, (game.danger || 0) - dt * 2);
+            game.hogMoving = 0;
+        }
+
+        if (phase === 'caught' || (phase === 'results' && !game.won && game.caughtT > 0)) updateCaught(dt);
+        if (phase === 'won' || (phase === 'results' && game.wonT > 0)) updateWon(dt);
+
+        // The camera follows the bunny, keeping it a little right of centre.
+        const camTarget = game.playerX - VW * 0.6;
+        game.camX += (camTarget - game.camX) * Math.min(1, dt * 6);
+
+        if (phase === 'menu') {
+            game.menuUfo += dt * 70;
+            if (game.menuUfo > VW + 600) game.menuUfo = -500;
+        }
+
+        game.shake = Math.max(0, game.shake - dt);
+        for (const p of game.particles) {
+            p.vy += p.g * dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.life -= dt;
+            p.spin += dt * 8;
+            if (p.kind === 'puff') p.size += dt * 10;
+        }
+        game.particles = game.particles.filter((p) => p.life > 0);
+        for (const f of game.floaters) { f.life -= dt; f.y -= dt * 30; }
+        game.floaters = game.floaters.filter((f) => f.life > 0);
+
+        if (phase === 'running' || phase === 'ready') updateHud();
+    };
+
+    // The alien abduction: saucer arrives, beam on, bunny floats up spinning, saucer zips away.
+    const updateCaught = (dt) => {
+        game.caughtT += dt;
+        const t = game.caughtT;
+        const u = game.ufo;
+        const hoverY = 62;
+        if (t < 1.3) {
+            u.y = -80 + (hoverY + 80) * ease(t / 1.3);
+            u.x = game.playerX + 10 + Math.sin(t * 5) * 14 * (1 - t / 1.3);
+        } else if (t < 3.4) {
+            u.y = hoverY + Math.sin(t * 4) * 3;
+            u.x = game.playerX + 10;
+        }
+        if (t > 1.3 && u.beam === 0) sfx.beam();
+        u.beam = t > 1.3 && t < 3.3 ? clamp((t - 1.3) / 0.3, 0, 1) * clamp((3.3 - t) / 0.3, 0, 1) : 0;
+        game.bunnyLift = ease((t - 1.6) / 1.5);
+        if (t > 0.8 && !game.hogFlee) {
+            game.hogFlee = true;
+            addFloater(game.hogX, GROUND - 60, 'eek!', '#D0453A', 18);
+        }
+        if (game.hogFlee) { game.hogX -= 150 * dt; game.hogPhase += dt * 40; game.hogMoving = 1; }
+        if (t > 3.4) {
+            if (!game.zipped) { game.zipped = true; sfx.zip(); }
+            const k = t - 3.4;
+            u.x += (200 + k * 900) * dt;
+            u.y -= (60 + k * 500) * dt;
+        } else game.zipped = false;
+        if (t > 4.3 && !game.resultShown) { game.won = false; showResults(false); }
+    };
+
+    const updateWon = (dt) => {
+        game.wonT += dt;
+        if (game.playerX >= game.houseX - 2 && game.bunnyAlpha > 0) {
+            if (game.bunnyAlpha === 1) {
+                sfx.win();
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(() => burst(game.houseX + 20 + (Math.random() - 0.5) * 120, 100 + Math.random() * 40,
+                        ['#D0453A', '#F4B63F', '#3E74C0', '#5DB872', '#C7457E'], 22,
+                        { speed: 160, up: 60, g: 140, life: 1.6, kind: 'confetti', size: 4 }), i * 220);
+                }
+                addFloater(game.houseX + 40, GROUND - 110, '♥', '#C7457E', 30);
+            }
+            game.bunnyAlpha = Math.max(0, game.bunnyAlpha - dt * 4);
+            if (game.bunnyAlpha === 0) game.bunnyAlpha = -0.0001;
+        }
+        if (game.bunnyAlpha <= 0 && !game.resultShown) {
+            game.homeT = (game.homeT || 0) + dt;
+            if (game.homeT > 1.1) { game.won = true; game.homeT = 0; showResults(true); }
+        }
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Drawing
+    // ————————————————————————————————————————————————————————————
+
+    const PALETTES = {
+        day: {
+            skyTop: '#8ECDEB', skyBot: '#E6F4DA', sun: '#F7C948', cloud: 'rgba(255,255,255,0.92)',
+            far: '#A8CFA0', mid: '#83B97C', trunk: '#7A5A3A', leaf: '#4F9A55', leaf2: '#64AE64',
+            grass: '#86C06A', grassDark: '#6CA855', path: '#E5CF9E', pathEdge: '#CDB27A', tuft: '#5C9A47',
+            mound: '#79B65E', vignette: '208,69,58', stars: false, flower: ['#F4B63F', '#ffffff', '#C7457E'],
+        },
+        night: {
+            skyTop: '#0C1626', skyBot: '#2B3B55', sun: '#F2EBC9', cloud: 'rgba(200,210,230,0.18)',
+            far: '#2D4237', mid: '#26392E', trunk: '#3E3022', leaf: '#284A30', leaf2: '#2F5737',
+            grass: '#2F4A2E', grassDark: '#263D26', path: '#6B5E45', pathEdge: '#54492F', tuft: '#3B5A36',
+            mound: '#35532F', vignette: '226,106,94', stars: true, flower: ['#B79A4E', '#9AA3B8', '#8C5470'],
+        },
+    };
+    let pal = darkQuery.matches ? PALETTES.night : PALETTES.day;
+    darkQuery.addEventListener?.('change', (e) => { pal = e.matches ? PALETTES.night : PALETTES.day; });
+
+    const INK = '#3A2E28';
+    const ell = (x, y, rx, ry, rot = 0) => { ctx.beginPath(); ctx.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, Math.PI * 2); };
+    const circ = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, Math.max(0.1, r), 0, Math.PI * 2); };
+    const fillStroke = (fill, stroke = INK, lw = 2) => {
+        ctx.fillStyle = fill; ctx.fill();
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+    };
+
+    const drawSky = () => {
+        const g = ctx.createLinearGradient(0, 0, 0, GROUND);
+        g.addColorStop(0, pal.skyTop);
+        g.addColorStop(1, pal.skyBot);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, VW, VH);
+        if (pal.stars) {
+            for (let i = 0; i < 60; i++) {
+                const x = hash(i) * VW, y = hash(i + 99) * 150;
+                ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(game.t * (0.5 + hash(i + 7)) + i));
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(x, y, 1.6, 1.6);
+            }
+            ctx.globalAlpha = 1;
+        }
+        // sun or moon
+        circ(VW - 70, 52, 24);
+        ctx.fillStyle = pal.sun;
+        ctx.fill();
+        if (pal.stars) { circ(VW - 61, 46, 21); ctx.fillStyle = pal.skyTop; ctx.fill(); }
+        // clouds drift slowly
+        ctx.fillStyle = pal.cloud;
+        for (let k = 0; k < 6; k++) {
+            const span = VW + 240;
+            let x = (hash(k + 3) * span - game.camX * 0.06 - game.t * 5) % span;
+            if (x < 0) x += span;
+            x -= 120;
+            const y = 30 + hash(k + 11) * 70;
+            const s = 0.7 + hash(k + 21) * 0.6;
+            circ(x, y, 16 * s); ctx.fill();
+            circ(x + 18 * s, y - 8 * s, 20 * s); ctx.fill();
+            circ(x + 40 * s, y, 15 * s); ctx.fill();
+            ctx.fillRect(x, y, 40 * s, 15 * s);
+        }
+    };
+
+    const drawHills = (parallax, baseY, amp, color, freq, seed) => {
+        const off = game.camX * parallax;
+        ctx.beginPath();
+        ctx.moveTo(0, VH);
+        for (let sx = 0; sx <= VW + 12; sx += 12) {
+            const wx = sx + off;
+            ctx.lineTo(sx, baseY - amp * (0.6 * Math.sin(wx * freq + seed) + 0.4 * Math.sin(wx * freq * 2.3 + seed * 2)));
+        }
+        ctx.lineTo(VW, VH);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+    };
+
+    const drawTrees = () => {
+        const par = 0.5, spacing = 130;
+        const off = game.camX * par;
+        const k0 = Math.floor(off / spacing) - 1;
+        for (let k = k0; k < k0 + VW / spacing + 3; k++) {
+            if (hash(k) < 0.4) continue;
+            const sx = k * spacing + hash(k + 5) * 60 - off;
+            const s = 0.7 + hash(k + 9) * 0.5;
+            const baseY = GROUND - 12;
+            ctx.fillStyle = pal.trunk;
+            ctx.fillRect(sx - 4 * s, baseY - 40 * s, 8 * s, 40 * s);
+            if (hash(k + 13) > 0.5) {
+                // round tree
+                circ(sx, baseY - 52 * s, 24 * s); ctx.fillStyle = pal.leaf; ctx.fill();
+                circ(sx - 8 * s, baseY - 58 * s, 13 * s); ctx.fillStyle = pal.leaf2; ctx.fill();
+            } else {
+                // pine
+                ctx.fillStyle = pal.leaf;
+                for (let j = 0; j < 3; j++) {
+                    ctx.beginPath();
+                    ctx.moveTo(sx, baseY - (90 - j * 18) * s);
+                    ctx.lineTo(sx - (16 + j * 6) * s, baseY - (40 - j * 12) * s);
+                    ctx.lineTo(sx + (16 + j * 6) * s, baseY - (40 - j * 12) * s);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+        }
+    };
+
+    const drawGround = () => {
+        ctx.fillStyle = pal.grass;
+        ctx.fillRect(0, GROUND - 14, VW, VH);
+        ctx.fillStyle = pal.grassDark;
+        ctx.fillRect(0, GROUND - 14, VW, 3);
+        // dirt path
+        ctx.fillStyle = pal.path;
+        ctx.fillRect(0, GROUND - 6, VW, 24);
+        ctx.fillStyle = pal.pathEdge;
+        ctx.fillRect(0, GROUND + 16, VW, 3);
+        // pebbles on the path and tufts/flowers on the grass, pinned to world positions
+        const spacing = 34;
+        const k0 = Math.floor(game.camX / spacing) - 1;
+        for (let k = k0; k < k0 + VW / spacing + 3; k++) {
+            const sx = k * spacing - game.camX;
+            const h = hash(k + 0.5);
+            if (h > 0.55) {
+                ctx.fillStyle = pal.pathEdge;
+                ell(sx + h * 20, GROUND + 4 + hash(k + 2) * 8, 3, 2); ctx.fill();
+            }
+            const ty = GROUND + 30 + hash(k + 4) * 40;
+            ctx.strokeStyle = pal.tuft;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(sx, ty); ctx.lineTo(sx - 3, ty - 7);
+            ctx.moveTo(sx, ty); ctx.lineTo(sx, ty - 9);
+            ctx.moveTo(sx, ty); ctx.lineTo(sx + 3, ty - 7);
+            ctx.stroke();
+            if (hash(k + 8) > 0.7) {
+                circ(sx + 12, ty - 4, 3);
+                ctx.fillStyle = pal.flower[Math.floor(hash(k + 6) * 3)];
+                ctx.fill();
+            }
+            // a few tufts along the top edge of the grass
+            if (hash(k + 17) > 0.5) {
+                const ey = GROUND - 12;
+                ctx.beginPath();
+                ctx.moveTo(sx + 8, ey); ctx.lineTo(sx + 6, ey - 6);
+                ctx.moveTo(sx + 10, ey); ctx.lineTo(sx + 11, ey - 7);
+                ctx.stroke();
+            }
+        }
+        // start line
+        const startX = -12 - game.camX;
+        if (startX > -20 && startX < VW + 20) {
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = i % 2 ? '#ffffff' : INK;
+                ctx.fillRect(startX, GROUND - 6 + i * 6, 6, 6);
+                ctx.fillStyle = i % 2 ? INK : '#ffffff';
+                ctx.fillRect(startX + 6, GROUND - 6 + i * 6, 6, 6);
+            }
+        }
+    };
+
+    const drawHome = () => {
+        const sx = game.houseX - game.camX;
+        if (sx < -200 || sx > VW + 200) return;
+        const y = GROUND + 6;
+        // grassy burrow mound
+        ctx.beginPath();
+        ctx.ellipse(sx + 30, y, 88, 74, 0, Math.PI, 0);
+        ctx.closePath();
+        fillStroke(pal.mound);
+        // round door
+        ctx.beginPath();
+        ctx.arc(sx, y - 22, 20, Math.PI, 0);
+        ctx.lineTo(sx + 20, y);
+        ctx.lineTo(sx - 20, y);
+        ctx.closePath();
+        fillStroke('#3E8E5A');
+        circ(sx + 11, y - 16, 2.5); ctx.fillStyle = '#F4B63F'; ctx.fill();
+        // window with warm light
+        circ(sx + 56, y - 34, 11);
+        fillStroke('#FFD978');
+        ctx.strokeStyle = INK; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(sx + 45, y - 34); ctx.lineTo(sx + 67, y - 34);
+        ctx.moveTo(sx + 56, y - 45); ctx.lineTo(sx + 56, y - 23);
+        ctx.stroke();
+        // chimney
+        ctx.beginPath();
+        ctx.rect(sx + 70, y - 82, 14, 22);
+        fillStroke('#B5673E');
+        // flag
+        ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(sx + 20, y - 74); ctx.lineTo(sx + 20, y - 112); ctx.stroke();
+        const wave = Math.sin(game.t * 5) * 3;
+        ctx.beginPath();
+        ctx.moveTo(sx + 21, y - 112);
+        ctx.quadraticCurveTo(sx + 34, y - 108 + wave, sx + 46, y - 104);
+        ctx.lineTo(sx + 21, y - 96);
+        ctx.closePath();
+        fillStroke('#D0453A');
+        // HOME sign
+        ctx.fillStyle = '#8B6440';
+        ctx.fillRect(sx - 72, y - 22, 4, 22);
+        ctx.beginPath();
+        ctx.roundRect(sx - 96, y - 44, 52, 22, 4);
+        fillStroke('#C69560');
+        ctx.fillStyle = INK;
+        ctx.font = '600 13px Fredoka, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('HOME', sx - 70, y - 33);
+    };
+
+    const drawCarrot = (wx, i) => {
+        const sx = wx - game.camX;
+        if (sx < -20 || sx > VW + 20) return;
+        const y = GROUND - 16 + Math.sin(game.t * 3 + i) * 2.5;
+        ctx.save();
+        ctx.translate(sx, y);
+        ctx.rotate(0.35);
+        ctx.fillStyle = '#4E9A44';
+        ell(-3, -10, 2.5, 6, -0.4); ctx.fill();
+        ell(3, -10, 2.5, 6, 0.4); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-5, -5);
+        ctx.quadraticCurveTo(0, -8, 5, -5);
+        ctx.lineTo(0, 12);
+        ctx.closePath();
+        fillStroke('#F08A24', INK, 1.5);
+        ctx.restore();
+    };
+
+    // The bunny (the player). Drawn facing right with its feet at (x, y).
+    const drawBunny = (x, y, o = {}) => {
+        const phase = o.phase || 0;
+        const moving = o.moving || 0;
+        const hop = moving * Math.abs(Math.sin(phase)) * 9;
+        ctx.save();
+        ctx.globalAlpha = clamp(o.alpha ?? 1, 0, 1);
+        ctx.translate(x, y);
+        if (!o.noShadow) {
+            ctx.fillStyle = 'rgba(0,0,0,0.16)';
+            ell(0, 2, 22 - hop * 0.8, 5); ctx.fill();
+        }
+        ctx.translate(0, -hop);
+        if (o.rot || o.scale) {
+            ctx.translate(0, -28);
+            ctx.rotate(o.rot || 0);
+            ctx.scale(o.scale ?? 1, o.scale ?? 1);
+            ctx.translate(0, 28);
+        }
+        if (o.stumble) ctx.rotate(Math.sin(o.stumble * 40) * 0.08);
+        const fur = '#FFFDF7', pink = '#F4A6B8';
+        const flop = moving * Math.sin(phase) * 0.18;
+        // ears (behind head)
+        const ear = (bx, by, rot, sc) => {
+            ctx.save();
+            ctx.translate(bx, by);
+            ctx.rotate(rot);
+            ell(0, -15 * sc, 6.5, 16 * sc); fillStroke(fur);
+            ell(0, -14 * sc, 3, 11 * sc); ctx.fillStyle = pink; ctx.fill();
+            ctx.restore();
+        };
+        ear(9, -49, -0.55 - flop, 0.95);
+        // back leg
+        const swing = moving ? Math.sin(phase) : 0;
+        ell(-12 + swing * 7, -6, 12, 5.5, swing * 0.2); fillStroke(fur);
+        // body
+        ell(-2, -22, 21, 16); fillStroke(fur);
+        // tail
+        circ(-22, -27, 7); fillStroke('#ffffff');
+        // front paw
+        ell(9 - swing * 7, -5, 8, 4.5); fillStroke(fur);
+        // head
+        circ(16, -40, 13.5); fillStroke(fur);
+        ear(17, -51, -0.25 - flop * 0.7, 1);
+        // face
+        ctx.fillStyle = 'rgba(244,166,184,0.55)';
+        ell(21, -35, 4.5, 2.8); ctx.fill();
+        const eyeX = o.lookBack ? 11 : 20;
+        circ(eyeX, -43, o.scared ? 3.4 : 2.7); ctx.fillStyle = INK; ctx.fill();
+        circ(eyeX + 0.9, -44, 0.9); ctx.fillStyle = '#ffffff'; ctx.fill();
+        circ(29, -39, 2.2); ctx.fillStyle = '#E5738F'; ctx.fill();
+        ctx.strokeStyle = INK; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        if (o.scared) { circ(26, -33, 2); ctx.stroke(); }
+        else { ctx.moveTo(27, -35); ctx.quadraticCurveTo(25, -32, 23, -34); ctx.stroke(); }
+        // sweat drop when the hedgehogs are close
+        if (o.sweat) {
+            ctx.fillStyle = '#7CC4F0';
+            ctx.beginPath();
+            ctx.moveTo(4, -62);
+            ctx.quadraticCurveTo(0, -55, 4, -53);
+            ctx.quadraticCurveTo(8, -55, 4, -62);
+            ctx.fill();
+        }
+        ctx.restore();
+    };
+
+    // A hedgehog, facing right, feet at (x, y).
+    const drawHog = (x, y, o = {}) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ell(0, 2, 20, 4.5); ctx.fill();
+        if (o.flip) ctx.scale(-1, 1);
+        const spike = '#5E4130', bodyC = '#9C6B4A', face = '#EBCB9F';
+        if (o.rolling) {
+            // curled into a spiky ball
+            ctx.translate(0, -17 - Math.abs(Math.sin(o.roll * 1.5)) * 5);
+            ctx.rotate(o.roll);
+            ctx.beginPath();
+            const n = 22;
+            for (let i = 0; i <= n * 2; i++) {
+                const a = (i / (n * 2)) * Math.PI * 2;
+                const r = i % 2 ? 13 : 20;
+                ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            fillStroke(spike);
+            circ(0, 0, 12); fillStroke(bodyC);
+            ctx.beginPath(); ctx.arc(0, 0, 6, 0.3, 2.6); ctx.strokeStyle = face; ctx.lineWidth = 3; ctx.stroke();
+            ctx.restore();
+            return;
+        }
+        const bob = o.moving ? Math.abs(Math.sin(o.phase)) * 3 : (o.asleep ? Math.sin(game.t * 2 + x) * 0.8 : 0);
+        ctx.translate(0, -bob);
+        const sw = o.moving ? Math.sin(o.phase) * 4 : 0;
+        // legs
+        ctx.fillStyle = '#4A3224';
+        ell(-9 + sw, -3, 4, 3); ctx.fill();
+        ell(8 - sw, -3, 4, 3); ctx.fill();
+        // spiky back
+        const cx = -3, cy = -12;
+        ctx.beginPath();
+        const n = 9;
+        ctx.moveTo(cx - 20, cy + 6);
+        for (let i = 0; i <= n * 2; i++) {
+            const a = Math.PI * 0.98 + (i / (n * 2)) * Math.PI * 0.78;
+            const outer = i % 2 === 0;
+            const rx = outer ? 27 : 19, ry = outer ? 22 : 14;
+            ctx.lineTo(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry);
+        }
+        ctx.lineTo(cx + 18, cy - 2);
+        ctx.lineTo(cx + 12, cy + 8);
+        ctx.closePath();
+        fillStroke(spike);
+        // body
+        ell(cx, cy + 1, 19, 11); fillStroke(bodyC);
+        // face + snout
+        ctx.beginPath();
+        ctx.moveTo(6, -20);
+        ctx.quadraticCurveTo(18, -21, 27, -11);
+        ctx.quadraticCurveTo(18, -3, 6, -4);
+        ctx.closePath();
+        fillStroke(face);
+        circ(27, -11, 3); ctx.fillStyle = INK; ctx.fill();
+        circ(8, -19, 3.2); fillStroke(face, INK, 1.5);
+        // eye
+        ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1.6;
+        if (o.asleep) {
+            ctx.beginPath(); ctx.arc(15, -14, 2.5, 0.2, Math.PI - 0.2); ctx.stroke();
+        } else if (o.dizzy) {
+            ctx.beginPath(); ctx.moveTo(12.5, -16.5); ctx.lineTo(17.5, -11.5); ctx.moveTo(17.5, -16.5); ctx.lineTo(12.5, -11.5); ctx.stroke();
+        } else {
+            circ(15, -14, 2.3); ctx.fill();
+            circ(15.8, -14.8, 0.8); ctx.fillStyle = '#ffffff'; ctx.fill();
+            if (o.determined) {
+                ctx.beginPath(); ctx.moveTo(11, -19.5); ctx.lineTo(18, -17.5); ctx.stroke();
+            }
+        }
+        ctx.restore();
+        // dizzy stars circling overhead
+        if (o.dizzy) {
+            for (let i = 0; i < 3; i++) {
+                const a = game.t * 5 + (i * Math.PI * 2) / 3;
+                drawStar(x + Math.cos(a) * 14, y - 40 + Math.sin(a) * 4, 4, '#F4B63F');
+            }
+        }
+        if (o.asleep && o.zzz) {
+            ctx.fillStyle = pal.stars ? '#C9D4E8' : '#5C6A5E';
+            ctx.font = '600 14px Fredoka, sans-serif';
+            ctx.textAlign = 'center';
+            const z = (game.t * 0.7 + x * 0.01) % 1;
+            ctx.globalAlpha = 1 - z;
+            ctx.fillText('z', x + 18 + z * 10, y - 34 - z * 22);
+            ctx.globalAlpha = 1;
+        }
+    };
+
+    const drawStar = (x, y, r, color) => {
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+            const rr = i % 2 ? r * 0.45 : r;
+            ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+        }
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+    };
+
+    // The flying saucer, with a little green alien in the dome and an optional tractor beam.
+    const drawUFO = (sx, sy, beam = 0, scale = 1) => {
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.scale(scale, scale);
+        if (beam > 0) {
+            const g = ctx.createLinearGradient(0, 10, 0, (GROUND - sy) / scale);
+            g.addColorStop(0, `rgba(190,255,150,${0.75 * beam})`);
+            g.addColorStop(1, `rgba(190,255,150,${0.18 * beam})`);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            const bottom = (GROUND - sy) / scale + 4;
+            ctx.moveTo(-16, 10);
+            ctx.lineTo(16, 10);
+            ctx.lineTo(52, bottom);
+            ctx.lineTo(-52, bottom);
+            ctx.closePath();
+            ctx.fill();
+            // rings travelling up the beam
+            ctx.strokeStyle = `rgba(255,255,255,${0.5 * beam})`;
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 4; i++) {
+                const f = 1 - ((game.t * 0.9 + i / 4) % 1);
+                const yy = 10 + f * (bottom - 10);
+                const w = 16 + f * 36;
+                ell(0, yy, w, 4); ctx.stroke();
+            }
+        }
+        // dome + alien
+        ctx.beginPath();
+        ctx.arc(0, -4, 21, Math.PI, 0);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(175,225,250,0.85)';
+        ctx.fill();
+        const alien = '#5DBB4A';
+        ctx.strokeStyle = alien; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-5, -16); ctx.lineTo(-8, -23); ctx.moveTo(5, -16); ctx.lineTo(8, -23); ctx.stroke();
+        circ(-8, -24, 2.4); ctx.fillStyle = alien; ctx.fill();
+        circ(8, -24, 2.4); ctx.fill();
+        ell(0, -9, 9, 9.5); ctx.fill();
+        ctx.fillStyle = INK;
+        ell(-3.6, -10, 2.6, 3.6, -0.3); ctx.fill();
+        ell(3.6, -10, 2.6, 3.6, 0.3); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -5, 2.5, 0.2, Math.PI - 0.2); ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, -4, 21, Math.PI, 0);
+        ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke();
+        // saucer body
+        const g2 = ctx.createLinearGradient(0, -8, 0, 14);
+        g2.addColorStop(0, '#D9DEE6');
+        g2.addColorStop(1, '#8A94A3');
+        ell(0, 3, 48, 13); fillStroke(g2);
+        ell(0, 11, 18, 5); fillStroke('#B7F08C');
+        // blinking lights
+        const colors = ['#F4B63F', '#D0453A', '#3E74C0', '#C7457E', '#5DBB4A'];
+        for (let i = 0; i < 7; i++) {
+            const lx = -36 + i * 12;
+            const on = Math.floor(game.t * 8 + i) % 3 === 0;
+            circ(lx, 4 + Math.abs(lx) * 0.04, 2.8);
+            ctx.fillStyle = on ? '#FFFFFF' : colors[i % colors.length];
+            ctx.fill();
+        }
+        ctx.restore();
+    };
+
+    const drawParticles = () => {
+        for (const p of game.particles) {
+            const sx = p.x - game.camX;
+            const a = clamp(p.life / p.max, 0, 1);
+            ctx.globalAlpha = a;
+            if (p.kind === 'puff') {
+                circ(sx, p.y, p.size);
+                ctx.fillStyle = pal.stars ? 'rgba(160,150,120,0.6)' : 'rgba(205,178,122,0.75)';
+                ctx.fill();
+            } else if (p.kind === 'confetti') {
+                ctx.save();
+                ctx.translate(sx, p.y);
+                ctx.rotate(p.spin);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
+                ctx.restore();
+            } else {
+                drawStar(sx, p.y, p.size + 1, p.color);
+            }
+        }
+        ctx.globalAlpha = 1;
+    };
+
+    const drawFloaters = () => {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (const f of game.floaters) {
+            ctx.globalAlpha = clamp(f.life / f.max * 1.5, 0, 1);
+            ctx.font = `700 ${f.size}px Fredoka, sans-serif`;
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+            ctx.strokeText(f.text, f.x - game.camX, f.y);
+            ctx.fillStyle = f.color;
+            ctx.fillText(f.text, f.x - game.camX, f.y);
+        }
+        ctx.globalAlpha = 1;
+    };
+
+    const drawPrompt = (text) => {
+        ctx.font = '600 17px Fredoka, sans-serif';
+        const w = ctx.measureText(text).width + 32;
+        const x = VW / 2 - w / 2, y = 16;
+        const bob = Math.sin(game.t * 3) * 2;
+        ctx.beginPath();
+        ctx.roundRect(x, y + bob, w, 34, 17);
+        fillStroke('rgba(255,253,245,0.95)', INK, 2);
+        ctx.fillStyle = INK;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, VW / 2, y + 18 + bob);
+    };
+
+    const render = () => {
+        ctx.save();
+        if (game.shake > 0 && !reducedMotion.matches) {
+            ctx.translate((Math.random() - 0.5) * 8 * game.shake, (Math.random() - 0.5) * 8 * game.shake);
+        }
+        drawSky();
+        if (game.phase === 'menu') {
+            // teaser: a saucer drifting across the sky on the title screen
+            drawUFO(game.menuUfo, 70 + Math.sin(game.t * 2) * 8, 0, 0.6);
+        }
+        drawHills(0.15, GROUND - 62, 22, pal.far, 0.006, 1);
+        drawHills(0.3, GROUND - 30, 16, pal.mid, 0.009, 4);
+        drawTrees();
+        drawGround();
+        drawHome();
+        game.carrots.forEach((c, i) => { if (!c.got) drawCarrot(c.x, i); });
+
+        const phase = game.phase;
+        const active = phase === 'running';
+        const stunned = game.hogStun > 0 && (active || phase === 'won' || phase === 'results');
+        const asleep = !game.hogAwake;
+        const danger = game.danger || 0;
+        for (let i = 2; i >= 0; i--) {
+            const hx = game.hogX - i * HOG_SPACING - game.camX;
+            if (hx < -60 || hx > VW + 60) continue;
+            drawHog(hx, GROUND + (i === 1 ? 4 : 0), {
+                moving: game.hogMoving,
+                phase: game.hogPhase + i * 1.3,
+                rolling: game.hogRolling && active && !stunned,
+                roll: game.hogRoll + i,
+                asleep,
+                dizzy: stunned,
+                determined: danger > 0.4,
+                flip: game.hogFlee,
+                zzz: i !== 1,
+            });
+        }
+
+        // UFO beam goes behind the bunny, saucer in front
+        const caughtish = (phase === 'caught' || phase === 'results') && game.caughtT > 0;
+        const ux = game.ufo.x - game.camX;
+        if (caughtish && game.ufo.beam > 0) {
+            ctx.save();
+            ctx.globalAlpha = 1;
+            drawUFOBeamOnly(ux, game.ufo.y, game.ufo.beam);
+            ctx.restore();
+        }
+
+        if (game.bunnyAlpha > 0 && game.bunnyLift < 1) {
+            const lift = game.bunnyLift;
+            const targetY = game.ufo.y + 30;
+            const by = GROUND - lift * (GROUND - targetY);
+            drawBunny(game.playerX - game.camX, by, {
+                phase: game.runPhase,
+                moving: lift > 0 ? 0 : game.moving,
+                lookBack: (danger > 0.5 && game.moving < 0.5) || (phase === 'caught' && lift === 0),
+                sweat: danger > 0.55 || phase === 'caught',
+                scared: phase === 'caught' || danger > 0.8,
+                stumble: game.stumble,
+                rot: lift * Math.PI * 4,
+                scale: 1 - lift * 0.7,
+                noShadow: lift > 0,
+                alpha: game.bunnyAlpha,
+            });
+        }
+        if (caughtish && game.ufo.y > -100) drawUFO(ux, game.ufo.y, 0);
+
+        drawParticles();
+        drawFloaters();
+
+        // red glow round the edges when the hedgehogs are close
+        if (danger > 0.35 && phase === 'running') {
+            const a = (danger - 0.35) * 1.1 * (0.75 + 0.25 * Math.sin(game.t * 8));
+            const g = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.3, VW / 2, VH / 2, Math.max(VW * 0.55, VH * 0.75));
+            g.addColorStop(0, `rgba(${pal.vignette},0)`);
+            g.addColorStop(1, `rgba(${pal.vignette},${a})`);
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, VW, VH);
+        }
+
+        // arrow showing where the hedgehogs are when they're off screen
+        const hogScreen = game.hogX - game.camX;
+        if (hogScreen < -30 && (phase === 'running' || phase === 'ready')) {
+            ctx.font = '600 13px Fredoka, sans-serif';
+            ctx.beginPath();
+            ctx.roundRect(8, GROUND - 60, 96, 24, 12);
+            fillStroke('rgba(255,253,245,0.9)', INK, 1.5);
+            ctx.fillStyle = INK;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(asleep ? '◀ zzz… 🦔' : '◀ hedgehogs!', 56, GROUND - 48);
+        }
+
+        if (phase === 'ready') {
+            const ch = game.text[0];
+            drawPrompt(`Type  ${ch === ' ' ? 'space' : ch}  to start running!`);
+        }
+        ctx.restore();
+    };
+
+    const drawUFOBeamOnly = (sx, sy, beam) => {
+        // draw the beam by itself so it sits behind the floating bunny
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(sx - 70, sy + 15, 140, VH);
+        ctx.clip();
+        drawUFO(sx, sy, beam);
+        ctx.restore();
+    };
+
+    // ————————————————————————————————————————————————————————————
+    // Main loop
+    // ————————————————————————————————————————————————————————————
+
+    let lastFrame = performance.now();
+    const frame = (ts) => {
+        const dt = Math.min(0.05, Math.max(0, (ts - lastFrame) / 1000));
+        lastFrame = ts;
+        try {
+            update(dt);
+            render();
+        } catch (err) {
+            console.error(err);
+        }
+        requestAnimationFrame(frame);
+    };
+
+    window.addEventListener('resize', () => { resize(); if (!$('playArea').hidden) updateStrip(); });
+
+    // Boot
+    resize();
+    buildKeyboard();
+    renderMute();
+    goMenu();
+    requestAnimationFrame(frame);
+    </script>
+</body>
+</html>
