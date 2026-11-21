@@ -27,6 +27,7 @@
             --guest: #2F6690;
             --ok: #3C7A3F;
             --bad: #A33B2B;
+            --warn: #A86F0C;
             --serif: "STIX Two Text", "Times New Roman", serif;
             --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
         }
@@ -45,6 +46,7 @@
                 --guest: #7FB3DA;
                 --ok: #84C487;
                 --bad: #E8897A;
+                --warn: #E0B45A;
             }
         }
 
@@ -86,6 +88,7 @@
             padding: 10px 16px; cursor: pointer; border-radius: 2px;
         }
         button:hover { border-color: var(--copper); color: var(--copper-strong); }
+        button:disabled, button:disabled:hover { opacity: 0.4; cursor: not-allowed; border-color: var(--ink); color: var(--ink); }
         button.primary { background: var(--ink); color: var(--paper); }
         button.primary:hover { background: var(--copper-strong); border-color: var(--copper-strong); color: var(--paper); }
 
@@ -160,7 +163,17 @@
             display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; margin-bottom: 14px;
             font-family: var(--mono); font-size: 0.85rem;
         }
+        .play-bar { padding: 8px 12px; border: 1.5px solid transparent; transition: background 0.2s, border-color 0.2s; }
         .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--ok); margin-right: 6px; }
+        .conn { font-weight: 500; }
+        .conn.unstable { color: var(--warn); }
+        .conn.unstable .dot { background: var(--warn); animation: blink 1s ease-in-out infinite; }
+        .conn.closed { color: var(--bad); }
+        .conn.closed .dot { background: var(--bad); }
+        .play-bar.unstable { border-color: var(--warn); }
+        .play-bar.closed { border-color: var(--bad); background: var(--surface); }
+        .pad-wrap.closed { opacity: 0.5; pointer-events: none; }
+        @keyframes blink { 50% { opacity: 0.25; } }
         .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin: 0 4px -1px 0; }
         .play-bar .spacer { flex: 1; }
         .pad-wrap { background: var(--surface); border: 1px solid var(--line); box-shadow: 4px 4px 0 var(--line-faint); }
@@ -254,8 +267,8 @@
 
         <!-- ————— Connected demo: shared sketchpad ————— -->
         <section id="play" hidden>
-            <div class="play-bar">
-                <span><span class="dot"></span>Connected</span>
+            <div class="play-bar" id="play-bar">
+                <span class="conn" id="conn-status" role="status"><span class="dot"></span><span id="conn-text">Connected</span></span>
                 <span id="role-label"></span>
                 <span>Round trip: <span id="ping-label">—</span></span>
                 <span class="spacer"></span>
@@ -264,7 +277,6 @@
             </div>
             <div class="pad-wrap"><canvas id="pad" aria-label="Shared sketchpad"></canvas></div>
             <p class="hint" style="margin-top:12px">Draw on the pad. Your lines appear on the other laptop straight away, with no server in between.</p>
-            <div class="status bad" id="play-status" hidden></div>
         </section>
     </div>
 
@@ -282,6 +294,7 @@
     // Guest:  const link = new PeerLink();
     //         const reply = await link.acceptOfferCode(code); // show as QR
     // Both:   link.onopen = () => …; link.onmessage = (obj) => …;
+    //         link.onstatechange = (state, reason) => …;  // see PeerLink
     //         link.send({ any: 'json' });
     // =====================================================================
 
@@ -512,27 +525,63 @@
     })();
 
     class PeerLink {
+        // Internal message type for "I'm leaving". Games should not use this name.
+        static #BYE = '__bye';
+
         constructor() {
             this.onopen = null;
             this.onmessage = null;
-            this.onclose = null;
+            // onstatechange(state, reason) reports connection health:
+            //   'connected'  link is up (also sent again after recovering from 'unstable')
+            //   'unstable'   no contact for ~5 s. It may recover by itself (e.g. a wifi blip)
+            //   'closed'     final. reason: 'left' (the other side disconnected or closed
+            //                its page), 'lost' (no contact for ~15 s) or 'local' (we closed)
+            this.onstatechange = null;
+            this.state = 'new';
             // No STUN/TURN: on a shared LAN the host candidates are all we need.
             this.pc = new RTCPeerConnection({ iceServers: [] });
             // A pre-negotiated channel means both sides create it identically, with no in-band setup.
             this.channel = this.pc.createDataChannel('game', { negotiated: true, id: 0 });
-            this.channel.onopen = () => this.onopen?.();
-            this.channel.onclose = () => this.onclose?.();
+            this.channel.onopen = () => {
+                this.#setState('connected');
+                this.onopen?.();
+            };
+            // A remote channel close arrives almost instantly when the other side closes cleanly.
+            this.channel.onclose = () => this.#finish('left');
             this.channel.onmessage = (event) => {
                 let data;
                 try { data = JSON.parse(event.data); } catch { return; }
+                if (data?.t === PeerLink.#BYE) return this.#finish('left');
                 this.onmessage?.(data);
             };
+            // If a page closes without any goodbye, only WebRTC's consent checks notice:
+            // 'disconnected' after ~5 s, 'failed' after ~15 s (measured in Chrome).
             this.pc.onconnectionstatechange = () => {
-                if (this.pc.connectionState === 'failed') this.onclose?.();
+                const s = this.pc.connectionState;
+                if (s === 'disconnected' && this.state === 'connected') this.#setState('unstable');
+                else if (s === 'connected' && this.state === 'unstable') this.#setState('connected');
+                else if (s === 'failed') this.#finish('lost');
             };
+            // Say goodbye when the tab closes or navigates away, so the other side knows at once.
+            this.onPageHide = () => this.close();
+            window.addEventListener('pagehide', this.onPageHide);
         }
 
         get isOpen() { return this.channel.readyState === 'open'; }
+
+        #setState(state, reason) {
+            if (this.state === 'closed' || this.state === state) return;
+            this.state = state;
+            this.onstatechange?.(state, reason);
+        }
+
+        #finish(reason) {
+            if (this.state === 'closed') return;
+            this.#setState('closed', reason);
+            window.removeEventListener('pagehide', this.onPageHide);
+            this.channel.close();
+            this.pc.close();
+        }
 
         // Without trickle ICE we wait until all local addresses are gathered before encoding.
         #gatherComplete(timeoutMs = 4000) {
@@ -577,8 +626,8 @@
         }
 
         close() {
-            this.channel.close();
-            this.pc.close();
+            if (this.isOpen) this.channel.send(JSON.stringify({ t: PeerLink.#BYE }));
+            this.#finish('local');
         }
     }
 
@@ -766,13 +815,13 @@
             scanner?.stop();
             startPlay();
         };
-        link.onclose = () => {
-            if (!$('play').hidden) {
-                const el = $('play-status');
-                el.hidden = false;
-                el.innerHTML = '<strong>The connection closed.</strong><div class="row-actions"><button onclick="location.reload()">Pair again</button></div>';
-                clearInterval(pingTimer);
+        link.onstatechange = (state, reason) => {
+            if (state === 'closed' && $('play').hidden && role) {
+                // Closed before the game started, e.g. the other side gave up mid-pairing.
+                fail('The other laptop closed the connection.');
+                return;
             }
+            showConnectionState(state, reason);
         };
         link.onmessage = handleMessage;
     };
@@ -913,10 +962,34 @@
         clearPad();
         link?.send({ t: 'clear' });
     });
+    // Disconnect while connected; once the session has ended the same button becomes "Pair again".
     $('leave-btn').addEventListener('click', () => {
         link?.close();
         location.reload();
     });
+
+    // Reflect connection health in the bar at the top of the pad.
+    const showConnectionState = (state, reason) => {
+        const bar = $('play-bar');
+        const status = $('conn-status');
+        const labels = {
+            connected: 'Connected',
+            unstable: 'Lost contact, waiting…',
+            closed: reason === 'left' ? 'They disconnected' : reason === 'lost' ? 'Connection lost' : 'Disconnected',
+        };
+        $('conn-text').textContent = labels[state] ?? state;
+        status.className = `conn ${state}`;
+        bar.className = `play-bar ${state}`;
+        $('pad').parentElement.classList.toggle('closed', state === 'closed');
+        if (state === 'unstable') $('ping-label').textContent = '—';
+        if (state === 'closed') {
+            clearInterval(pingTimer);
+            $('ping-label').textContent = '—';
+            $('clear-btn').disabled = true;
+            $('leave-btn').textContent = 'Pair again';
+            lastPoint = null;
+        }
+    };
 
     function handleMessage(msg) {
         switch (msg.t) {
