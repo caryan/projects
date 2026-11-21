@@ -3,7 +3,7 @@
 ## Repository Structure
 - `/python/` - Python script tools
 - `/web/` - Web-based tools (single page HTML/JS applications)
-- `/coding_logs/` - Documentation of tool development process
+- `CODING_LOG.md` - One-entry-per-session log of AI-assisted work (precis, harness/model, token cost)
 
 ## Development Commands
 - No formal build system is present (single-file applications)
@@ -38,5 +38,6 @@
 - Local-only processing (will be served from a static website)
 
 ## Documentation
+- After a session that adds or updates a tool, add an entry at the top of `CODING_LOG.md` following the template there: a 2–3 sentence precis, the harness version and model, and token usage with a cost estimate. Get the numbers by running `uv run python/session_usage.py` (most recent session for this repo) at the end of the session so the totals are complete. Don't save full transcripts.
 - Include clear usage instructions in UI
 - Document any unique algorithms or techniques used
