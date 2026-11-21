@@ -12,9 +12,9 @@ Get the usage numbers for the current session with `uv run python/session_usage.
 -->
 
 ## 2026-11-21 · QR Pair (new) · `web/qr-pair.html`
-- **Precis:** Prototype for pairing two laptops on the same wifi with no server: each shows a QR code to the other's webcam, which sets up a direct WebRTC data channel, with a shared sketchpad as the demo. Only the essential WebRTC fields (ICE username and password, certificate fingerprint, addresses) are packed into a ~104-character Crockford base32 code, which the other side rebuilds into a full description. The pairing kit is a self-contained block meant to be copied into future two-player games. A follow-up added connection-health states (connected / lost contact / disconnected) shown in the top bar, plus a goodbye message sent on Disconnect or tab close, so the other side finds out within a fraction of a second instead of 15 s.
-- **Harness / model:** Claude Code 2.1.330 · claude-opus-5-5 (23 calls)
-- **Tokens:** 54 in · 68.3k cache write · 1.69M cache read · 50.2k out · ~$1.89 est. at API list prices
+- **Precis:** Prototype for pairing two laptops on the same wifi with no server: each shows a QR code to the other's webcam, which sets up a direct WebRTC data channel, with a shared sketchpad as the demo. Only the essential WebRTC fields (ICE username and password, certificate fingerprint, addresses) are packed into a ~104-character Crockford base32 code, which the other side rebuilds into a full description. The pairing kit is a self-contained block meant to be copied into future two-player games. A follow-up added connection-health states (connected / lost contact / disconnected) shown in the top bar, plus a goodbye message sent on Disconnect or tab close, so the other side finds out within a fraction of a second instead of 15 s. It is framed as a general browser-to-browser connection demo (Host / Join a connection) and listed on the index under Network.
+- **Harness / model:** Claude Code 2.1.330 · claude-opus-5-5 (36 calls)
+- **Tokens:** 84 in · 81.8k cache write · 3.08M cache read · 58.3k out · ~$2.44 est. at API list prices
 
 ## 2026-11-21 · Hedgehog Dash (new) · `web/hedgehog-dash-typing.html`
 - **Precis:** Learn-to-type game: hedgehogs chase the player and typing the prompted letters and words keeps them ahead. Getting caught means being beamed up by aliens.
