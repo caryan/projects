@@ -9,8 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
     <!-- QR generation (draws codes) and jsQR (reads codes from webcam frames) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- Integrity hashes pin the exact files, so a tampered CDN copy is refused rather than run. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"
+            integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"
+            integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
     <style>
         /* ————— Engineering-pad design tokens (shared site identity) ————— */
         :root {
@@ -176,7 +179,13 @@
         @keyframes blink { 50% { opacity: 0.25; } }
         .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin: 0 4px -1px 0; }
         .play-bar .spacer { flex: 1; }
-        .pad-wrap { background: var(--surface); border: 1px solid var(--line); box-shadow: 4px 4px 0 var(--line-faint); }
+        .pad-wrap { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: 4px 4px 0 var(--line-faint); }
+        #peer-cursor {
+            position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%);
+            border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); pointer-events: none;
+            transition: left 40ms linear, top 40ms linear;
+        }
+        .rejoin { font-family: var(--mono); font-size: 0.85rem; color: var(--ok); margin-bottom: 10px; }
         #pad { display: block; width: 100%; aspect-ratio: 4 / 3; touch-action: none; cursor: crosshair; }
     </style>
 </head>
@@ -227,6 +236,8 @@
                             <tr><td>Address and port</td><td>7–19 each</td><td>Where to reach the laptop on the local network: a real IPv4 address (7 bytes), or a hidden <code>.local</code> name (19 bytes) if camera access was refused</td></tr>
                         </tbody>
                     </table>
+                    <p>Address names in a code are checked against a strict pattern before use, so a code shown to the camera can only ever describe a connection, nothing else.</p>
+                    <p>Once connected, the laptops share two channels. The <em>reliable</em> one delivers every message in order, for things that must arrive, like strokes on the pad. The <em>fast</em> one never waits to resend a lost packet, so a wifi hiccup can't hold up newer messages. It carries the live pointer and a once-a-second ping, which measures the round trip and lines up the two clocks to within a few milliseconds. If the link drops, <strong>Pair again</strong> reconnects without reloading the page, and the host sends its copy of the drawing across.</p>
                     <p>Once the page has loaded, no servers are involved. The laptops talk directly to each other, so this only works when both are on the same local network and that network lets devices reach each other. Many guest networks block this.</p>
                 </div>
             </details>
@@ -263,6 +274,16 @@
                 </article>
             </div>
             <div class="status" id="pair-status" role="status"></div>
+            <template id="failure-tips">
+                <ul>
+                    <li>Check both laptops are on the same wifi network, not a guest network.</li>
+                    <li>Some networks (schools, offices, hotels, guest wifi) block devices from talking to each other.</li>
+                    <li>A VPN on either laptop can get in the way. Try turning it off.</li>
+                    <li>On a Mac, check System Settings → Privacy &amp; Security → Local Network, and make sure your browser is switched on.</li>
+                    <li>If camera access was refused, the laptops have to find each other by hidden <code>.local</code> names, which some networks block. Allowing the camera usually fixes this.</li>
+                </ul>
+                <div class="row-actions"><button type="button" data-action="retry">Try again</button></div>
+            </template>
         </section>
 
         <!-- ————— Connected demo: shared sketchpad ————— -->
@@ -271,35 +292,55 @@
                 <span class="conn" id="conn-status" role="status"><span class="dot"></span><span id="conn-text">Connected</span></span>
                 <span id="role-label"></span>
                 <span>Round trip: <span id="ping-label">—</span></span>
+                <span title="Reads the same on both laptops">Shared clock: <span id="clock-label">—</span></span>
                 <span class="spacer"></span>
                 <button id="clear-btn">Clear</button>
                 <button id="leave-btn">Disconnect</button>
             </div>
-            <div class="pad-wrap"><canvas id="pad" aria-label="Shared sketchpad"></canvas></div>
-            <p class="hint" style="margin-top:12px">Draw on the pad. Your lines appear on the other laptop straight away, with no server in between.</p>
+            <p class="rejoin" id="rejoin-note" hidden>Reconnected to the same laptop. The host's drawing has been restored.</p>
+            <div class="pad-wrap">
+                <canvas id="pad" aria-label="Shared sketchpad"></canvas>
+                <div id="peer-cursor" hidden></div>
+            </div>
+            <p class="hint" style="margin-top:12px">Draw on the pad. Your lines appear on the other laptop straight away, with no server in between. The dot is the other laptop's pointer, and the shared clock should read the same on both screens.</p>
         </section>
     </div>
 
     <script>
     // =====================================================================
-    // QR PAIRING KIT
-    // Copy this whole block into a game. It has three parts:
+    // QR PAIRING KIT v2 (canonical copy: web/qr-pair.html; docs: web/qr-pair-kit.md)
+    // Copy this whole block, unchanged, into a game. It has three parts:
     //   PairCodec — packs the essential WebRTC fields into ~100-char codes
-    //   PeerLink  — one RTCPeerConnection + a JSON data channel
+    //   PeerLink  — one RTCPeerConnection with two JSON channels, a shared clock,
+    //               and goodbye / reconnect detection
     //   QrScanner / drawQrCode — webcam scanning and QR rendering
     //
-    // Host:   const link = new PeerLink();
+    // Host:   const link = new PeerLink({ app: 'my-game@1' });
     //         const code = await link.createOfferCode();   // show as QR
     //         await link.acceptAnswerCode(replyCode);      // scanned reply
-    // Guest:  const link = new PeerLink();
+    // Guest:  const link = new PeerLink({ app: 'my-game@1' });
     //         const reply = await link.acceptOfferCode(code); // show as QR
-    // Both:   link.onopen = () => …; link.onmessage = (obj) => …;
-    //         link.onstatechange = (state, reason) => …;  // see PeerLink
-    //         link.send({ any: 'json' });
+    // Both:   link.onopen = ({ peerId, reconnected }) => …;
+    //         link.onmessage = (msg, { fast }) => …;     // msg is always a plain object
+    //         link.onstatechange = (state, reason) => …; // see PeerLink
+    //         link.send({ t: 'scored', … });     // reliable + ordered: events that must arrive
+    //         link.sendFast({ t: 'pos', … });    // unreliable + unordered: snapshots, sent often
+    //         link.sharedNow();                  // ms on a clock both laptops agree on
+    //         link.rtt;                          // latest round trip in ms
+    //
+    // Game tips:
+    //   - Send on a fixed tick (e.g. 30 Hz), not once per input event.
+    //   - Fast messages can be lost or arrive out of order: number them and drop stale ones,
+    //     and send full state rather than changes.
+    //   - Make one side (usually the host) authoritative, and check every incoming message.
+    //   - If the link drops, pairing again gives a new PeerLink. onopen's `reconnected` says
+    //     whether it is the same laptop, so the game can resume rather than restart.
     // =====================================================================
 
     const PairCodec = (() => {
-        const VERSION = 1;
+        // Bump when the code format OR the PeerLink channel protocol changes, so pages that
+        // can't talk to each other say so at the scan instead of failing later.
+        const VERSION = 2;
         // Crockford base32: no I, L, O or U, so codes are hard to misread. Every character
         // is also in QR "alphanumeric" mode, which packs 5.5 bits per character.
         const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -372,7 +413,7 @@
             const tailParts = tail ? tail.split(':') : [];
             const missing = 8 - headParts.length - tailParts.length;
             const groups = tail === null ? headParts : [...headParts, ...Array(missing).fill('0'), ...tailParts];
-            if (groups.length !== 8) throw new Error(`Bad IPv6 address ${addr}`);
+            if (groups.length !== 8 || !groups.every(g => /^[0-9a-f]{1,4}$/i.test(g))) return null;
             return groups.flatMap(g => { const n = parseInt(g, 16); return [n >> 8, n & 0xFF]; });
         };
 
@@ -384,6 +425,30 @@
 
         const UUID_LOCAL = /^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})\.local$/i;
         const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+        // Plain DNS-style names only. Anything else from a code could smuggle extra lines or
+        // markup into the description we hand to the browser, so it is refused.
+        const HOSTNAME = /^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
+
+        // Turn an address from a browser description into the bytes we send, or null to skip it.
+        const packAddress = (address) => {
+            let m;
+            if ((m = address.match(IPV4))) {
+                const octets = m.slice(1).map(Number);
+                return octets.every(n => n <= 255) ? [ADDR.IPV4, ...octets] : null;
+            }
+            if ((m = address.match(UUID_LOCAL))) {
+                const hexId = m.slice(1).join('');
+                const bytes = [ADDR.MDNS];
+                for (let i = 0; i < 32; i += 2) bytes.push(parseInt(hexId.slice(i, i + 2), 16));
+                return bytes;
+            }
+            if (address.includes(':')) {
+                const bytes = parseIpv6(address);
+                return bytes ? [ADDR.IPV6, ...bytes] : null;
+            }
+            const nameBytes = new TextEncoder().encode(address);
+            return HOSTNAME.test(address) ? [ADDR.NAME, nameBytes.length, ...nameBytes] : null;
+        };
 
         // Pick the UDP host candidates worth sending. IPv4 and mDNS (.local) names come
         // first; IPv6 is used only if there is nothing else. Link-local IPv4 is skipped.
@@ -393,12 +458,16 @@
                 if (!line.startsWith('a=candidate:')) continue;
                 const parts = line.slice('a=candidate:'.length).split(' ');
                 const [, component, transport, , address, port, , type] = parts;
-                if (component !== '1' || transport.toLowerCase() !== 'udp' || type !== 'host') continue;
+                if (component !== '1' || transport?.toLowerCase() !== 'udp' || type !== 'host') continue;
                 if (address.startsWith('169.254.')) continue;
-                if (found.some(c => c.address === address && c.port === Number(port))) continue;
-                found.push({ address, port: Number(port) });
+                const portNumber = Number(port);
+                if (!Number.isInteger(portNumber) || portNumber < 1 || portNumber > 65535) continue;
+                const packed = packAddress(address);
+                if (!packed) continue;
+                if (found.some(c => c.address === address && c.port === portNumber)) continue;
+                found.push({ address, port: portNumber, packed });
             }
-            const rank = (c) => IPV4.test(c.address) ? 0 : UUID_LOCAL.test(c.address) ? 1 : c.address.includes(':') ? 3 : 2;
+            const rank = (c) => c.packed[0] === ADDR.IPV4 ? 0 : c.packed[0] === ADDR.MDNS ? 1 : c.packed[0] === ADDR.IPV6 ? 3 : 2;
             found.sort((a, b) => rank(a) - rank(b));
             const nonV6 = found.filter(c => rank(c) < 3);
             return (nonV6.length ? nonV6 : found).slice(0, MAX_CANDIDATES);
@@ -425,26 +494,10 @@
             packIce(ufrag, out);
             packIce(pwd, out);
             const fp = hex.split(':').map(h => parseInt(h, 16));
-            if (fp.length !== 32) throw new Error('Unexpected fingerprint length');
+            if (fp.length !== 32 || fp.some(n => !(n >= 0 && n <= 255))) throw new Error('Unexpected fingerprint length');
             out.push(...fp);
             out.push(candidates.length);
-            for (const { address, port } of candidates) {
-                let m;
-                if ((m = address.match(IPV4))) {
-                    out.push(ADDR.IPV4, ...m.slice(1).map(Number));
-                } else if ((m = address.match(UUID_LOCAL))) {
-                    const hexId = m.slice(1).join('');
-                    out.push(ADDR.MDNS);
-                    for (let i = 0; i < 32; i += 2) out.push(parseInt(hexId.slice(i, i + 2), 16));
-                } else if (address.includes(':')) {
-                    out.push(ADDR.IPV6, ...parseIpv6(address));
-                } else {
-                    const nameBytes = new TextEncoder().encode(address);
-                    if (nameBytes.length > 255) throw new Error('Host name too long');
-                    out.push(ADDR.NAME, nameBytes.length, ...nameBytes);
-                }
-                out.push(port >> 8, port & 0xFF);
-            }
+            for (const { port, packed } of candidates) out.push(...packed, port >> 8, port & 0xFF);
             out.push(crc8(out));
             return toBase32(out);
         };
@@ -477,8 +530,11 @@
             if (!setup) throw new Error('Code has an invalid header');
             const ufrag = unpackIce();
             const pwd = unpackIce();
+            // ICE requires at least 4 and 22 characters (RFC 8839).
+            if (ufrag.length < 4 || pwd.length < 22) throw new Error('Code has invalid connection credentials');
             const fingerprint = Array.from(take(32), b => b.toString(16).padStart(2, '0').toUpperCase()).join(':');
             const count = take(1)[0];
+            if (count < 1 || count > MAX_CANDIDATES) throw new Error('Code has an invalid address list');
             const candidates = [];
             for (let i = 0; i < count; i++) {
                 const type = take(1)[0];
@@ -488,15 +544,20 @@
                     const h = Array.from(take(16), b => b.toString(16).padStart(2, '0')).join('');
                     address = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}.local`;
                 } else if (type === ADDR.IPV6) address = formatIpv6(take(16));
-                else if (type === ADDR.NAME) address = new TextDecoder().decode(take(take(1)[0]));
-                else throw new Error('Code has an unknown address type');
+                else if (type === ADDR.NAME) {
+                    address = new TextDecoder().decode(take(take(1)[0]));
+                    if (!HOSTNAME.test(address)) throw new Error('Code has an invalid address');
+                } else throw new Error('Code has an unknown address type');
                 const [hi, lo] = take(2);
-                candidates.push({ address, port: (hi << 8) | lo });
+                const port = (hi << 8) | lo;
+                if (port === 0) throw new Error('Code has an invalid port');
+                candidates.push({ address, port });
             }
             return { kind, setup, ufrag, pwd, fingerprint, candidates, byteLength: bytes.length };
         };
 
         // Rebuild a minimal but complete remote description for a data-channel-only session.
+        // Every value here was checked by decode(), so nothing can add lines of its own.
         const toSdp = (info, mid = '0') => {
             const lines = [
                 'v=0',
@@ -525,35 +586,67 @@
     })();
 
     class PeerLink {
-        // Internal message type for "I'm leaving". Games should not use this name.
+        // Internal message types all start with "__", and games cannot send them.
         static #BYE = '__bye';
+        static #HELLO = '__hello';
+        static #PING = '__ping';
+        static #PONG = '__pong';
+        // A random id for this page load, sent to the other side so it can tell a reconnect
+        // to the same laptop apart from a new partner.
+        static #pageId = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
+        static #lastPeerId = null;
+        // Fast messages are snapshots, so once a few are queued it is better to drop new ones.
+        static #FAST_BACKLOG = 64 * 1024;
+        // Chrome closes a channel whose queue passes 16 MB, so refuse well before that.
+        static #RELIABLE_BACKLOG = 4 * 1024 * 1024;
 
-        constructor() {
+        #helloTimer = null;
+        #pingTimer = null;
+        #clockSamples = [];
+
+        // app: a name for the game and its message format, e.g. 'snake@1'. Both laptops must
+        // use the same string, so bump it when the game's messages change.
+        constructor({ app = 'qr-pair-demo@1' } = {}) {
+            this.app = String(app);
             this.onopen = null;
             this.onmessage = null;
             // onstatechange(state, reason) reports connection health:
             //   'connected'  link is up (also sent again after recovering from 'unstable')
             //   'unstable'   no contact for ~5 s. It may recover by itself (e.g. a wifi blip)
             //   'closed'     final. reason: 'left' (the other side disconnected or closed
-            //                its page), 'lost' (no contact for ~15 s) or 'local' (we closed)
+            //                its page), 'lost' (no contact for ~15 s), 'local' (we closed)
+            //                or 'mismatch' (the other laptop is running a different app)
             this.onstatechange = null;
+            this.onrtt = null;          // onrtt(ms) after each clock sample (about once a second)
             this.state = 'new';
+            this.isHost = false;
+            this.peerId = null;
+            this.rtt = null;
+            this.clockReady = false;
+            this.peerClockOffset = 0;   // the other side's performance.now() minus ours
+
             // No STUN/TURN: on a shared LAN the host candidates are all we need.
             this.pc = new RTCPeerConnection({ iceServers: [] });
-            // A pre-negotiated channel means both sides create it identically, with no in-band setup.
-            this.channel = this.pc.createDataChannel('game', { negotiated: true, id: 0 });
+            // Pre-negotiated channels mean both sides create them identically, with no in-band setup.
+            // 'reliable' is ordered and retransmitted. 'fast' never waits for a lost packet, so one
+            // dropped packet on wifi can't hold up everything behind it.
+            this.channel = this.pc.createDataChannel('reliable', { negotiated: true, id: 0 });
+            this.fastChannel = this.pc.createDataChannel('fast', { negotiated: true, id: 1, ordered: false, maxRetransmits: 0 });
+
             this.channel.onopen = () => {
-                this.#setState('connected');
-                this.onopen?.();
+                // Say who we are first. Ordered delivery means it reaches the other side before
+                // anything the game sends after its own onopen.
+                this.#sendRaw(this.channel, { t: PeerLink.#HELLO, id: PeerLink.#pageId, app: this.app });
+                this.#helloTimer = setTimeout(() => this.#finish('lost'), 5000);
+                this.#maybeOpen();
             };
+            this.fastChannel.onopen = () => this.#maybeOpen();
             // A remote channel close arrives almost instantly when the other side closes cleanly.
-            this.channel.onclose = () => this.#finish('left');
-            this.channel.onmessage = (event) => {
-                let data;
-                try { data = JSON.parse(event.data); } catch { return; }
-                if (data?.t === PeerLink.#BYE) return this.#finish('left');
-                this.onmessage?.(data);
-            };
+            const onChannelClose = () => this.#finish(this.#transportDown() ? 'lost' : 'left');
+            this.channel.onclose = onChannelClose;
+            this.fastChannel.onclose = onChannelClose;
+            this.channel.onmessage = (event) => this.#receive(event.data, false);
+            this.fastChannel.onmessage = (event) => this.#receive(event.data, true);
             // If a page closes without any goodbye, only WebRTC's consent checks notice:
             // 'disconnected' after ~5 s, 'failed' after ~15 s (measured in Chrome).
             this.pc.onconnectionstatechange = () => {
@@ -567,7 +660,21 @@
             window.addEventListener('pagehide', this.onPageHide);
         }
 
-        get isOpen() { return this.channel.readyState === 'open'; }
+        get isOpen() { return this.state === 'connected' || this.state === 'unstable'; }
+
+        // Bytes queued on the reliable channel and not yet sent. If this keeps growing, the
+        // game is sending faster than the wifi can carry.
+        get backlog() { return this.channel.bufferedAmount; }
+
+        // A clock in ms that reads the same on both laptops (to within a few ms once
+        // clockReady is true). It is the host's performance.now().
+        sharedNow() {
+            return this.isHost ? performance.now() : performance.now() + this.peerClockOffset;
+        }
+
+        #transportDown() {
+            return ['disconnected', 'failed', 'closed'].includes(this.pc.connectionState);
+        }
 
         #setState(state, reason) {
             if (this.state === 'closed' || this.state === state) return;
@@ -575,30 +682,127 @@
             this.onstatechange?.(state, reason);
         }
 
+        #maybeOpen() {
+            if (this.state !== 'new' || !this.peerId) return;
+            if (this.channel.readyState !== 'open' || this.fastChannel.readyState !== 'open') return;
+            clearTimeout(this.#helloTimer);
+            const reconnected = this.peerId === PeerLink.#lastPeerId;
+            PeerLink.#lastPeerId = this.peerId;
+            this.#setState('connected');
+            this.#startClock();
+            this.onopen?.({ peerId: this.peerId, reconnected });
+        }
+
         #finish(reason) {
             if (this.state === 'closed') return;
+            clearTimeout(this.#helloTimer);
+            clearInterval(this.#pingTimer);
             this.#setState('closed', reason);
             window.removeEventListener('pagehide', this.onPageHide);
             this.channel.close();
+            this.fastChannel.close();
             this.pc.close();
         }
 
-        // Without trickle ICE we wait until all local addresses are gathered before encoding.
-        #gatherComplete(timeoutMs = 4000) {
-            return new Promise((resolve) => {
-                if (this.pc.iceGatheringState === 'complete') return resolve();
-                const done = () => {
-                    clearTimeout(timer);
-                    this.pc.removeEventListener('icegatheringstatechange', check);
-                    resolve();
-                };
-                const check = () => { if (this.pc.iceGatheringState === 'complete') done(); };
-                const timer = setTimeout(done, timeoutMs);
-                this.pc.addEventListener('icegatheringstatechange', check);
-            });
+        // Everything from the other laptop passes through here. Only plain objects reach the
+        // game, and internal "__" messages never do.
+        #receive(raw, fast) {
+            if (typeof raw !== 'string' || this.state === 'closed') return;
+            let msg;
+            try { msg = JSON.parse(raw); } catch { return; }
+            if (msg === null || typeof msg !== 'object' || Array.isArray(msg)) return;
+            switch (msg.t) {
+                case PeerLink.#BYE:
+                    return this.#finish('left');
+                case PeerLink.#HELLO:
+                    if (this.peerId) return;        // only the first hello counts
+                    if (msg.app !== this.app) return this.#finish('mismatch');
+                    if (typeof msg.id === 'string' && /^[0-9a-f]{1,64}$/.test(msg.id)) {
+                        this.peerId = msg.id;
+                        this.#maybeOpen();
+                    }
+                    return;
+                case PeerLink.#PING:
+                    if (Number.isFinite(msg.a)) this.#sendRaw(this.fastChannel, { t: PeerLink.#PONG, a: msg.a, b: performance.now() });
+                    return;
+                case PeerLink.#PONG:
+                    return this.#onPong(msg);
+            }
+            if (typeof msg.t === 'string' && msg.t.startsWith('__')) return;
+            if (!this.isOpen) return;
+            try {
+                this.onmessage?.(msg, { fast });
+            } catch (err) {
+                // A bad message must not take the link down with it.
+                console.error('PeerLink: onmessage handler threw', err);
+            }
         }
 
+        // Clock sync: ping once a second on the fast channel. Each reply gives a round trip
+        // and an estimate of the other clock, assuming the reply was stamped halfway through.
+        // The fastest recent round trip had the least queuing delay, so its estimate is used.
+        #startClock() {
+            const ping = () => this.#sendRaw(this.fastChannel, { t: PeerLink.#PING, a: performance.now() });
+            ping();
+            this.#pingTimer = setInterval(ping, 1000);
+        }
+
+        #onPong({ a, b }) {
+            if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+            const rtt = performance.now() - a;
+            if (rtt < 0 || rtt > 10000) return;
+            this.rtt = rtt;
+            this.#clockSamples.push({ rtt, offset: b - (a + rtt / 2) });
+            if (this.#clockSamples.length > 16) this.#clockSamples.shift();
+            const best = this.#clockSamples.reduce((m, s) => (s.rtt < m.rtt ? s : m));
+            this.peerClockOffset = best.offset;
+            this.clockReady = true;
+            this.onrtt?.(rtt);
+        }
+
+        // Returns true if the message was queued. False means the link isn't open, the queue
+        // is full, or the message was too big; details go to the console. Never throws.
+        #sendRaw(channel, obj, backlogLimit = Infinity) {
+            if (channel.readyState !== 'open' || channel.bufferedAmount > backlogLimit) return false;
+            let text;
+            try { text = JSON.stringify(obj); } catch (err) {
+                console.warn('PeerLink: message is not JSON-serialisable', err);
+                return false;
+            }
+            const maxBytes = this.pc.sctp?.maxMessageSize || 65536;
+            if (text.length * 3 > maxBytes && new TextEncoder().encode(text).length > maxBytes) {
+                console.warn(`PeerLink: message is over the ${maxBytes}-byte limit. Split it up.`);
+                return false;
+            }
+            try {
+                channel.send(text);
+                return true;
+            } catch (err) {
+                console.warn('PeerLink: send failed', err);
+                return false;
+            }
+        }
+
+        #sendApp(channel, obj, backlogLimit) {
+            if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+                console.warn('PeerLink: messages must be plain objects');
+                return false;
+            }
+            if (typeof obj.t === 'string' && obj.t.startsWith('__')) {
+                console.warn('PeerLink: message types starting with "__" are reserved');
+                return false;
+            }
+            return this.isOpen && this.#sendRaw(channel, obj, backlogLimit);
+        }
+
+        // Reliable and ordered. Use for things that must arrive: moves, scores, chat.
+        send(obj) { return this.#sendApp(this.channel, obj, PeerLink.#RELIABLE_BACKLOG); }
+
+        // Unreliable and unordered. Use for frequent snapshots where only the latest matters.
+        sendFast(obj) { return this.#sendApp(this.fastChannel, obj, PeerLink.#FAST_BACKLOG); }
+
         async createOfferCode() {
+            this.isHost = true;
             await this.pc.setLocalDescription(await this.pc.createOffer());
             await this.#gatherComplete();
             return PairCodec.encode(this.pc.localDescription.sdp, 'offer');
@@ -621,12 +825,25 @@
             await this.pc.setRemoteDescription({ type: 'answer', sdp: PairCodec.toSdp(info, mid) });
         }
 
-        send(obj) {
-            if (this.isOpen) this.channel.send(JSON.stringify(obj));
+        // Without trickle ICE we wait until all local addresses are gathered before encoding.
+        #gatherComplete(timeoutMs = 4000) {
+            return new Promise((resolve) => {
+                if (this.pc.iceGatheringState === 'complete') return resolve();
+                const done = () => {
+                    clearTimeout(timer);
+                    this.pc.removeEventListener('icegatheringstatechange', check);
+                    resolve();
+                };
+                const check = () => { if (this.pc.iceGatheringState === 'complete') done(); };
+                const timer = setTimeout(done, timeoutMs);
+                this.pc.addEventListener('icegatheringstatechange', check);
+            });
         }
 
         close() {
-            if (this.isOpen) this.channel.send(JSON.stringify({ t: PeerLink.#BYE }));
+            if (this.channel.readyState === 'open') {
+                try { this.channel.send(JSON.stringify({ t: PeerLink.#BYE })); } catch { /* closing anyway */ }
+            }
             this.#finish('local');
         }
     }
@@ -715,27 +932,23 @@
     let role = null;
     let busy = false;
     let connectTimer = null;
+    let pairingRun = 0;            // bumped on every (re)start, so stale async steps can bail out
 
-    const setStatus = (html, tone = '') => {
+    // Status text always goes in as text, never HTML: error messages can quote parts of a
+    // code, and a code can come from anyone who holds a screen up to the camera.
+    const setStatus = (message, tone = '', withTips = false) => {
         const el = $('pair-status');
         el.className = `status ${tone}`;
-        el.innerHTML = html;
+        const text = document.createElement(tone === 'bad' ? 'strong' : 'span');
+        text.textContent = message;
+        el.replaceChildren(text);
+        if (withTips) el.append($('failure-tips').content.cloneNode(true));
     };
-
-    const FAILURE_TIPS = `
-        <ul>
-            <li>Check both laptops are on the same wifi network, not a guest network.</li>
-            <li>Some networks (schools, offices, hotels, guest wifi) block devices from talking to each other.</li>
-            <li>A VPN on either laptop can get in the way. Try turning it off.</li>
-            <li>On a Mac, check System Settings → Privacy &amp; Security → Local Network, and make sure your browser is switched on.</li>
-            <li>If camera access was refused, the laptops have to find each other by hidden <code>.local</code> names, which some networks block. Allowing the camera usually fixes this.</li>
-        </ul>
-        <div class="row-actions"><button onclick="location.reload()">Start over</button></div>`;
 
     const fail = (message) => {
         clearTimeout(connectTimer);
         scanner?.stop();
-        setStatus(`<strong>${message}</strong>${FAILURE_TIPS}`, 'bad');
+        setStatus(message, 'bad', true);
     };
 
     const showCode = (code) => {
@@ -748,6 +961,7 @@
     };
 
     const startCamera = async () => {
+        scanner?.stop();
         scanner = new QrScanner($('camera'), handleCode);
         try {
             await scanner.start();
@@ -782,7 +996,9 @@
         $('video-frame').classList.add('found');
         $('camera-msg').textContent = 'Got it ✓';
         scanner?.stop();
-        (role === 'host' ? acceptReply(text) : acceptHostCode(text)).catch(err => fail(err.message));
+        const run = pairingRun;
+        (role === 'host' ? acceptReply(text, run) : acceptHostCode(text, run))
+            .catch(err => { if (run === pairingRun) fail(err.message); });
         return true;
     };
 
@@ -793,44 +1009,71 @@
         }, ms);
     };
 
-    const acceptHostCode = async (code) => {
+    const acceptHostCode = async (code, run) => {
         setStatus('Building a reply…');
         const reply = await link.acceptOfferCode(code);
+        if (run !== pairingRun) return;
         showCode(reply);
         setStatus('Now turn this screen toward the host so its webcam can scan your reply.');
         // Give the host plenty of time to scan the reply.
         waitForConnection(90000);
     };
 
-    const acceptReply = async (code) => {
+    const acceptReply = async (code, run) => {
         setStatus('Connecting…');
         await link.acceptAnswerCode(code);
-        waitForConnection(15000);
+        if (run !== pairingRun) return;
+        waitForConnection(30000);
     };
 
     const setupLink = () => {
-        link = new PeerLink();
-        link.onopen = () => {
+        link = new PeerLink({ app: 'qr-pair-demo@1' });
+        link.onopen = (info) => {
             clearTimeout(connectTimer);
             scanner?.stop();
-            startPlay();
+            startPlay(info);
         };
         link.onstatechange = (state, reason) => {
             if (state === 'closed' && $('play').hidden && role) {
-                // Closed before the game started, e.g. the other side gave up mid-pairing.
-                fail('The other laptop closed the connection.');
+                // Closed before the session started, e.g. the other side gave up mid-pairing.
+                fail(reason === 'mismatch'
+                    ? 'The other laptop is running a different game or version of this page.'
+                    : 'The other laptop closed the connection.');
                 return;
             }
             showConnectionState(state, reason);
         };
         link.onmessage = handleMessage;
+        link.onrtt = (rtt) => { $('ping-label').textContent = `${Math.round(rtt)} ms`; };
     };
 
-    const beginPairing = async (chosenRole) => {
-        role = chosenRole;
-        $('intro').hidden = true;
+    // Put the pairing cards back to their starting state, for a first pairing or a re-pair.
+    const resetPairingUI = () => {
+        $('video-frame').classList.remove('found');
+        $('camera-msg').textContent = 'Starting camera…';
+        $('paste-input').value = '';
+        const canvas = $('qr-canvas');
+        canvas.width = canvas.height = 1;
+        $('qr-placeholder').hidden = false;
+        $('code-text').textContent = '—';
+        $('copy-btn').disabled = true;
+        $('code-meta').textContent = '';
+    };
+
+    // Start (or restart) pairing in the role already chosen. Page state such as the drawing is
+    // kept, so a dropped link can be re-paired without losing anything.
+    const startPairing = async () => {
+        const run = ++pairingRun;
+        clearTimeout(connectTimer);
+        busy = false;
+        if (link) {
+            const old = link;
+            old.onopen = old.onmessage = old.onstatechange = old.onrtt = null;
+            old.close();
+        }
+        $('play').hidden = true;
         $('pairing').hidden = false;
-        $('pairing').classList.add(`role-${role}`);
+        resetPairingUI();
         setupLink();
 
         if (role === 'host') {
@@ -840,15 +1083,20 @@
             $('scan-step').textContent = '2';
             $('scan-title').textContent = 'Scan their reply';
             $('scan-hint').textContent = 'When their reply QR code appears, hold it up to this webcam.';
+            $('qr-placeholder').textContent = 'Preparing…';
+            setStatus('Starting camera…');
             // Start the camera before creating the offer: once camera permission is granted,
             // browsers share the real LAN IP (shorter code) instead of a hidden .local name.
             await startCamera();
+            if (run !== pairingRun) return;
             setStatus('Preparing your code…');
             try {
-                showCode(await link.createOfferCode());
+                const code = await link.createOfferCode();
+                if (run !== pairingRun) return;
+                showCode(code);
                 setStatus('Waiting for the other laptop to scan this code and show its reply.');
             } catch (err) {
-                fail(err.message);
+                if (run === pairingRun) fail(err.message);
             }
         } else {
             $('scan-step').textContent = '1';
@@ -863,8 +1111,20 @@
         }
     };
 
+    const beginPairing = (chosenRole) => {
+        role = chosenRole;
+        $('intro').hidden = true;
+        $('pairing').classList.add(`role-${role}`);
+        startPairing();
+    };
+
     $('host-btn').addEventListener('click', () => beginPairing('host'));
     $('join-btn').addEventListener('click', () => beginPairing('guest'));
+
+    // "Try again" lives inside the status box, which is rebuilt each time.
+    $('pair-status').addEventListener('click', (event) => {
+        if (event.target.closest('[data-action="retry"]')) startPairing();
+    });
 
     $('paste-form').addEventListener('submit', (event) => {
         event.preventDefault();
@@ -894,44 +1154,70 @@
     });
 
 
-    // ————— Connected demo: shared sketchpad + latency —————
+    // ————— Connected demo: shared sketchpad, live pointer and shared clock —————
+    // The demo follows the patterns a game would:
+    //   - strokes are events that must arrive, so they go on the reliable channel, batched
+    //     once per frame rather than once per pointer event
+    //   - the pointer position is a snapshot, so it goes on the fast channel at ~30 Hz,
+    //     numbered so late arrivals are ignored, and repeated so a lost packet doesn't matter
+    //   - the host's drawing is the master copy, sent in full whenever a link opens
     const pad = $('pad');
     const padCtx = pad.getContext('2d');
-    const strokes = [];            // every segment drawn, so the pad can be redrawn on resize
-    let pingTimer = null;
-    let lastPoint = null;
+    const strokes = [];            // { who: 'host' | 'guest', pts: [[x, y], …] }, kept for redraws and sync
+    const MAX_POINTS = 200000;     // stop drawing (and storing) past this, so memory stays bounded
+    const SYNC_CHUNK_POINTS = 4000; // ~60 KB per sync message, well under the size limit
+    let totalPoints = 0;
+    let myStroke = null;           // the stroke being drawn here right now
+    let sentUpTo = 0;              // index of the last point of myStroke already sent
+    let myCursor = null;           // [x, y] while the pointer is over the pad, else null
+    let cursorSeq = 0, lastCursorSent = 0, lastCursorKey = '';
+    let theirCursorSeq = 0, theirCursorAt = 0;
 
     const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     const colorFor = (who) => cssVar(who === 'host' ? '--copper' : '--guest');
+    const otherRole = () => (role === 'host' ? 'guest' : 'host');
 
-    const drawSegment = ({ a, b, who }) => {
+    const drawStroke = ({ who, pts }, from = 0) => {
+        if (pts.length - from < 2) return;
         const w = pad.width, h = pad.height;
         padCtx.strokeStyle = colorFor(who);
         padCtx.lineWidth = Math.max(2, w / 220);
         padCtx.lineCap = 'round';
+        padCtx.lineJoin = 'round';
         padCtx.beginPath();
-        padCtx.moveTo(a[0] * w, a[1] * h);
-        padCtx.lineTo(b[0] * w, b[1] * h);
+        padCtx.moveTo(pts[from][0] * w, pts[from][1] * h);
+        for (let i = from + 1; i < pts.length; i++) padCtx.lineTo(pts[i][0] * w, pts[i][1] * h);
         padCtx.stroke();
     };
 
     const resizePad = () => {
         const rect = pad.getBoundingClientRect();
+        if (!rect.width) return;
         const dpr = window.devicePixelRatio || 1;
         pad.width = Math.round(rect.width * dpr);
         pad.height = Math.round(rect.height * dpr);
-        strokes.forEach(drawSegment);
+        strokes.forEach(s => drawStroke(s));
     };
+    window.addEventListener('resize', resizePad);
 
-    const addSegment = (segment) => {
-        strokes.push(segment);
-        drawSegment(segment);
+    const addStroke = (stroke) => {
+        if (totalPoints + stroke.pts.length > MAX_POINTS) return false;
+        totalPoints += stroke.pts.length;
+        strokes.push(stroke);
+        drawStroke(stroke);
+        return true;
     };
 
     const clearPad = () => {
         strokes.length = 0;
+        totalPoints = 0;
+        myStroke = null;
         padCtx.clearRect(0, 0, pad.width, pad.height);
     };
+
+    // Incoming data is checked before use: positions must be pairs of numbers in 0..1.
+    const isPoint = (p) => Array.isArray(p) && p.length === 2 && p.every(v => Number.isFinite(v) && v >= 0 && v <= 1);
+    const isPointList = (pts) => Array.isArray(pts) && pts.length >= 2 && pts.length <= SYNC_CHUNK_POINTS && pts.every(isPoint);
 
     // Positions travel as 0..1 fractions so both laptops' pads line up whatever their size.
     const padPoint = (event) => {
@@ -942,30 +1228,65 @@
         ].map(v => Math.round(v * 10000) / 10000);
     };
 
+    // Send any new points of the stroke being drawn as one message. Each chunk repeats the
+    // last point already sent, so the chunks join up into one line on the other side.
+    const flushStroke = () => {
+        if (!myStroke || !link?.isOpen) return;
+        while (myStroke.pts.length - sentUpTo >= 2) {
+            const end = Math.min(myStroke.pts.length, sentUpTo + 500);
+            if (!link.send({ t: 'line', pts: myStroke.pts.slice(sentUpTo, end) })) return; // retry next frame
+            sentUpTo = end - 1;
+        }
+    };
+
     pad.addEventListener('pointerdown', (event) => {
+        if (!link?.isOpen) return;
         pad.setPointerCapture(event.pointerId);
-        lastPoint = padPoint(event);
+        const stroke = { who: role, pts: [padPoint(event)] };
+        if (addStroke(stroke)) { myStroke = stroke; sentUpTo = 0; }
     });
     pad.addEventListener('pointermove', (event) => {
-        if (!lastPoint) return;
         const point = padPoint(event);
-        const segment = { a: lastPoint, b: point, who: role };
-        addSegment(segment);
-        link?.send({ t: 'line', ...segment });
-        lastPoint = point;
+        myCursor = point;
+        if (!myStroke || totalPoints >= MAX_POINTS) return;
+        const pts = myStroke.pts;
+        pts.push(point);
+        totalPoints++;
+        drawStroke(myStroke, pts.length - 2);
     });
-    const endStroke = () => { lastPoint = null; };
+    const endStroke = () => { flushStroke(); myStroke = null; };
     pad.addEventListener('pointerup', endStroke);
     pad.addEventListener('pointercancel', endStroke);
+    pad.addEventListener('pointerleave', () => { myCursor = null; });
+
+    // Once per frame: send stroke points, the pointer snapshot, and refresh the clock readout.
+    const tick = () => {
+        requestAnimationFrame(tick);
+        if (!link?.isOpen) return;
+        flushStroke();
+        const now = performance.now();
+        const key = myCursor ? myCursor.join(',') : 'none';
+        // ~30 Hz when the pointer moves, plus a repeat every 250 ms so a lost packet heals.
+        if ((key !== lastCursorKey && now - lastCursorSent > 33) || now - lastCursorSent > 250) {
+            link.sendFast({ t: 'cursor', n: ++cursorSeq, p: myCursor });
+            lastCursorSent = now;
+            lastCursorKey = key;
+        }
+        // Their pointer fades out if no snapshot has arrived for a second.
+        if (now - theirCursorAt > 1000) $('peer-cursor').hidden = true;
+        if (link.clockReady) $('clock-label').textContent = `${(link.sharedNow() / 1000).toFixed(1)} s`;
+    };
+    requestAnimationFrame(tick);
 
     $('clear-btn').addEventListener('click', () => {
         clearPad();
         link?.send({ t: 'clear' });
     });
-    // Disconnect while connected; once the session has ended the same button becomes "Pair again".
+    // Disconnect while connected; once the session has ended the same button pairs again,
+    // in the same role and without reloading, so the drawing is kept.
     $('leave-btn').addEventListener('click', () => {
-        link?.close();
-        location.reload();
+        if (link?.isOpen) link.close();
+        else startPairing();
     });
 
     // Reflect connection health in the bar at the top of the pad.
@@ -983,43 +1304,90 @@
         $('pad').parentElement.classList.toggle('closed', state === 'closed');
         if (state === 'unstable') $('ping-label').textContent = '—';
         if (state === 'closed') {
-            clearInterval(pingTimer);
             $('ping-label').textContent = '—';
             $('clear-btn').disabled = true;
             $('leave-btn').textContent = 'Pair again';
-            lastPoint = null;
+            $('peer-cursor').hidden = true;
+            endStroke();
         }
     };
 
+    // Messages from the other laptop. Who sent it is known from the link itself, never
+    // taken from the message.
     function handleMessage(msg) {
         switch (msg.t) {
             case 'line':
-                if (Array.isArray(msg.a) && Array.isArray(msg.b)) addSegment({ a: msg.a, b: msg.b, who: msg.who === 'host' ? 'host' : 'guest' });
+                if (isPointList(msg.pts)) addStroke({ who: otherRole(), pts: msg.pts });
                 break;
             case 'clear':
                 clearPad();
                 break;
-            case 'ping':
-                link.send({ t: 'pong', ts: msg.ts });
+            case 'cursor':
+                // Fast messages can arrive late or out of order: keep only the newest.
+                if (!Number.isInteger(msg.n) || msg.n <= theirCursorSeq) break;
+                theirCursorSeq = msg.n;
+                theirCursorAt = performance.now();
+                if (isPoint(msg.p)) {
+                    const dot = $('peer-cursor');
+                    dot.style.left = `${msg.p[0] * 100}%`;
+                    dot.style.top = `${msg.p[1] * 100}%`;
+                    dot.hidden = false;
+                } else {
+                    $('peer-cursor').hidden = true;
+                }
                 break;
-            case 'pong':
-                $('ping-label').textContent = `${Math.round(performance.now() - msg.ts)} ms`;
+            // The host's drawing replaces the guest's when a link opens.
+            case 'sync-begin':
+                if (role === 'guest') clearPad();
+                break;
+            case 'sync':
+                if (role !== 'guest' || !Array.isArray(msg.strokes)) break;
+                for (const s of msg.strokes) {
+                    if ((s?.who === 'host' || s?.who === 'guest') && isPointList(s.pts)) addStroke({ who: s.who, pts: s.pts });
+                }
                 break;
         }
     }
 
-    function startPlay() {
+    // Host: send the whole drawing in chunks that stay under the message size limit.
+    const sendSync = () => {
+        link.send({ t: 'sync-begin' });
+        // Split very long strokes into overlapping pieces so each fits in one chunk.
+        const pieces = [];
+        for (const s of strokes) {
+            for (let i = 0; i < s.pts.length - 1; i += SYNC_CHUNK_POINTS - 1) {
+                pieces.push({ who: s.who, pts: s.pts.slice(i, i + SYNC_CHUNK_POINTS) });
+            }
+        }
+        let chunk = [], points = 0;
+        for (const piece of pieces) {
+            if (points + piece.pts.length > SYNC_CHUNK_POINTS && chunk.length) {
+                link.send({ t: 'sync', strokes: chunk });
+                chunk = []; points = 0;
+            }
+            chunk.push(piece);
+            points += piece.pts.length;
+        }
+        if (chunk.length) link.send({ t: 'sync', strokes: chunk });
+    };
+
+    function startPlay({ reconnected }) {
         $('pairing').hidden = true;
         $('play').hidden = false;
         const you = role === 'host' ? 'host' : 'guest';
         $('role-label').innerHTML =
             `<span class="swatch" style="background:${colorFor(you)}"></span>You (${you})` +
-            ` &nbsp; <span class="swatch" style="background:${colorFor(you === 'host' ? 'guest' : 'host')}"></span>Them`;
+            ` &nbsp; <span class="swatch" style="background:${colorFor(otherRole())}"></span>Them`;
+        $('peer-cursor').style.background = colorFor(otherRole());
+        $('clear-btn').disabled = false;
+        $('leave-btn').textContent = 'Disconnect';
+        $('ping-label').textContent = '—';
+        $('clock-label').textContent = '—';
+        $('rejoin-note').hidden = !reconnected;
+        theirCursorSeq = 0;
+        showConnectionState('connected');
         resizePad();
-        window.addEventListener('resize', resizePad);
-        const ping = () => link.send({ t: 'ping', ts: performance.now() });
-        ping();
-        pingTimer = setInterval(ping, 2000);
+        if (role === 'host') sendSync();
     }
     </script>
 </body>

@@ -3,6 +3,7 @@
 ## Repository Structure
 - `/python/` - Python script tools
 - `/web/` - Web-based tools (single page HTML/JS applications)
+- `/tests/` - Headless-browser test scripts (`uv run tests/<name>.py`)
 - `CODING_LOG.md` - One-entry-per-session log of AI-assisted work (precis, harness/model, token cost)
 
 ## Development Commands
@@ -36,6 +37,9 @@
   - Thorough error handling for user inputs
 - Single-file architecture for web tools (HTML/JS/CSS in one file)
 - Local-only processing (will be served from a static website)
+
+### Reusable pieces
+- **Two-player / networked games:** use the QR pairing kit (direct WebRTC between two browsers on the same wifi, paired by QR codes, no server). Read `web/qr-pair-kit.md` before starting: it covers copying the kit block from `web/qr-pair.html`, the API, game patterns (host-authoritative, reliable vs fast channel, tick-based sending, `sharedNow()`, resync on open) and tests. Don't write new WebRTC or signalling code. Change the kit only in `web/qr-pair.html`, then re-copy it into the games that use it.
 
 ## Documentation
 - After a session that adds or updates a tool, add an entry at the top of `CODING_LOG.md` following the template there: a 2–3 sentence precis, the harness version and model, and token usage with a cost estimate. Get the numbers by running `uv run python/session_usage.py` (most recent session for this repo) at the end of the session so the totals are complete. Don't save full transcripts.
