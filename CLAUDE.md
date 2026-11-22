@@ -2,7 +2,7 @@
 
 ## Repository Structure
 - `/python/` - Python script tools
-- `/web/` - Web-based tools (single page HTML/JS applications)
+- `/web/` - Web-based tools (mostly single-page HTML/JS applications, plus notes for reusable pieces like `qr-pair-kit.md`)
 - `/tests/` - Headless-browser test scripts (`uv run tests/<name>.py`)
 - `CODING_LOG.md` - One-entry-per-session log of AI-assisted work (precis, harness/model, token cost)
 
@@ -35,7 +35,9 @@
   - Use ES6+ features (arrow functions, async/await)
   - Add comments for complex logic
   - Thorough error handling for user inputs
-- Single-file architecture for web tools (HTML/JS/CSS in one file)
+- One-off tools: single-file architecture (HTML/JS/CSS in one file) is the default
+- Apps that need something already built as a reusable piece (see below): use that piece rather than rewriting it, following its own notes on how to include it
+- When a feature looks likely to recur across apps (networking, input handling, rendering helpers), suggest making it a reusable piece with a canonical source, a notes file in `web/`, tests in `tests/`, and an entry below. Don't extract one speculatively from a single app
 - Local-only processing (will be served from a static website)
 
 ### Reusable pieces
