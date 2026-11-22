@@ -2,16 +2,15 @@
 # requires-python = ">=3.12"
 # dependencies = ["websocket-client"]
 # ///
-"""Headless-Chrome tests for the QR pairing kit (see web/qr-pair-kit.md).
+"""Headless-Chrome tests for the QR Pair library, web/lib/qr-pair.js (see web/lib/qr-pair.md).
 
-    uv run tests/qr_pair_kit_test.py                      # kit tests on web/qr-pair.html
-    uv run tests/qr_pair_kit_test.py web/some-game.html   # kit tests on a game's copy of the kit
-    uv run tests/qr_pair_kit_test.py --demo               # also drive the qr-pair.html demo end to end
-    uv run tests/qr_pair_kit_test.py --slow-scan 70       # wait 70 s before the host "scans" the reply
+    uv run tests/qr_pair_test.py                  # library tests
+    uv run tests/qr_pair_test.py --demo           # plus web/qr-pair.html end to end in two windows
+    uv run tests/qr_pair_test.py --slow-scan 70   # plus a host that waits 70 s before "scanning"
 
-Kit tests pull the block between "QR PAIRING KIT" and "END QR PAIRING KIT" out of the given
-page and run two PeerLinks against each other over loopback in one headless Chrome page.
-The demo test opens web/qr-pair.html in two windows and pairs them by pasting codes.
+Library tests import the module into a blank page and run two PeerLinks against each other
+over loopback. The demo test opens web/qr-pair.html in two windows and pairs them by pasting
+codes, using the pairing UI's data-qrp="…" elements and the page's window.qrPairDemo hooks.
 
 Needs Google Chrome at the standard macOS path (or set CHROME=/path/to/chrome).
 What this can't cover: real webcam scanning, two physical machines on real wifi, Firefox/Safari.
@@ -23,8 +22,11 @@ import websocket
 REPO = pathlib.Path(__file__).resolve().parent.parent
 CHROME = os.environ.get("CHROME", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
-# ————— Test page for the kit itself —————
-KIT_TEST_JS = r"""
+# ————— Test page for the library itself (runs as a module after importing it) —————
+LIB_TEST_PAGE = "/__qr-pair-test.html"
+LIB_TEST_JS = r"""
+import * as QR from '/web/lib/qr-pair.js';
+const { PairCodec, PeerLink } = QR;
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail: String(detail) });
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -43,8 +45,8 @@ const codeWithName = (version, name) => {
 };
 
 async function pair({ hostApp, guestApp, hostDelayMs = 0 } = {}) {
-    const host = new PeerLink(hostApp ? { app: hostApp } : undefined);
-    const guest = new PeerLink(guestApp ? { app: guestApp } : undefined);
+    const host = new PeerLink({ app: hostApp ?? 'test@1' });
+    const guest = new PeerLink({ app: guestApp ?? 'test@1' });
     const ev = { host: [], guest: [] };
     for (const [n, l] of [['host', host], ['guest', guest]]) {
         l.onopen = (i) => ev[n].push('open');
@@ -62,14 +64,21 @@ async function pair({ hostApp, guestApp, hostDelayMs = 0 } = {}) {
 
 (async () => {
     try {
-        // The codec reads its own version from the header nibble; find it from a real code.
-        const probe = new PeerLink();
-        const version = PairCodec.decode(await probe.createOfferCode()).byteLength && (await (async () => {
-            for (let v = 1; v < 16; v++) { try { PairCodec.decode(codeWithName(v, 'ok.lan')); return v; } catch {} }
-            return -1;
-        })());
-        probe.close();
-        check('codec version found', version > 0, version);
+        check('exports the documented API', ['PairCodec', 'PeerLink', 'QrScanner', 'drawQrCode', 'loadQrLibraries', 'mountPairing', 'QR_PAIR_VERSION'].every(k => k in QR));
+        let noApp = 'accepted';
+        try { new PeerLink(); } catch (e) { noApp = e.message; }
+        check('PeerLink without an app name throws', noApp !== 'accepted', noApp);
+        // The codec's version is the header nibble; find which one it accepts.
+        let version = -1;
+        for (let v = 1; v < 16 && version < 0; v++) { try { PairCodec.decode(codeWithName(v, 'ok.lan')); version = v; } catch {} }
+        check('codec version matches QR_PAIR_VERSION', version === QR.QR_PAIR_VERSION, version);
+        try {
+            const [qrcodeFn, jsQRFn] = await QR.loadQrLibraries();
+            const modules = await QR.drawQrCode(document.createElement('canvas'), 'TEST123');
+            check('QR libraries load from CDN with integrity hashes', typeof qrcodeFn === 'function' && typeof jsQRFn === 'function' && modules > 0, `${modules}x${modules} QR`);
+        } catch (e) {
+            check('QR libraries load from CDN with integrity hashes', false, e.message);
+        }
         for (const [label, name] of [['html', '<img src=x onerror=alert(1)>'], ['crlf', '1.2.3.4 9 typ host\r\na=x:y'], ['space', 'a b']]) {
             let msg = 'accepted';
             try { PairCodec.decode(codeWithName(version, name)); } catch (e) { msg = e.message; }
@@ -77,7 +86,7 @@ async function pair({ hostApp, guestApp, hostDelayMs = 0 } = {}) {
         }
         let other = 'accepted';
         try { PairCodec.decode(codeWithName(version === 15 ? 14 : version + 1, 'ok.lan')); } catch (e) { other = e.message; }
-        check('code from another kit version rejected', other !== 'accepted', other);
+        check('code from another library version rejected', other !== 'accepted', other);
 
         const a = await pair();
         check('pairs over loopback', a.open, `${Math.round(a.openMs)} ms after answer`);
@@ -219,35 +228,34 @@ def serve(directory):
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
+    """Serves the repo, plus the in-memory library test page."""
+
+    def do_GET(self):
+        if self.path.split("?")[0] == LIB_TEST_PAGE:
+            body = (f"<!doctype html><meta charset='utf-8'><title>qr-pair test</title>"
+                    f"<script type='module'>{LIB_TEST_JS}</script>").encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            super().do_GET()
+
     def log_message(self, *args):
         pass
 
 
-def extract_kit(html):
-    start = html.find("// QR PAIRING KIT")
-    end = html.find("END QR PAIRING KIT")
-    if start < 0 or end < 0:
-        sys.exit("Couldn't find the QR PAIRING KIT ... END QR PAIRING KIT block in that file.")
-    start = html.rfind("\n", 0, start) + 1
-    end = html.find("\n", end)
-    return html[start:end]
-
-
-def run_kit_tests(browser, page_path, slow_s):
-    kit = extract_kit(pathlib.Path(page_path).read_text())
-    tmp = tempfile.mkdtemp()
-    pathlib.Path(tmp, "kit-test.html").write_text(
-        f"<!doctype html><meta charset='utf-8'><title>kit test</title><script>\n{kit}\n{KIT_TEST_JS}\n</script>")
-    httpd, base = serve(tmp)
+def run_lib_tests(browser, slow_s):
+    httpd, base = serve(str(REPO))
     try:
-        tab = browser.window("kit", f"{base}/kit-test.html?slow={int(slow_s * 1000)}")
+        tab = browser.window("library", f"{base}{LIB_TEST_PAGE}?slow={int(slow_s * 1000)}")
         tab.wait("window.__results", timeout=90 + slow_s)
         results = tab.js("window.__results")
-        report(f"kit tests: {page_path}", [(r["name"], r["ok"], r["detail"]) for r in results], tab.errors)
+        report("library tests: web/lib/qr-pair.js", [(r["name"], r["ok"], r["detail"]) for r in results], tab.errors)
         return all(r["ok"] for r in results)
     finally:
         httpd.shutdown()
-        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def run_demo_test(browser):
@@ -257,19 +265,23 @@ def run_demo_test(browser):
     check = lambda name, ok, detail="": results.append((name, bool(ok), str(detail)))
     url = f"{base}/web/qr-pair.html"
     A, B = browser.window("host", url), browser.window("guest", url)
-    paste = "(c => { const i = document.getElementById('paste-input'); i.value = c; document.getElementById('paste-form').requestSubmit(); })"
-    shown = "(t => t !== '—' && t)(document.getElementById('code-text').textContent)"
+    q = lambda name: f"document.querySelector('[data-qrp=\"{name}\"]')"
+    paste = f"(c => {{ {q('paste')}.value = c; {q('paste-form')}.requestSubmit(); }})"
+    shown = f"(t => t !== '—' && t)({q('code')}.textContent)"
     text = lambda tab, el: tab.js(f"document.getElementById('{el}').textContent")
     hidden = lambda tab, el: tab.js(f"document.getElementById('{el}').hidden")
 
     def pair(first):
-        btn = ("host-btn", "join-btn") if first else ("leave-btn", "leave-btn")
-        A.js(f"document.getElementById('{btn[0]}').click()")
-        B.js(f"document.getElementById('{btn[1]}').click()")
+        if first:
+            A.js(f"{q('host')}.click()")
+            B.js(f"{q('join')}.click()")
+        else:
+            A.js("document.getElementById('leave-btn').click()")   # "Pair again"
+            B.js("document.getElementById('leave-btn').click()")
         B.js(f"{paste}({json.dumps(A.wait(shown).replace(' ', ''))})")
         A.js(f"{paste}({json.dumps(B.wait(shown).replace(' ', ''))})")
         for t in (A, B):
-            t.wait("!document.getElementById('play').hidden && link.isOpen", 30)
+            t.wait("!document.getElementById('play').hidden && qrPairDemo.link?.isOpen", 30)
 
     def stroke(tab, points, release=True):
         x0, y0, w, h = tab.js("(r => [r.left, r.top, r.width, r.height])(document.getElementById('pad').getBoundingClientRect())")
@@ -285,22 +297,23 @@ def run_demo_test(browser):
     try:
         for t in (A, B):
             t.wait("document.readyState === 'complete'", 20)
-        check("CDN libraries pass their integrity check", all(t.js("typeof jsQR === 'function' && typeof qrcode === 'function'") for t in (A, B)))
         pair(first=True)
         check("pairs by pasted codes", True)
+        check("pairing UI hides itself once connected", A.js("document.getElementById('pairing-root').hidden") and B.js("document.getElementById('pairing-root').hidden"))
+        check("library loaded both QR libraries (integrity checked)", all(t.js("typeof jsQR === 'function' && typeof qrcode === 'function'") for t in (A, B)))
         check("first pairing is not flagged as a reconnect", hidden(A, "rejoin-note") and hidden(B, "rejoin-note"))
 
         stroke(A, [(0.2 + i * 0.02, 0.2 + i * 0.01) for i in range(30)])
         stroke(B, [(0.5 - i * 0.03, 0.8) for i in range(10)])
         time.sleep(0.5)
-        a_pts, b_pts = A.js("strokes.reduce((n, s) => n + s.pts.length, 0)"), B.js("strokes.reduce((n, s) => n + s.pts.length, 0)")
-        check("strokes reach the other side (both directions)", A.js("strokes.some(s => s.who === 'guest')") and B.js("strokes.some(s => s.who === 'host')"), f"host {a_pts} pts, guest {b_pts} pts")
+        a_pts, b_pts = A.js("qrPairDemo.strokes.reduce((n, s) => n + s.pts.length, 0)"), B.js("qrPairDemo.strokes.reduce((n, s) => n + s.pts.length, 0)")
+        check("strokes reach the other side (both directions)", A.js("qrPairDemo.strokes.some(s => s.who === 'guest')") and B.js("qrPairDemo.strokes.some(s => s.who === 'host')"), f"host {a_pts} pts, guest {b_pts} pts")
         A.mouse("mouseMoved", *A.js("(r => [r.left + r.width * 0.61, r.top + r.height * 0.3])(document.getElementById('pad').getBoundingClientRect())"), False)
         time.sleep(1.5)
         check("pointer snapshots arrive on the fast channel", not hidden(B, "peer-cursor") and B.js("document.getElementById('peer-cursor').style.left") == "61%",
               B.js("document.getElementById('peer-cursor').style.left"))
         check("round trip shown", text(A, "ping-label").endswith("ms") and text(B, "ping-label").endswith("ms"), f"{text(A, 'ping-label')} / {text(B, 'ping-label')}")
-        skew = abs(A.js("link.sharedNow()") - B.js("link.sharedNow()"))
+        skew = abs(A.js("qrPairDemo.link.sharedNow()") - B.js("qrPairDemo.link.sharedNow()"))
         check("shared clocks agree (incl. DevTools call gap)", skew < 50, f"{skew:.1f} ms")
 
         A.js("document.getElementById('leave-btn').click()")
@@ -308,11 +321,11 @@ def run_demo_test(browser):
         check("Disconnect is announced on the other side", True, text(B, "conn-text"))
         check("button becomes Pair again", text(A, "leave-btn") == "Pair again" and text(B, "leave-btn") == "Pair again")
 
-        host_pts = A.js("totalPoints")
-        B.js("clearPad()")   # wipe the guest's copy so the host's sync has to restore it
+        host_pts = A.js("qrPairDemo.totalPoints")
+        B.js("qrPairDemo.clearPad()")   # wipe the guest's copy so the host's sync has to restore it
         pair(first=False)
         time.sleep(0.8)
-        check("Pair again reconnects without a reload and restores the host's drawing", B.js("totalPoints") == host_pts, f"{B.js('totalPoints')} of {host_pts} points")
+        check("Pair again reconnects without a reload and restores the host's drawing", B.js("qrPairDemo.totalPoints") == host_pts, f"{B.js('qrPairDemo.totalPoints')} of {host_pts} points")
         check("reconnect to the same laptop is detected", not hidden(A, "rejoin-note") and not hidden(B, "rejoin-note"))
 
         B.call("Page.navigate", url="about:blank")
@@ -336,7 +349,6 @@ def report(title, results, errors):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("pages", nargs="*", default=[str(REPO / "web/qr-pair.html")], help="HTML files containing the kit")
     ap.add_argument("--demo", action="store_true", help="also run the web/qr-pair.html end-to-end test")
     ap.add_argument("--slow-scan", type=float, default=0, metavar="SECONDS", help="also test a slow host scan")
     args = ap.parse_args()
@@ -344,7 +356,7 @@ def main():
         sys.exit(f"Chrome not found at {CHROME}. Set CHROME=/path/to/chrome.")
     browser = Browser()
     try:
-        ok = all([run_kit_tests(browser, p, args.slow_scan) for p in args.pages])
+        ok = run_lib_tests(browser, args.slow_scan)
         if args.demo:
             ok = run_demo_test(browser) and ok
     finally:
