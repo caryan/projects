@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ricochet Tanks — Two-Player Maze Duel</title>
+    <meta name="description" content="Two tanks in a random maze, bullets that bounce off the walls. Play on one keyboard or on two laptops linked by QR codes.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <style>
+        /* ————— Engineering-pad design tokens (shared site identity) ————— */
+        :root {
+            --paper: #EEF2E3;
+            --grid-minor: rgba(90, 120, 84, 0.13);
+            --grid-major: rgba(90, 120, 84, 0.22);
+            --surface: #F6F8ED;
+            --ink: #243240;
+            --ink-soft: #5C6A5E;
+            --line: rgba(36, 50, 64, 0.30);
+            --line-faint: rgba(36, 50, 64, 0.16);
+            --copper: #9A5527;
+            --copper-strong: #8C4E26;
+            --guest: #2F6690;
+            --ok: #3C7A3F;
+            --bad: #A33B2B;
+            --warn: #A86F0C;
+            --serif: "STIX Two Text", "Times New Roman", serif;
+            --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --paper: #191F1A;
+                --grid-minor: rgba(190, 215, 185, 0.055);
+                --grid-major: rgba(190, 215, 185, 0.10);
+                --surface: #212822;
+                --ink: #DEE5D2;
+                --ink-soft: #95A291;
+                --line: rgba(222, 229, 210, 0.30);
+                --line-faint: rgba(222, 229, 210, 0.14);
+                --copper: #D28E58;
+                --copper-strong: #E2A46E;
+                --guest: #7FB3DA;
+                --ok: #84C487;
+                --bad: #E8897A;
+                --warn: #E0B45A;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { height: 100%; }
+        body {
+            font-family: var(--serif);
+            color: var(--ink);
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--grid-major) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+                linear-gradient(var(--grid-minor) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+            background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+            line-height: 1.55;
+            min-height: 100%;
+        }
+        a { color: inherit; }
+        :focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; }
+        [hidden] { display: none !important; }
+
+        .sheet { max-width: 1100px; margin: 0 auto; padding: 32px 16px 72px; }
+
+        .masthead {
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 24px;
+            padding-bottom: 18px; border-bottom: 2px solid var(--ink); margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .masthead h1 { font-size: 2.2rem; font-weight: 500; line-height: 1.1; }
+        .masthead p { color: var(--ink-soft); max-width: 52ch; margin-top: 6px; }
+        .back { font-family: var(--mono); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
+
+        button {
+            font-family: var(--mono); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--ink); background: var(--surface); border: 1.5px solid var(--ink);
+            padding: 9px 14px; cursor: pointer; border-radius: 2px;
+        }
+        button:hover { border-color: var(--copper); color: var(--copper-strong); }
+        button.link-btn { border: none; background: none; padding: 4px 0; color: var(--ink-soft); font-size: 0.8rem; }
+        button.link-btn:hover { color: var(--copper-strong); }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--line); padding: 20px;
+            box-shadow: 4px 4px 0 var(--line-faint);
+        }
+        .hint { color: var(--ink-soft); font-size: 0.97rem; }
+        kbd {
+            font-family: var(--mono); font-size: 0.78rem; padding: 1px 6px; border: 1px solid var(--line);
+            border-bottom-width: 2px; border-radius: 3px; background: var(--paper); white-space: nowrap;
+        }
+
+        /* ————— Mode picker ————— */
+        .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .mode h2 { font-size: 1.35rem; font-weight: 500; margin-bottom: 6px; }
+        .mode p { color: var(--ink-soft); margin-bottom: 16px; }
+        .mode .keys { font-size: 0.92rem; margin-bottom: 18px; color: var(--ink); }
+        .mode .keys div + div { margin-top: 6px; }
+
+        /* ————— Pairing: the UI comes from lib/qr-pair.js, themed with these tokens ————— */
+        #pairing-root {
+            --qrp-ink: var(--ink);
+            --qrp-ink-soft: var(--ink-soft);
+            --qrp-surface: var(--surface);
+            --qrp-field: var(--paper);
+            --qrp-line: var(--line);
+            --qrp-accent: var(--copper-strong);
+            --qrp-ok: var(--ok);
+            --qrp-bad: var(--bad);
+            --qrp-mono: var(--mono);
+            --qrp-shadow: 4px 4px 0 var(--line-faint);
+        }
+
+        details { margin-top: 24px; }
+        summary { cursor: pointer; font-family: var(--mono); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        details .card { margin-top: 12px; }
+        details p + p, details p + ul, details ul + p { margin-top: 10px; }
+        details ul { padding-left: 1.3em; }
+
+        /* ————— Game ————— */
+        .play-bar {
+            display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; margin-bottom: 12px;
+            font-family: var(--mono); font-size: 0.85rem;
+            padding: 8px 12px; border: 1.5px solid transparent; transition: background 0.2s, border-color 0.2s;
+        }
+        .play-bar .spacer { flex: 1; }
+        .score { display: inline-flex; align-items: center; gap: 8px; }
+        .score b { font-size: 1.5rem; font-weight: 500; min-width: 1.2em; text-align: center; }
+        .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 2px; }
+        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--ok); margin-right: 6px; }
+        .conn { font-weight: 500; }
+        .conn.unstable { color: var(--warn); }
+        .conn.unstable .dot { background: var(--warn); animation: blink 1s ease-in-out infinite; }
+        .conn.closed { color: var(--bad); }
+        .conn.closed .dot { background: var(--bad); }
+        .play-bar.unstable { border-color: var(--warn); }
+        .play-bar.closed { border-color: var(--bad); background: var(--surface); }
+        @keyframes blink { 50% { opacity: 0.25; } }
+
+        .arena {
+            display: block; margin: 0 auto;
+            width: min(100%, max(480px, calc((100vh - 290px) * 1.5)));
+            aspect-ratio: 3 / 2;
+            background: var(--surface); border: 1px solid var(--line); box-shadow: 4px 4px 0 var(--line-faint);
+        }
+        .controls { margin-top: 12px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="sheet">
+        <header class="masthead">
+            <div>
+                <h1>Ricochet Tanks</h1>
+                <p>Two tanks, one random maze, and shells that bounce off every wall. Hit the other tank before a ricochet hits you.</p>
+            </div>
+            <a class="back" href="../index.html">← All projects</a>
+        </header>
+
+        <!-- ————— Pick how to play ————— -->
+        <section id="mode-pick">
+            <div class="modes">
+                <div class="card mode">
+                    <h2>One keyboard</h2>
+                    <p>Two players share this laptop's keyboard.</p>
+                    <div class="keys">
+                        <div><span class="swatch" style="background:var(--copper)"></span> Copper: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to drive, <kbd>Q</kbd> to fire</div>
+                        <div><span class="swatch" style="background:var(--guest)"></span> Blue: <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd> to drive, <kbd>M</kbd> to fire</div>
+                    </div>
+                    <button id="mode-local">Play on this laptop</button>
+                </div>
+                <div class="card mode">
+                    <h2>Two laptops</h2>
+                    <p>Each player uses their own laptop on the same wifi. Link them by showing QR codes to each other's webcams. Nothing goes through a server.</p>
+                    <div class="keys">
+                        <div><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrow keys to drive, <kbd>Space</kbd> to fire</div>
+                    </div>
+                    <button id="mode-net">Link two laptops</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ————— Pairing (Host / Join, QR codes, camera) is drawn here by lib/qr-pair.js ————— -->
+        <section id="pairing-wrap" hidden>
+            <button class="link-btn" id="pairing-back">← Back to game modes</button>
+            <div id="pairing-root"></div>
+        </section>
+        <noscript><p class="hint">This game needs JavaScript.</p></noscript>
+
+        <!-- ————— The game ————— -->
+        <section id="game" hidden>
+            <div class="play-bar" id="play-bar">
+                <span class="score"><span class="swatch" style="background:var(--copper)"></span><span id="name-0">Copper</span> <b id="score-0">0</b></span>
+                <span class="score"><span class="swatch" style="background:var(--guest)"></span><span id="name-1">Blue</span> <b id="score-1">0</b></span>
+                <span class="conn" id="conn-status" role="status" hidden><span class="dot"></span><span id="conn-text">Connected</span></span>
+                <span class="spacer"></span>
+                <button id="sound-btn">Sound: on</button>
+                <button id="new-match-btn">New match</button>
+                <button id="leave-btn" hidden>Disconnect</button>
+                <button id="menu-btn">Menu</button>
+            </div>
+            <canvas class="arena" id="arena" aria-label="Maze arena"></canvas>
+            <p class="hint controls" id="controls-hint"></p>
+        </section>
+
+        <details id="about">
+            <summary>How to play, and how it works</summary>
+            <div class="card">
+                <p><strong>Rules.</strong> Each round starts in a new random maze. Shells bounce off walls and last about nine seconds, so a miss can come back for you: your own shells can hit you too, and a shot straight at a nearby wall comes straight back. Each tank can have five shells in the air at once. When a tank is hit, the round ends a couple of seconds later: if the other tank is still standing it scores a point, and if both were hit it's a draw.</p>
+                <p><strong>The maze.</strong> It starts as a grid of closed cells. A random depth-first walk knocks down walls to join every cell into one winding maze with exactly one route between any two cells. Then about a quarter of the remaining inner walls are knocked out at random, which adds loops and gives shells more lines to travel along.</p>
+                <p><strong>Bouncing shells.</strong> Each wall is a thin rectangle. Every tick, a shell's path is traced as a ray against the walls, each grown by the shell's radius, and the first wall it would cross reflects it. That repeats for the rest of the tick's distance, so a fast shell can never slip through a wall or a corner. A shell is fired from the tank's centre and traced out to the muzzle in the same way, so a barrel poking through a wall can't fire through it.</p>
+                <p><strong>Two laptops.</strong> The laptops talk directly over WebRTC, paired with the site's <code>lib/qr-pair.js</code>. The host's laptop runs the whole game. The other laptop sends just its keys, about 60 times a second, and draws what the host sends back: tank and shell positions about 60 times a second on the fast channel, and each new maze and the scores on the reliable one. The guest draws a few hundredths of a second behind, blending between the last two updates so motion stays smooth through a lost packet. If the link drops, <strong>Pair again</strong> reconnects without reloading and the match carries on.</p>
+            </div>
+        </details>
+    </div>
+
+    <!-- The game: ricochet-tanks/main.js, with sim.js (rules), net.js (messages) and render.js (drawing). -->
+    <script type="module" src="ricochet-tanks/main.js"></script>
+</body>
+</html>

@@ -11,6 +11,11 @@ Get the usage numbers for the current session with `uv run python/session_usage.
 - **Tokens:** N in · N cache write · N cache read · N out · ~$N est. at API list prices
 -->
 
+## 2026-11-27 · Ricochet Tanks (new) · `web/ricochet-tanks.html`
+- **Precis:** Two-player tank duel in a random maze with shells that bounce off walls, playable on one keyboard or on two laptops linked through `lib/qr-pair.js`. The maze is a depth-first walk with a quarter of the leftover inner walls knocked out to add loops. Shells are swept as rays against radius-grown wall rectangles so they reflect cleanly and never tunnel. Over the link the host is authoritative: the guest sends a key bitmask and a fire-press count on the fast channel, and draws ~60 Hz host snapshots interpolated 35 ms behind the shared clock. Mazes and scores go on the reliable channel, and Pair again resumes the match. It's the first app split into a page plus ES modules (`web/ricochet-tanks/`: sim, net, render, main; noted in CLAUDE.md), with headless tests in `tests/ricochet_tanks_test.py` that reuse the qr-pair harness.
+- **Harness / model:** Claude Code 2.1.332 · claude-opus-5-5 (24 calls)
+- **Tokens:** 48 in · 136.9k cache write · 2.65M cache read · 81.0k out · ~$3.24 est. at API list prices
+
 ## 2026-11-21 · QR Pair (security review, game hardening, shared library) · `web/lib/qr-pair.js`
 - **Precis:** A skeptical review found an XSS: a crafted code's address was echoed by Chrome's SDP parse error into `innerHTML`. That's fixed, along with SDP line injection (strict hostname checks) and missing SRI on the CDN scripts. `PeerLink` then gained a second unreliable/unordered "fast" channel, never-throwing sends with backpressure, junk-message filtering, a shared clock (`sharedNow()`), a hello handshake with app-name checking and reconnect detection, and in-page **Pair again** with host resync. The pairing code then moved out of the demo into an importable ES module, `web/lib/qr-pair.js`, with a drop-in `mountPairing()` UI and on-demand SRI-pinned CDN loading. It has reuse notes in `web/lib/qr-pair.md` (linked from CLAUDE.md) and headless-Chrome tests in `tests/qr_pair_test.py`, and `web/qr-pair.html` is now its demo.
 - **Harness / model:** Claude Code 2.1.330 · claude-opus-5-5 (59 calls)

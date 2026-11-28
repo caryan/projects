@@ -37,6 +37,7 @@
   - Add comments for complex logic
   - Thorough error handling for user inputs
 - One-off tools: single-file architecture (HTML/JS/CSS in one file) is the default
+- Bigger apps such as games can split up: the page stays at `web/<name>.html` (markup and CSS) and its ES modules go in `web/<name>/` (e.g. `web/ricochet-tanks.html` + `web/ricochet-tanks/sim.js`). Keep rules/logic free of the DOM so tests can import it
 - Apps that need something already built as a reusable piece (see below): use that piece rather than rewriting it, following its own notes on how to include it
 - When a feature looks likely to recur across apps (networking, input handling, rendering helpers), suggest making it a reusable piece with a canonical source, a notes file in `web/`, tests in `tests/`, and an entry below. Don't extract one speculatively from a single app
 - Local-only processing (will be served from a static website)
